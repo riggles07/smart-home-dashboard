@@ -1,0 +1,12 @@
+# Node-RED Dashboard Requirements
+
+# Core Node-RED packages
+node-red-dashboard
+
+# Integration packages
+node-red-node-hubitat
+node-red-node-unifi
+
+# Optional features
+node-red-contrib-kanbanflow
+node-red-contrib-home-assistant-common

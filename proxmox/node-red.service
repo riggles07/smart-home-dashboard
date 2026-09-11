@@ -1,0 +1,17 @@
+[Unit]
+Description=Node-RED Dashboard Service
+After=network.target
+
+[Service]
+Type=simple
+User=node-red
+Group=node-red
+WorkingDirectory=/home/node-red
+ExecStart=/usr/bin/node-red
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

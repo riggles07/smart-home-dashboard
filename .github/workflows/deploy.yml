@@ -1,0 +1,21 @@
+name: Deploy Smart Home Dashboard
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install -g node-red node-red-dashboard node-red-node-hubitat node-red-node-unifi
+      - name: Deploy to Node-RED
+        run: |
+          node-red -u flows_config.json

@@ -1,0 +1,27 @@
+{
+  "lxc": {
+    "lxc.arch": "amd64",
+    "lxc.utsname": "debian",
+    "lxc.rootfs.path": "/var/lib/lxc/{{CONTAINER_ID}}/rootfs",
+    "lxc.template.path": "/var/lib/lxc-templates",
+    "lxc.id": "{{CONTAINER_ID}}",
+    "lxc.description": "Node-RED Dashboard",
+    "lxc.network.type": "veth",
+    "lxc.network.link": "vmbr0",
+    "lxc.network.flags": "up",
+    "lxc.network.hwaddr": "00:16:3e:00:00:00",
+    "lxc.network.ip4": "{{CONTAINER_IP}}",
+    "lxc.network.ip6": "",
+    "lxc.console.type": "tty",
+    "lxc.console.path": "/var/lib/lxc/{{CONTAINER_ID}}/console",
+    "lxc.rootfs.options": "rw,nosuid,nodev,exec",
+    "lxc.apparmor.profile": "unconfined",
+    "lxc.apparmor.allow_incomplete": "true",
+    "lxc.apparmor.exec": "false",
+    "lxc.cap.drop": "",
+    "lxc.cap.drop.default": ["setgid", "setuid", "sys_admin", "sys_boot", "sys_module", "sys_rawio", "sys_chown", "sys_ptrace", "mac_override", "mac_admin", "net_admin", "net_raw", "audit_write", "audit_control", "block_suspend"],
+    "lxc.mount.auto": "proc:rw sys:rw",
+    "lxc.mount.entry": "/dev/ttyUSB0 /dev/ttyUSB0 bind,optional,create=file",
+    "lxc.mount.entry": "/dev/ttyUSB1 /dev/ttyUSB1 bind,optional,create=file"
+  }
+}
