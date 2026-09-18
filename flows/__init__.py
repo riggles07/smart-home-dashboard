@@ -36,8 +36,16 @@ unifi_network_monitor = _unifi_network_monitor
 # flow module which returns the configuration object.
 dashboard_configuration = _dashboard_configuration.dashboard_configuration
 
+# The Hubitat device-control surface and its route handler live in the
+# dashboard configuration module; re-export them so the dashboard layer can
+# reach device commands via ``flows``.
+device_control_surface = _dashboard_configuration.device_control_surface
+handle_device_control = _dashboard_configuration.handle_device_control
+
 __all__ = [
     "dashboard_configuration",
+    "device_control_surface",
+    "handle_device_control",
     "home_lab_monitor",
     "hubitat_integration",
     "integration_functions",
