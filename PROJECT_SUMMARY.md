@@ -26,10 +26,15 @@ This project implements a comprehensive smart home monitoring dashboard with the
 - [x] VM/Container status
 - [x] Node resource monitoring
 
-### Phase 3: Hubitat Integration (Pending)
+### Phase 3: Hubitat Integration (In Progress)
 - [ ] Smart device controls
 - [ ] Automation triggers
-- [ ] Device state monitoring
+- [x] Device state monitoring
+  - Live Maker API state for one device (`getDeviceState`) and all devices
+    (`getAllDeviceStates`), rendered by the `hubitat-device-state` node.
+  - Refresh strategy: hybrid — hub event subscription (`subscribeStateEvents`)
+    with TTL-cached polling (`startStatePolling`) as the fallback. See
+    [docs/hubitat-state-monitoring.md](docs/hubitat-state-monitoring.md).
 
 ### Phase 4: UniFi Network Monitoring (Pending)
 - [ ] WiFi client list

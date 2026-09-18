@@ -29,7 +29,16 @@ module.exports = function (RED) {
                     devices: {
                         type: "page",
                         name: "Devices",
-                        nodes: []
+                        // Device tiles are bound to the state node, so a tile
+                        // re-renders on every published state snapshot.
+                        nodes: [
+                            {
+                                type: "hubitat-device-state",
+                                group: "Device Status",
+                                width: 6,
+                                order: 1
+                            }
+                        ]
                     },
                     settings: {
                         type: "page",
@@ -63,6 +72,36 @@ module.exports = function (RED) {
         common: {
             label: "Device Control"
         }
+    });
+
+    // Hubitat Device State Node
+    // Renders live device attributes (switch/level/hue/temperature/battery/...)
+    // as tiles. Fed by the hubitat-control node's state monitoring, which
+    // subscribes to hub-pushed events and falls back to TTL-cached polling.
+    RED.nodes.addType("hubitat-device-state", {
+        label: "Device Status",
+        type: "ui_template",
+        tab: "dashboard",
+        view: "devices",
+        group: "Device Status",
+        // Tile refresh is the dashboard's own UI refresh; the node's TTL cache
+        // means N tiles cost one hub read per TTL window.
+        refresh: 5000,
+        ttl: 5,
+        layout: "grid",
+        attributes: [
+            "switch",
+            "level",
+            "temperature",
+            "humidity",
+            "battery",
+            "motion",
+            "contact",
+            "lock",
+            "hue",
+            "saturation",
+            "colorTemperature"
+        ]
     });
 
     // UniFi Monitor Node
