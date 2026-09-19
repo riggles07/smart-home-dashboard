@@ -8,6 +8,10 @@ DEFAULT_LAYOUT = "landscape"
 DEFAULT_REFRESH_MS = 5000
 DEFAULT_THEME = "complete"
 
+#: Default Rule Machine action for an automation trigger (see
+#: ``flows/hubitat_integration.py`` for the endpoint-trigger contract).
+DEFAULT_TRIGGER_ACTION = "runRuleAct"
+
 DASHBOARD_NAME = "Smart Home Dashboard"
 DASHBOARD_VERSION = "1.0.0"
 
@@ -49,9 +53,15 @@ def dashboard_configuration(RED=None):
             "max": 100,
         },
         "hubitat-control": {"label": "Device Control"},
+        "hubitat-automation": {
+            "label": "Automation Triggers",
+            "listTopic": "hubitat/automations",
+            "resultTopic": "hubitat/automation/result",
+            "action": DEFAULT_TRIGGER_ACTION,
+        },
         "unifi-monitor": {"label": "Network Monitor"},
         "kanban-card": {"label": "Task Card"},
     }
 
 
-__all__ = ["dashboard_configuration"]
+__all__ = ["dashboard_configuration", "DEFAULT_TRIGGER_ACTION"]

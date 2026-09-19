@@ -65,6 +65,21 @@ module.exports = function (RED) {
         }
     });
 
+    // Hubitat Automation Trigger Node (Phase 3 -- "Automation triggers").
+    // A ui_button/dropdown pair per rule: the list is populated from
+    // hubitat-control's getAutomations() (Rule Machine getRuleList) and the
+    // button posts the selected rule id back through handleAutomationTrigger().
+    RED.nodes.addType("hubitat-automation", {
+        label: "Hubitat Automation",
+        type: "hubitat-automation",
+        common: {
+            label: "Automation Triggers",
+            listTopic: "hubitat/automations",
+            resultTopic: "hubitat/automation/result",
+            action: "runRuleAct"
+        }
+    });
+
     // UniFi Monitor Node
     RED.nodes.addType("unifi-monitor", {
         label: "UniFi Monitor",

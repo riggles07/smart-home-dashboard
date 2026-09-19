@@ -125,3 +125,31 @@ class TestDashboardConfiguration:
 
         card = dashboard['kanban-card']
         assert card['label'] == 'Task Card'
+
+    def test_hubitat_automation_node_type(self):
+        """Test that the automation trigger node type is registered."""
+        from flows import dashboard_configuration
+        dashboard = dashboard_configuration(None)
+        assert 'hubitat-automation' in dashboard
+
+    def test_hubitat_automation_config(self):
+        """Test that the automation node carries its topics and default action."""
+        from flows import dashboard_configuration
+        dashboard = dashboard_configuration(None)
+
+        automation = dashboard['hubitat-automation']
+        assert automation['label'] == 'Automation Triggers'
+        assert automation['listTopic'] == 'hubitat/automations'
+        assert automation['resultTopic'] == 'hubitat/automation/result'
+        assert automation['action'] == 'runRuleAct'
+
+    def test_automation_topics_match_integration_module(self):
+        """The dashboard topics must match the ones the node publishes on."""
+        import dashboard_configuration as config_module  # the flows mirror module
+        from flows import dashboard_configuration, hubitat_integration
+
+        automation = dashboard_configuration(None)['hubitat-automation']
+        assert automation['listTopic'] == hubitat_integration.AUTOMATION_TOPIC
+        assert automation['resultTopic'] == hubitat_integration.AUTOMATION_RESULT_TOPIC
+        assert automation['action'] == hubitat_integration.DEFAULT_TRIGGER_ACTION
+        assert config_module.DEFAULT_TRIGGER_ACTION == hubitat_integration.DEFAULT_TRIGGER_ACTION
