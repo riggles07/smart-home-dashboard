@@ -56,12 +56,25 @@ module.exports = function (RED) {
         }
     });
 
-    // Hubitat Control Node
+    // Hubitat Control Node -- carries the device control surface the Devices
+    // view renders. Each widget maps onto a Hubitat Maker API command; the UI
+    // publishes {"deviceId","command","value"} on input_topic and results come
+    // back on output_topic (see hubitat-integration.js controlDevice()).
     RED.nodes.addType("hubitat-control", {
         label: "Hubitat Control",
         type: "hubitat-control",
         common: {
-            label: "Device Control"
+            label: "Device Control",
+            inputTopic: "hubitat/device/+/control",
+            outputTopic: "hubitat/device/+/command",
+            widgets: [
+                { command: "on", capability: "switch", widget: "ui_switch" },
+                { command: "off", capability: "switch", widget: "ui_switch" },
+                { command: "setLevel", capability: "dimmer", widget: "ui_slider", args: ["level", "duration"] },
+                { command: "setColor", capability: "color-bulb", widget: "ui_colour_picker", args: ["hue", "saturation", "level"] },
+                { command: "setColorTemperature", capability: "color-bulb", widget: "ui_slider", args: ["temperature", "level"] },
+                { command: "refresh", capability: "common", widget: "ui_button" }
+            ]
         }
     });
 
