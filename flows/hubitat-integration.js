@@ -319,13 +319,15 @@ module.exports = function (RED) {
          * in `payload`, and publishes the result on this node's output.
          */
         controlDevice(msg, callback) {
-            const done = (result) => {
+            // Publish the structured result on this node's output topic and
+            // hand it to the caller's callback Node-style (err, result).
+            const publish = (result) => {
                 if (callback) { callback(result.ok ? null : result.error, result); }
                 this.send({ payload: result, topic: `hubitat/device/${result.deviceId}/command` });
                 return result;
             };
             if (!msg || typeof msg !== 'object') {
-                return done(this.fail('invalid_payload', "control action must be an object with 'deviceId' and 'command'"));
+                return publish(this.fail('invalid_payload', "control action must be an object with 'deviceId' and 'command'"));
             }
             const request = (msg.payload && typeof msg.payload === 'object') ? msg.payload : msg;
             const deviceId = request.deviceId !== undefined ? request.deviceId
@@ -340,7 +342,9 @@ module.exports = function (RED) {
             }
 
             const args = Array.isArray(value) ? value.slice() : (value === undefined || value === null ? [] : [value]);
-            return this.sendDeviceCommand(deviceId, command, ...args, done);
+            // sendDeviceCommand's callback contract is Node-style (err, result)
+            // where result is always the structured result object.
+            return this.sendDeviceCommand(deviceId, command, ...args, (err, result) => publish(result));
         }
 
         // Alias so a hubitat-control node's input can be wired straight here.

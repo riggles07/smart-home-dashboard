@@ -26,8 +26,8 @@ This project implements a comprehensive smart home monitoring dashboard with the
 - [x] VM/Container status
 - [x] Node resource monitoring
 
-### Phase 3: Hubitat Integration (Pending)
-- [ ] Smart device controls
+### Phase 3: Hubitat Integration (In Progress)
+- [x] Smart device controls
 - [ ] Automation triggers
 - [ ] Device state monitoring
 
