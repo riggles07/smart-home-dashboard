@@ -42,6 +42,21 @@ class TestMobileThemeCss:
         assert 'min-height: var(--shd-touch-target)' in css
         assert 'touch-action: manipulation' in css
 
+    def test_tab_links_meet_touch_target(self):
+        """Tab navigation links are primary touch controls on mobile.
+
+        They must carry the 44px minimum-height rule (and tap-friendly
+        touch-action), not just padding -- padding alone renders ~42px.
+        Found by the Phase 5 on-device audit (2026-09-21); regression guard.
+        """
+        css = CSS_PATH.read_text()
+        tab_block = re.search(r'\.ui_tab \.tab-link \{[^}]*\}', css)
+        assert tab_block, ".ui_tab .tab-link rule missing from theme"
+        assert 'min-height: var(--shd-touch-target)' in tab_block.group(0), \
+            ".tab-link lacks the 44px min-height touch-target rule"
+        assert 'touch-action: manipulation' in tab_block.group(0), \
+            ".tab-link lacks touch-action: manipulation"
+
     def test_theme_has_viewport_friendly_text_adjust(self):
         """Stop auto text inflate/zoom on rotate."""
         css = CSS_PATH.read_text()

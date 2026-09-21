@@ -82,6 +82,10 @@ body {
   text-decoration: none;
   font-size: 14px;
   border-bottom: 2px solid transparent;
+  min-height: var(--shd-touch-target);   /* tab links are tappable, too */
+  display: inline-flex;
+  align-items: center;
+  touch-action: manipulation;
 }
 .ui_tab .tab-link.active {
   color: var(--shd-text);
