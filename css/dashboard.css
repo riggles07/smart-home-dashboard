@@ -1,0 +1,217 @@
+/* ====================================================================
+   Smart Home Dashboard - Mobile-Responsive Theme
+   Phase 5: Mobile responsive design, target device Samsung Galaxy A7 Lite
+   --------------------------------------------------------------------
+   Target device viewport (Samsung Galaxy Tab A7 Lite 8.7" / SM-T220):
+     - Portrait:  800 x 1280 CSS px @ 2x DPR (nominal 400 dp wide)
+     - Landscape: 1280 x 800 CSS px
+   Breakpoints below target that profile plus a general phone band.
+   ==================================================================== */
+
+/* ---------- Global reset & base ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --shd-bg: #1a1a2e;
+  --shd-surface: #16213e;
+  --shd-card: #1f2b47;
+  --shd-accent: #667eea;
+  --shd-accent-2: #764ba2;
+  --shd-text: #eee;
+  --shd-text-dim: #aab;
+  --shd-ok: #2ecc71;
+  --shd-warn: #f1c40f;
+  --shd-err: #e74c3c;
+  --shd-touch-target: 44px;   /* minimum Apple/Google touch target */
+  --shd-radius: 10px;
+}
+
+html { font-size: 16px; }
+
+body {
+  background: var(--shd-bg);
+  color: var(--shd-text);
+  font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;   /* no grey flash on tap */
+  -webkit-text-size-adjust: 100%;            /* stop iOS auto-zoom on rotate */
+  overflow-x: hidden;                         /* no horizontal scroll on narrow screens */
+}
+
+/* ---------- Status bar / header ---------- */
+.status-bar {
+  background: linear-gradient(135deg, var(--shd-accent), var(--shd-accent-2));
+  color: #fff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.status-bar .status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+.status-dot.ok      { background: var(--shd-ok); }
+.status-dot.warning { background: var(--shd-warn); }
+.status-dot.error   { background: var(--shd-err); }
+
+/* ---------- Tab navigation ---------- */
+.ui_tab {
+  border-bottom: 2px solid var(--shd-accent);
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;             /* swipe between tabs instead of wrapping */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.ui_tab::-webkit-scrollbar { display: none; }
+
+.ui_tab .tab-link {
+  padding: 12px 16px;
+  white-space: nowrap;
+  color: var(--shd-text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+.ui_tab .tab-link.active {
+  color: var(--shd-text);
+  border-bottom-color: var(--shd-accent);
+}
+
+/* ---------- Cards / groups ---------- */
+.ui_card, .ui_group {
+  background: var(--shd-card);
+  border-radius: var(--shd-radius);
+  padding: 16px;
+  margin: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ui_row {
+  display: flex;
+  flex-direction: row;          /* desktop / tablet landscape default */
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ui_row > * { flex: 1 1 auto; }
+
+/* ---------- Widgets & touch-friendly controls ---------- */
+/* Buttons, switches, sliders: never smaller than 44px so they are
+   comfortably tappable on the Galaxy A7 Lite's 8.7" touch panel. */
+.mdc-button,
+.ui_button,
+.ui_toggle,
+button {
+  min-height: var(--shd-touch-target);
+  min-width: var(--shd-touch-target);
+  padding: 10px 18px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: manipulation;  /* kill 300ms double-tap-zoom delay */
+}
+
+.ui_switch .mdc-switch,
+.ui_toggle {
+  transform-origin: left center;
+}
+
+.ui_slider input[type="range"] {
+  height: 44px;                 /* fat touch track */
+  width: 100%;
+  accent-color: var(--shd-accent);
+}
+
+/* ---------- Status indicators ---------- */
+.status-ok      { color: var(--shd-ok); }
+.status-warning { color: var(--shd-warn); }
+.status-error   { color: var(--shd-err); }
+
+/* ---------- Tables (device lists, network clients) ---------- */
+.ui_table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ui_table th, .ui_table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-wrap: break-word;
+}
+
+/* ---------- Animations ---------- */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.7; }
+}
+.pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* ====================================================================
+   Responsive breakpoints
+   ==================================================================== */
+
+/* Large screens first: dashboard grid on wide displays */
+@media (min-width: 1280px) {
+  .ui_row { flex-direction: row; }
+  .ui_card, .ui_group { max-width: 480px; }
+}
+
+/* Tablet portrait / small tablet landscape (Galaxy A7 Lite landscape:
+   1280 CSS px viewport falls through to the base styles) */
+@media (max-width: 1024px) {
+  .ui_row { flex-direction: column; }
+  .ui_card, .ui_group { width: 100%; margin: 8px 0; }
+}
+
+/* Galaxy A7 Lite portrait (~800 CSS px) and general tablets */
+@media (max-width: 900px) {
+  html { font-size: 15px; }
+  .ui_table th, .ui_table td { padding: 8px 6px; font-size: 13px; }
+  .status-bar { padding: 10px 12px; }
+}
+
+/* Phones and the narrow end of the A7 Lite in split-screen */
+@media (max-width: 600px) {
+  html { font-size: 14px; }
+  .ui_row { flex-direction: column; }
+  .ui_table th, .ui_table td { padding: 6px 4px; font-size: 12px; }
+  .ui_card, .ui_group { padding: 12px; margin: 8px; }
+  .ui_tab .tab-link { padding: 10px 12px; font-size: 13px; }
+  .status-bar { flex-direction: column; align-items: flex-start; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  html { font-size: 13px; }
+  .ui_tab .tab-link { padding: 10px 10px; }
+}
+
+/* ---------- Landscape phones (short viewport) ---------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .status-bar { position: static; padding: 6px 12px; }
+  .ui_card, .ui_group { margin: 6px; padding: 10px; }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .pulse { animation: none; }
+}
+
+/* ---------- Print ---------- */
+@media print {
+  body { background: #fff; color: #000; }
+  .status-bar, .ui_tab { display: none; }
+}

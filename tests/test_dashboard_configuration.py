@@ -25,12 +25,15 @@ class TestDashboardConfiguration:
         assert 'name' in dashboard
         assert dashboard['name'] == 'Smart Home Dashboard'
         assert 'version' in dashboard
-        assert dashboard['version'] == '1.0.0'
+        assert dashboard['version'] == '1.1.0'
         assert 'tabs' in dashboard
         assert 'layout' in dashboard
-        assert dashboard['layout'] == 'landscape'
+        assert dashboard['layout'] == 'auto'
         assert 'refresh' in dashboard
         assert 'theme' in dashboard
+        assert 'css' in dashboard
+        assert dashboard['css'] == 'css/dashboard.css'
+        assert 'mobile' in dashboard
 
     def test_tab_configuration(self):
         """Test that dashboard has proper tab configuration."""

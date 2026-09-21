@@ -9,12 +9,23 @@ action into a Hubitat Maker API command --
 :func:`device_control_surface` / :func:`handle_device_control`.
 """
 
-DEFAULT_LAYOUT = "landscape"
+DEFAULT_LAYOUT = "auto"
 DEFAULT_REFRESH_MS = 5000
 DEFAULT_THEME = "complete"
+DASHBOARD_CSS = "css/dashboard.css"
+
+#: Phase 5 target device: Samsung Galaxy A7 Lite (SM-T220),
+#: 800x1280 CSS px @ 2x DPR.
+TARGET_DEVICE = "Samsung Galaxy A7 Lite"
+MIN_TOUCH_TARGET_PX = 44
+MOBILE_BREAKPOINTS = {
+    "tablet_portrait": 900,
+    "phone": 600,
+    "small_phone": 380,
+}
 
 DASHBOARD_NAME = "Smart Home Dashboard"
-DASHBOARD_VERSION = "1.0.0"
+DASHBOARD_VERSION = "1.1.0"
 
 #: UI group per device capability -- which control a widget renders.
 CAPABILITY_WIDGET_TYPE = {
@@ -110,6 +121,16 @@ def dashboard_configuration(RED=None):
         "layout": DEFAULT_LAYOUT,
         "refresh": DEFAULT_REFRESH_MS,
         "theme": DEFAULT_THEME,
+        "css": DASHBOARD_CSS,
+        # Phase 5: mobile-responsive profile. The CSS theme re-flows rows
+        # into columns below 1024px so the Galaxy A7 Lite portrait
+        # viewport (800 CSS px) gets a single-column, touch-friendly UI.
+        "mobile": {
+            "target_device": TARGET_DEVICE,
+            "viewport": "width=device-width, initial-scale=1",
+            "min_touch_target": MIN_TOUCH_TARGET_PX,
+            "breakpoints": dict(MOBILE_BREAKPOINTS),
+        },
         "home-lab-monitor": {
             "label": "Node Status",
             "format": "%%",
@@ -126,4 +147,7 @@ __all__ = [
     "dashboard_configuration",
     "device_control_surface",
     "handle_device_control",
+    "MOBILE_BREAKPOINTS",
+    "MIN_TOUCH_TARGET_PX",
+    "TARGET_DEVICE",
 ]
