@@ -6,9 +6,14 @@ module.exports = function (RED) {
     "use strict";
 
     // Dashboard configuration
+    //
+    // Phase 5: mobile-responsive defaults. The dashboard starts in
+    // "auto" layout so the CSS theme (css/dashboard.css) re-flows rows
+    // into columns below 1024px -- covering the Samsung Galaxy A7 Lite
+    // in portrait (800 CSS px) and split-screen.
     const dashboard = {
         name: "Smart Home Dashboard",
-        version: "1.0.0",
+        version: "1.1.0",
         tabs: {
             dashboard: {
                 label: "Dashboard",
@@ -39,9 +44,22 @@ module.exports = function (RED) {
                 }
             }
         },
-        layout: "landscape",
+        layout: "auto",
         refresh: 5000,
-        theme: "complete"
+        theme: "complete",
+        css: "css/dashboard.css",
+        // Phase 5: touch-friendly control sizing + target device profile.
+        // Galaxy A7 Lite (SM-T220): 800x1280 CSS px, 2x DPR.
+        mobile: {
+            target_device: "Samsung Galaxy A7 Lite",
+            viewport: "width=device-width, initial-scale=1",
+            min_touch_target: 44,
+            breakpoints: {
+                tablet_portrait: 900,
+                phone: 600,
+                small_phone: 380
+            }
+        }
     };
 
     // Home Lab Monitor Node

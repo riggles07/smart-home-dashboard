@@ -5,21 +5,18 @@ node_red:
     port: 1880
     admin: admin
   user: admin
-  password: admin
-  httpAdminRoot: node-red
-  httpStatic: /usr/share/node-red
-  httpStaticCdn: https://unpkg.com
-  httpStaticLegacy: https://node-js-legacy.cdn.npmjs.com/node-red
   httpNode: true
   httpNodeAdminAuth: admin
+  httpNodeAdminRoot: node-red
   httpNodeCors:
     origin: "*"
     credentials: false
-  httpStaticAuth: false
+  httpStaticAuth: true
   httpStaticAuthUser: admin
   httpStaticAuthPass: admin
   ui:
     theme: complete
+    css: css/dashboard.css
     tabs:
       - file: flows/dashboard-configuration.js
         name: Dashboard
@@ -29,9 +26,10 @@ node_red:
     xheaders: false
     xforwarded: false
     ssl:
-      enabled: false
-      cert: /etc/ssl/certs/node-red.crt
-      key: /etc/ssl/private/node-red.key
+      enabled: true
+      cert: /etc/node-red/fullchain.pem
+      key: /etc/node-red/private.key
+      port: 1881
   logging:
     console:
       level: info

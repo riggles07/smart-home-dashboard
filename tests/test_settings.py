@@ -176,7 +176,7 @@ class TestSettingsConfiguration:
         content = settings_path.read_text()
 
         assert 'ssl:' in content
-        assert 'enabled: false' in content
+        assert 'enabled: true' in content
 
     def test_settings_has_ssl_cert_path(self):
         """Test that settings has SSL cert path."""
@@ -184,7 +184,7 @@ class TestSettingsConfiguration:
         content = settings_path.read_text()
 
         assert 'cert:' in content
-        assert 'ssl/certs/node-red.crt' in content
+        assert '/etc/node-red/fullchain.pem' in content
 
     def test_settings_has_ssl_key_path(self):
         """Test that settings has SSL key path."""
@@ -192,7 +192,7 @@ class TestSettingsConfiguration:
         content = settings_path.read_text()
 
         assert 'key:' in content
-        assert 'ssl/private/node-red.key' in content
+        assert '/etc/node-red/private.key' in content
 
     def test_settings_has_static_file_path(self):
         """Test that settings has static file path configured."""
