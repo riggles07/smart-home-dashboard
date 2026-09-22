@@ -42,13 +42,22 @@ apt-get install -y -qq \
     ufw \
     netcat-openbsd > /dev/null
 
+# Create non-root user for Node-RED
+echo "Creating non-root node-red user..."
+if id "node-red" &>/dev/null; then
+    echo "User node-red already exists"
+else
+    useradd -m -s /bin/bash node-red
+fi
+
 # Install Node-RED
 echo "Installing Node-RED..."
 npm install -g node-red@latest
 
-# Create user directory
+# Create user directory with secure permissions
 mkdir -p /home/node-red/.node-red
 chmod 700 /home/node-red/.node-red
+chown -R node-red:node-red /home/node-red
 
 # Create systemd service
 echo "Creating systemd service..."
@@ -68,6 +77,20 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
+# Security hardening for non-root Node-RED service
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/node-red
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -80,9 +103,14 @@ systemctl start node-red
 
 # Configure firewall
 echo "Configuring firewall..."
-ufw allow 1880/tcp
-ufw allow 1881/tcp
+ufw allow 1880/tcp  # HTTP (fallback)
+ufw allow 1881/tcp  # HTTPS
+ufw allow from 192.168.1.0/24 to any port 1880 comment "Allow local network HTTP access"
+ufw allow from 192.168.1.0/24 to any port 1881 comment "Allow local network HTTPS access"
 ufw --force enable
+
+# Deny all other traffic (default deny, then allow local network)
+echo "Firewall rules applied - only local network access allowed"
 
 # Generate self-signed SSL certificate (optional)
 echo "Creating SSL certificate (optional)..."

@@ -5,15 +5,18 @@ node_red:
     port: 1880
     admin: admin
   user: admin
+  # Credentials resolved from .env via credential rotation - never hardcoded
+  password: ${NODE_RED_PASS}
+  httpAdminRoot: node-red
+  httpStatic: /usr/share/node-red
   httpNode: true
   httpNodeAdminAuth: admin
-  httpNodeAdminRoot: node-red
   httpNodeCors:
     origin: "*"
     credentials: false
   httpStaticAuth: true
-  httpStaticAuthUser: admin
-  httpStaticAuthPass: admin
+  httpStaticAuthUser: ${NODE_RED_USER}
+  httpStaticAuthPass: ${NODE_RED_PASS}
   ui:
     theme: complete
     css: css/dashboard.css
@@ -30,6 +33,12 @@ node_red:
       cert: /etc/node-red/fullchain.pem
       key: /etc/node-red/private.key
       port: 1881
+  httpStaticHeaders:
+    X-Frame-Options: DENY
+    X-Content-Type-Options: nosniff
+    X-XSS-Protection: "1; mode=block"
+    Strict-Transport-Security: "max-age=31536000; includeSubDomains"
+    Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
   logging:
     console:
       level: info

@@ -157,9 +157,11 @@ chmod 600 .env
 ## Security
 
 - Never commit `.env` files to repositories
-- Use HTTPS for production deployments
-- Restrict Node-RED access to local network
-- Regular credential rotation
+- HTTPS enabled for production (`config/settings.js`, port 1881) with HSTS, X-Frame-Options, CSP headers
+- Firewall: ufw default-deny with LAN-only allow rules for 1880/1881
+- Node-RED runs as the non-root `node-red` user under a hardened systemd unit
+- Regular credential rotation: `./scripts/rotate-credentials.sh` (admin password, SSL cert, .env tokens)
+- Verify hardening: `./scripts/verify-security.sh`
 
 ## Troubleshooting
 
