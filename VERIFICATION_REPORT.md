@@ -4,12 +4,12 @@
 
 | Metric | Result |
 |--------|--------|
-| Test Command | `None configured` |
-| Tests Executed | N/A |
-| Pass/Fail | N/A - No test suite found |
+| Test Command | `python -m pytest` (via `.github/workflows/ci.yml`, runs on every push/PR) |
+| Tests Executed | 232 |
+| Pass/Fail | 232 passed, 0 failed (local run 2026-09-22: `232 passed in 0.27s`) |
 | Coverage | N/A - No coverage tooling configured |
 
-**Note**: This Node-RED project does not include a test suite. No pytest, Jest, or other test frameworks were found. The CI workflow (`ci.yml`) only installs packages without running tests.
+**Note**: A full Python test suite (232 tests in `tests/`) exists and passes locally. The CI workflow now runs it on every push and pull request (see "Open Issues" below — the 'Add CI tests' item is resolved).
 
 ---
 
@@ -26,7 +26,7 @@
 - **Home Lab Monitor** - Proxmox & Docker monitoring
 - **Dashboard Configuration** - Tab and view layout
 - **Integration Functions** - API clients (Hubitat/UniFi)
-- **Python Test Suite** - 231 tests passing
+- **Python Test Suite** - 232 tests passing
 
 ### ⚠️ Missing
 - **CHANGELOG.md** - No changelog for tracking changes
@@ -58,7 +58,7 @@
 
 ### Critical
 - [ ] **Add integration tests** - Expand test suite with API validation tests
-- [ ] **Add CI tests** - Update `.github/workflows/ci.yml` to run validation tests
+- [x] **Add CI tests** - ✅ Done: `.github/workflows/ci.yml` rewritten as a real workflow — checks out the repo, sets up Python 3.11, installs pytest, and runs `python -m pytest` (232 tests) on every push and pull request. No `continue-on-error` or exit-code swallowing: a failing test fails the job.
 - [x] **Create `.env` exclusion** - ✅ Done (Phase 6): `.env`, `*.key`, `*.pem` in `.gitignore`
 
 ### Medium Priority
@@ -77,7 +77,7 @@
 ## Conclusion
 
 The Smart Home Dashboard is **functionally complete** with:
-1. ✅ Automated testing infrastructure (231 Python tests, all passing)
+1. ✅ Automated testing infrastructure (232 Python tests, all passing)
 2. ✅ Production-ready security configuration (Phase 6: HTTPS, firewall, non-root Node-RED, credential rotation)
 3. ✅ Complete mobile responsive UI (Phase 5)
 
