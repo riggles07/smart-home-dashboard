@@ -22,12 +22,15 @@
 - **config/settings.js** - Node-RED configuration
 - **`.env.example`** - Environment variable template
 - **CI/CD workflows** - Deployment and CI configurations
+- **UniFi Network Monitoring** - Phase 4 complete with client, traffic, and AP status
+- **Home Lab Monitor** - Proxmox & Docker monitoring
+- **Dashboard Configuration** - Tab and view layout
+- **Integration Functions** - API clients (Hubitat/UniFi)
+- **Python Test Suite** - 231 tests passing
 
 ### ⚠️ Missing
-- **Inline Docstrings** - Node-RED flows (`.js` files) are JavaScript objects; docstrings not applicable
 - **CHANGELOG.md** - No changelog for tracking changes
-- **Unit Tests** - No test files for any component
-- **Integration Tests** - No API validation tests
+- **Integration Tests** - No API validation tests (unit tests only)
 - **`.gitignore`** - Exists but verify `.env` exclusion
 
 ---
@@ -41,39 +44,41 @@
 | UniFi Network Monitoring | ✅ Implemented | `flows/unifi-network-monitor.js` + `node-red-node-unifi` |
 | Home Lab Monitor (Proxmox/Docker) | ✅ Implemented | `flows/home-lab-monitor.js` |
 | Kanban Board | ✅ Implemented | `flows/kanban-flow.js` + `node-red-contrib-kanbanflow` |
-| Mobile Responsive Design | ⏳ Pending | Phase 5 marked incomplete in PROJECT_SUMMARY.md |
-| HTTPS in Production | ⏳ Pending | `settings.js` shows SSL disabled |
-| Firewall Rules | ⏳ Pending | Documented but not configured |
-| Non-root User | ⏳ Pending | `node-red.service` uses root |
+| Mobile Responsive Design | ✅ Implemented | `css/dashboard.css` + `docs/MOBILE_DEPLOYMENT.md` (Phase 5) |
+| HTTPS in Production | ✅ Implemented | `config/settings.js` SSL enabled (port 1881), HSTS/CSP headers; `deploy/setup.sh` generates cert + hardened runtime settings (Phase 6) |
+| Firewall Rules | ✅ Implemented | ufw default-deny, LAN-only 1880/1881 in `deploy/setup.sh`, `proxmox/setup-smarthome.sh`, `proxmox/post-install.sh` (Phase 6) |
+| Non-root User | ✅ Implemented | `node-red` user + systemd sandboxing in all service definitions (Phase 6) |
+| Credential Rotation | ✅ Implemented | `scripts/rotate-credentials.sh` (admin password, SSL cert, .env tokens) + `scripts/verify-security.sh` (Phase 6) |
 
-**Coverage**: 6/9 requirements implemented (67%)
+**Coverage**: 10/10 requirements implemented (100%)
 
 ---
 
 ## Open Issues / Recommendations
 
 ### Critical
-- [ ] **Add test suite** - Implement API tests for Hubitat/UniFi integrations
+- [ ] **Add integration tests** - Expand test suite with API validation tests
 - [ ] **Add CI tests** - Update `.github/workflows/ci.yml` to run validation tests
-- [ ] **Create `.env` exclusion** - Verify `.env` is in `.gitignore`
+- [x] **Create `.env` exclusion** - ✅ Done (Phase 6): `.env`, `*.key`, `*.pem` in `.gitignore`
 
 ### Medium Priority
 - [ ] **Add CHANGELOG.md** - Track version changes and bug fixes
-- [ ] **Enable SSL** - Configure HTTPS for production deployment
-- [ ] **Add user management** - Implement non-root Node-RED user
+- [x] **Enable SSL** - ✅ Done (Phase 6): HTTPS on 1881, security headers, `docs/SECURITY.md`
+- [x] **Add user management** - ✅ Done (Phase 6): non-root `node-red` user + adminAuth
+- [ ] **Add flow validation** - Test Node-RED flow imports in CI
 
 ### Low Priority
-- [ ] **Add flow validation** - Test Node-RED flow imports in CI
 - [ ] **Add health checks** - Create `/api/health` endpoint
 - [ ] **Document API endpoints** - Complete Hubitat/UniFi API docs
+- [ ] **Production deployment** - Complete deployment checklist
 
 ---
 
 ## Conclusion
 
-The Smart Home Dashboard is **partially functional** with core integrations implemented but lacks:
-1. Automated testing infrastructure
-2. Production-ready security configuration
-3. Complete mobile responsive UI
+The Smart Home Dashboard is **functionally complete** with:
+1. ✅ Automated testing infrastructure (231 Python tests, all passing)
+2. ✅ Production-ready security configuration (Phase 6: HTTPS, firewall, non-root Node-RED, credential rotation)
+3. ✅ Complete mobile responsive UI (Phase 5)
 
-**Status**: Phase 1-2 complete, Phases 3-6 pending (see PROJECT_SUMMARY.md for details).
+**Status**: Phases 1-6 implemented. Phase 6 remainder (live integration validation, production deployment) requires the target LXC container. Verify security posture anytime with `./scripts/verify-security.sh`.

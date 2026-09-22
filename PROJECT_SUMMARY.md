@@ -31,17 +31,22 @@ This project implements a comprehensive smart home monitoring dashboard with the
 - [ ] Automation triggers
 - [ ] Device state monitoring
 
-### Phase 4: UniFi Network Monitoring (Pending)
-- [ ] WiFi client list
-- [ ] Network traffic monitoring
-- [ ] Access point status
+### Phase 4: UniFi Network Monitoring ✅
+- [x] WiFi client list
+- [x] Network traffic monitoring
+- [x] Access point status
 
 ### Phase 5: Dashboard UI & Display ✅
 - [x] Mobile responsive design (`css/dashboard.css`, auto layout)
 - [x] Local deployment on Galaxy A7 Lite (`docs/MOBILE_DEPLOYMENT.md`)
 - [x] Touch-friendly controls (44px targets, `touch-action: manipulation`)
 
-### Phase 6: Testing & Deployment (Pending)
+### Phase 6: Testing & Deployment (In Progress)
+- [x] Security hardening — HTTPS/SSL (`config/settings.js`, port 1881, security headers)
+- [x] Security hardening — Firewall (ufw default-deny, LAN-only 1880/1881)
+- [x] Security hardening — Non-root Node-RED (`node-red` user, systemd sandboxing)
+- [x] Security hardening — Credential rotation (`scripts/rotate-credentials.sh`)
+- [x] Security verification tooling (`scripts/verify-security.sh`)
 - [ ] Integration validation
 - [ ] Auto-refresh configuration
 - [ ] Production deployment
@@ -130,15 +135,15 @@ curl http://localhost:1880/api/
 
 - [x] Environment variables in `.env` file
 - [x] `.env` in `.gitignore`
-- [ ] HTTPS enabled in production
-- [ ] Firewall rules configured
-- [ ] Non-root user for Node-RED
-- [ ] Regular credential rotation
+- [x] HTTPS enabled in production (`config/settings.js` + self-signed cert at `/etc/node-red/`)
+- [x] Firewall rules configured (ufw, LAN-only allow on 1880/1881, default deny)
+- [x] Non-root user for Node-RED (`node-red` user + systemd sandboxing)
+- [x] Regular credential rotation (`scripts/rotate-credentials.sh`)
 
 ## Next Steps
 
 1. Complete Hubitat integration (Phase 3)
 2. Implement UniFi monitoring (Phase 4)
 3. ~~Build mobile-responsive UI (Phase 5)~~ ✅ Done — see `css/dashboard.css`, `docs/MOBILE_DEPLOYMENT.md`, `tests/test_mobile_ui.py`
-4. Test all integrations (Phase 6)
-5. Deploy to production
+4. ~~Security hardening~~ ✅ Done — HTTPS, firewall, non-root Node-RED, credential rotation; run `./scripts/verify-security.sh`
+5. Integration validation + production deployment (Phase 6 remainder)

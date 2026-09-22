@@ -13,5 +13,19 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
+# Security hardening for non-root Node-RED service
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/node-red
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
 [Install]
 WantedBy=multi-user.target
