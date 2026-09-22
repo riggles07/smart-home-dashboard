@@ -32,13 +32,16 @@ class TestSettingsConfiguration:
         assert '1880' in content
 
     def test_settings_has_admin_user(self):
-        """Test that settings has admin user configuration."""
+        """Test that settings has admin user configuration (env-resolved, not hardcoded)."""
         settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
         content = settings_path.read_text()
 
         assert 'admin:' in content
         assert 'user:' in content
         assert 'password:' in content
+        # Phase 6 hardening: password must come from env, never hardcoded
+        assert '${NODE_RED_PASS}' in content, \
+            "password must be resolved from NODE_RED_PASS env var, not hardcoded"
 
     def test_settings_has_http_admin_root(self):
         """Test that settings has httpAdminRoot configuration."""
@@ -101,12 +104,13 @@ class TestSettingsConfiguration:
         assert 'httpNodeCors:' in content
         assert 'origin: "*"' in content
 
-    def test_settings_has_http_static_auth_disabled(self):
-        """Test that settings has httpStaticAuth disabled."""
+    def test_settings_has_http_static_auth_enabled(self):
+        """Test that settings has httpStaticAuth enabled (Phase 6 hardening)."""
         settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
         content = settings_path.read_text()
 
-        assert 'httpStaticAuth: false' in content
+        assert 'httpStaticAuth: true' in content, \
+            "httpStaticAuth must be enabled - static assets require authentication"
 
     def test_settings_has_logging_configuration(self):
         """Test that settings has logging configuration."""
@@ -202,20 +206,20 @@ class TestSettingsConfiguration:
         assert 'httpStatic:' in content
         assert '/usr/share/node-red' in content
 
-    def test_settings_has_static_cdn(self):
-        """Test that settings has static CDN configured."""
+    def test_settings_has_static_csp_header(self):
+        """Test that CSP header restricts asset sources (Phase 6 hardening)."""
         settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
         content = settings_path.read_text()
 
-        assert 'httpStaticCdn:' in content
-        assert 'unpkg.com' in content
+        assert 'Content-Security-Policy:' in content, \
+            "Content-Security-Policy header required to restrict asset sources"
 
-    def test_settings_has_static_legacy(self):
-        """Test that settings has static legacy CDN configured."""
+    def test_settings_has_static_hsts_header(self):
+        """Test that HSTS header enforces HTTPS (Phase 6 hardening)."""
         settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
         content = settings_path.read_text()
 
-        assert 'httpStaticLegacy:' in content
+        assert 'Strict-Transport-Security:' in content
 
     def test_settings_has_static_auth_user(self):
         """Test that settings has static auth user configured."""

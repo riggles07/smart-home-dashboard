@@ -2,6 +2,7 @@
 Tests for hubitat-integration.js (Smart home device controls)
 """
 import pytest
+import os
 import sys
 import json
 from pathlib import Path
@@ -60,8 +61,15 @@ class TestHubitatNode:
             'apiKey': 'my-key'
         }
 
-        node = hubitat_integration.HUBITAT_NODE('hubitat-control', {}, config, None)
-        assert node.baseUrl == 'http://hubitat.local:8080'
+        # Guard against a developer's exported HUBITAT_URL leaking in
+        # (e.g. after `set -a; source .env`)
+        old = os.environ.pop('HUBITAT_URL', None)
+        try:
+            node = hubitat_integration.HUBITAT_NODE('hubitat-control', {}, config, None)
+            assert node.baseUrl == 'http://hubitat.local:8080'
+        finally:
+            if old is not None:
+                os.environ['HUBITAT_URL'] = old
 
     def test_refresh_devices_method(self):
         """Test that refreshDevices retrieves all devices."""

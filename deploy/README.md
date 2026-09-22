@@ -134,15 +134,15 @@ systemctl enable node-red
 systemctl start node-red
 ```
 
-#### Step 5: Configure Firewall
+#### Step 5: Configure Firewall (Phase 6 hardening - LAN-only access)
 
 ```bash
-# Allow Node-RED ports
-ufw allow 1880/tcp
-ufw allow 1881/tcp
+# Allow Node-RED ports from the local network only (default deny otherwise)
+ufw allow from 192.168.1.0/24 to any port 1880 comment "Node-RED HTTP - LAN only"
+ufw allow from 192.168.1.0/24 to any port 1881 comment "Node-RED HTTPS - LAN only"
 
-# If UFW is not configured yet
-ufw enable
+# Enable UFW (default-deny incoming)
+ufw --force enable
 ```
 
 #### Step 6: Create Environment File

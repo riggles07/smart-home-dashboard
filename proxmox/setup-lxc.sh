@@ -25,3 +25,7 @@ qm start ${CONTAINER_ID}
 
 echo "✅ Container ${CONTAINER_ID} created and started"
 echo "📡 Access at: http://${CONTAINER_IP}:1880"
+echo ""
+echo "Note: Configure firewall rules after container setup:"
+echo "  qm firewall set ${CONTAINER_ID} rule add family=inet protocol=tcp destination=192.168.1.0/24 destination-port=1880"
+echo "  qm firewall set ${CONTAINER_ID} rule add family=inet protocol=tcp destination=192.168.1.0/24 destination-port=1881"

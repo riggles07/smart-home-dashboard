@@ -88,6 +88,7 @@ npm install -g node-red-node-hubitat
 npm install -g node-red-node-unifi
 npm install -g node-red-contrib-kanbanflow
 npm install -g node-red-contrib-home-assistant-common
+npm install -g bcryptjs   # Required for adminAuth password hashing (Phase 6)
 
 echo_success "Node-RED installed"
 echo ""
@@ -133,6 +134,20 @@ StandardError=journal
 Environment="NODE_RED_USER=admin"
 Environment="NODE_RED_PORT=1880"
 
+# Phase 6 security hardening (non-root + systemd sandboxing)
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/node-red
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -142,22 +157,34 @@ systemctl enable node-red
 echo_success "Systemd service configured"
 echo ""
 
-# Step 8: Configure firewall
+# Step 8: Configure firewall (Phase 6 hardening - LAN-only access)
 echo_color "Step 8: Configuring firewall..."
 ufw --force enable
-ufw allow 1880/tcp
-ufw allow 1881/tcp
-ufw allow 8082/tcp
+ufw allow from 192.168.1.0/24 to any port 1880 comment "Node-RED HTTP - LAN only"
+ufw allow from 192.168.1.0/24 to any port 1881 comment "Node-RED HTTPS - LAN only"
+ufw allow from 192.168.1.0/24 to any port 8082 comment "Kanban - LAN only"
 ufw --force reload
-echo_success "Firewall configured"
+echo_success "Firewall configured (LAN-only: 1880/1881/8082)"
 echo ""
 
-# Step 9: Create Node-RED configuration
+# Step 9: Create Node-RED configuration (Phase 6 hardened)
 echo_color "Step 9: Creating Node-RED configuration..."
+
+# Generate self-signed SSL certificate for HTTPS on port 1881
+mkdir -p /etc/node-red
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/node-red/private.key \
+    -out /etc/node-red/fullchain.pem \
+    -subj "/CN=smarthome-dashboard" \
+    && chmod 600 /etc/node-red/private.key \
+    && echo_success "Self-signed SSL certificate created" \
+    || echo_warning "SSL cert creation failed - HTTPS will not be available"
+
 cat > /home/node-red/.node-red/settings.js << 'EOF'
-// SmartHome Dashboard Node-RED Configuration
+// SmartHome Dashboard Node-RED Configuration (Phase 6 hardened)
 module.exports = {
   userDir: "/home/node-red/.node-red",
+  uiHost: "0.0.0.0",
   httpAdminRoot: "admin",
   httpNodeRoot: "api",
   httpStaticRoot: "public",
@@ -168,25 +195,34 @@ module.exports = {
     max: 100,
     windowMs: 60000
   },
+  // Security headers
+  httpStaticHeaders: {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "X-XSS-Protection": "1; mode=block",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+  },
   functionGlobalContext: {
     // Global variables can be set here
   },
   ui: {
     theme: "dashboard"
   },
-  // Enable SSL (uncomment for production)
-  // https: {
-  //   key: "/etc/ssl/private/nodered.key",
-  //   cert: "/etc/ssl/certs/nodered.crt"
-  // },
-  // Enable authentication (uncomment for production)
-  // users: [
-  //   {
-  //     username: "admin",
-  //     password: "your_secure_password",
-  //     roles: ["admin"]
-  //   }
-  // ],
+  // HTTPS enabled (Phase 6 hardening)
+  https: {
+    key: require("fs").readFileSync("/etc/node-red/private.key"),
+    cert: require("fs").readFileSync("/etc/node-red/fullchain.pem")
+  },
+  // Admin authentication - credentials resolved from environment (.env)
+  adminAuth: {
+    type: "credentials",
+    users: [{
+      username: process.env.NODE_RED_USER || "admin",
+      password: require("bcryptjs").hashSync(process.env.NODE_RED_PASS || "admin", 10),
+      permissions: ["*"]
+    }]
+  },
   logging: {
     console: {
       level: "info"
@@ -198,7 +234,9 @@ module.exports = {
   }
 };
 EOF
-echo_success "Node-RED configuration created"
+chown node-red:node-red /home/node-red/.node-red/settings.js
+chmod 600 /home/node-red/.node-red/settings.js
+echo_success "Node-RED configuration created (HTTPS + admin auth enabled)"
 echo ""
 
 # Step 10: Create environment file
@@ -273,14 +311,24 @@ echo "=========================================="
 echo ""
 echo "📡 Node-RED is accessible at:"
 echo "   http://$(hostname -I | awk '{print $1}'):1880"
+echo "   https://$(hostname -I | awk '{print $1}'):1881  (HTTPS, self-signed cert)"
+echo ""
+echo "🔐 Security hardening applied (Phase 6):"
+echo "   - HTTPS enabled on port 1881 (self-signed cert)"
+echo "   - Firewall: LAN-only access (default deny)"
+echo "   - Node-RED runs as non-root user 'node-red' with systemd sandboxing"
+echo "   - Admin auth enabled - change the default password!"
 echo ""
 echo "📝 Next steps:"
 echo "   1. Import dashboard flows:"
 echo "      cp -r /path/to/flows/* /home/node-red/.node-red/flows/"
 echo ""
-echo "   2. Configure Hubitat and UniFi credentials in .env file"
+echo "   2. Rotate credentials (replaces default admin/admin):"
+echo "      ./scripts/rotate-credentials.sh"
 echo ""
-echo "   3. Access the dashboard in your browser"
+echo "   3. Configure Hubitat and UniFi credentials in .env file"
 echo ""
-echo "📖 Documentation: deploy/README.md"
+echo "   4. Access the dashboard in your browser"
+echo ""
+echo "📖 Documentation: deploy/README.md and docs/SECURITY.md"
 echo ""
