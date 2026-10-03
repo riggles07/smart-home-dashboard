@@ -8,7 +8,9 @@
 # hardcoded defaults (proxmox.local / hubitat.local / unifi.local) and every
 # request fails with ENOTFOUND no matter what is in .env.
 #
-# Run as root, ON the Node-RED LXC:   sudo bash deploy/fix-env-loading.sh
+# Run as root, ON the Node-RED LXC:   bash deploy/fix-env-loading.sh
+# (in an LXC you are usually already root and `sudo` may not be installed --
+#  no sudo needed)
 #
 # Idempotent: safe to re-run. Uses a systemd drop-in rather than editing the
 # unit file, so a later `setup.sh` regeneration won't clobber it.
@@ -20,7 +22,7 @@ DROPIN=${DROPIN_DIR}/10-env-file.conf
 UNIT=node-red
 
 if [ "$(id -u)" -ne 0 ]; then
-    echo "must run as root (try: sudo bash $0)" >&2
+    echo "must run as root (in an LXC you are usually already root; try without sudo)" >&2
     exit 1
 fi
 
@@ -68,35 +70,66 @@ sed 's/^/     /' "$DROPIN"
 echo
 echo "== 4. reloading + restarting =="
 systemctl daemon-reload
-systemctl restart "$UNIT"
-sleep 2
-systemctl is-active --quiet "$UNIT" \
-    && echo "   $UNIT is active" \
-    || { echo "   !! $UNIT failed to start -- check: journalctl -u $UNIT -n 30" >&2; exit 1; }
+systemctl restart "$UNIT" || true
+sleep 3
+
+unit_active=0
+systemctl is-active --quiet "$UNIT" && unit_active=1
+
+if [ "$unit_active" = "1" ]; then
+    echo "   $UNIT is active"
+else
+    echo "   !! $UNIT is NOT active (state: $(systemctl is-active "$UNIT" 2>/dev/null || echo unknown))"
+    echo "      recent log:"
+    journalctl -u "$UNIT" -n 15 --no-pager 2>/dev/null | sed 's/^/        /' || true
+fi
+
+# Is the unit even the thing serving :1880? If something else answers, the
+# EnvironmentFile fix will not reach it no matter how healthy the unit looks.
+echo
+echo "== 5. who is actually serving :1880? =="
+if curl -s -o /dev/null --max-time 4 http://localhost:1880/settings; then
+    echo "   :1880 responds"
+    if [ "$unit_active" = "1" ]; then
+        echo "   and $UNIT is active -> the fix applies to the live runtime"
+    else
+        echo "   but $UNIT is NOT active -> Node-RED is running some other way."
+        echo "   The drop-in governs the unit only. Restart the ACTUAL process so it"
+        echo "   inherits the env file, e.g.:"
+        echo "     pkill -f 'node-red'   # then start it the same way you did before"
+        echo "   or, for a one-off run with the env loaded:"
+        echo "     set -a; . $ENV_FILE; set +a; node-red"
+    fi
+    pgrep -af 'node-red|node .*red' 2>/dev/null | sed 's/^/     /' || true
+else
+    echo "   :1880 does not respond (Node-RED is down)"
+fi
 
 echo
-echo "== 5. verifying against the RUNNING process =="
+echo "== 6. verifying against the RUNNING process =="
 # /proc/<pid>/environ is ground truth. `systemctl show -p Environment` is not
 # always populated for values sourced from EnvironmentFile, so never conclude
 # success or failure from it alone.
-pid=$(systemctl show "$UNIT" -p MainPID --value)
-echo "   MainPID: ${pid:-none}"
-if [ -n "${pid:-}" ] && [ "$pid" != "0" ] && [ -r "/proc/$pid/environ" ]; then
+pid=$(systemctl show "$UNIT" -p MainPID --value 2>/dev/null || echo "")
+if [ -z "${pid:-}" ] || [ "$pid" = "0" ]; then
+    # Fall back to finding the process directly.
+    pid=$(pgrep -f 'node-red' 2>/dev/null | head -1 || echo "")
+fi
+echo "   target pid: ${pid:-none}"
+if [ -n "${pid:-}" ] && [ -r "/proc/$pid/environ" ]; then
     if tr '\0' '\n' < "/proc/$pid/environ" | grep -qE '^(HUBITAT|UNIFI|PROXMOX)_'; then
         echo "   OK - flow env vars are in the process environment:"
         tr '\0' '\n' < "/proc/$pid/environ" \
             | grep -E '^(HUBITAT|UNIFI|PROXMOX)_' \
             | sed -E 's/=(.*)$/=<set>/' | sed 's/^/     /'
     else
-        echo "   !! no HUBITAT_/UNIFI_/PROXMOX_ vars in /proc/$pid/environ" >&2
-        echo "      The drop-in is installed but the file's contents are not" >&2
-        echo "      reaching the process -- check the file and journalctl." >&2
-        exit 1
+        echo "   !! no HUBITAT_/UNIFI_/PROXMOX_ vars in /proc/$pid/environ"
+        echo "      The env source has not reached that process. If it was started"
+        echo "      outside systemd, restart it after this drop-in is in place."
     fi
 else
-    echo "   !! cannot read /proc/$pid/environ (need root, or pid is unknown)" >&2
-    exit 1
+    echo "   ?? cannot read /proc/${pid:-?}/environ (no process found or not root)"
 fi
 
 echo
-echo "Done. Now run:  bash deploy/check-connectivity.sh"
+echo "Done. Now run:  bash check-connectivity.sh"

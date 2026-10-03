@@ -80,8 +80,11 @@ unit shipped without `EnvironmentFile=`, so the file was written and chmod'd but
 never read. Fix it:
 
 ```bash
-sudo bash deploy/fix-env-loading.sh    # idempotent; installs a drop-in
+bash deploy/fix-env-loading.sh    # idempotent; installs a drop-in
 ```
+
+> In an LXC you are usually already root and `sudo` may not even be installed —
+> run it without `sudo`.
 
 Then verify against the **running process**, which is the only ground truth:
 
