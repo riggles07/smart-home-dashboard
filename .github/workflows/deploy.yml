@@ -1,21 +1,48 @@
-name: Deploy Smart Home Dashboard
+# Deploy workflow -- DISABLED.
+#
+# The previous version could not work for three independent reasons, and it
+# failed on every run (3/3 since 2026-09-14):
+#
+#   1. Trigger was `branches: [master]`, but this repository's branch is `main`,
+#      so push-triggered deploys never ran at all.
+#   2. The deploy step was `node-red -u flows_config.json`. `-u` sets the
+#      userDir and takes a DIRECTORY; `flows_config.json` does not exist here,
+#      so the command could only fail. It was also not a real deployment.
+#   3. Conceptually wrong: this deploys a dashboard into an LXC on the home
+#      network. GitHub's hosted runners cannot reach it -- they have no route to
+#      192.168.4.0/24 or the tailnet. Any "deploy" from CI here is a no-op or a
+#      failure, so the weekly schedule just generated red X's on the repo.
+#
+# Deployment is performed by `deploy/setup.sh` on the target host (or via the
+# Node-RED Admin API: POST /flows). If CI-driven deploy is wanted later, use a
+# self-hosted runner on the LAN and import flows with:
+#     curl -X POST http://<host>:1880/flows \
+#       -H 'Content-Type: application/json' \
+#       -H 'Node-RED-Deployment-Type: full' \
+#       --data-binary @flows/all-flows.flow.json      # -> 204
+#
+# Kept as a manual-only, inert workflow so the previous YAML remains traceable
+# in history; `workflow_dispatch` with no jobs does nothing.
+name: Deploy Smart Home Dashboard (disabled)
+
 on:
-  push:
-    branches: [master]
-  schedule:
-    - cron: '0 8 * * 1'  # Weekly deployment
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "no" -- deployment happens on the host, not in CI'
+        required: false
+        default: 'no'
 
 jobs:
-  deploy:
+  notice:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - name: Install dependencies
-        run: npm install -g node-red node-red-dashboard node-red-node-hubitat node-red-node-unifi
-      - name: Deploy to Node-RED
+      - name: Explain why this workflow does not deploy
         run: |
-          node-red -u flows_config.json
+          echo "This workflow is intentionally inert."
+          echo ""
+          echo "CI cannot reach the dashboard host (home LAN / tailnet), so a"
+          echo "deploy step here cannot succeed. Deploy on the target host:"
+          echo "    bash deploy/setup.sh"
+          echo "or import flows via the Node-RED Admin API:"
+          echo "    POST http://<host>:1880/flows  (Node-RED-Deployment-Type: full)"

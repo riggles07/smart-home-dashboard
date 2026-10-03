@@ -1,264 +1,160 @@
 """
-Tests for config/settings.js (Node-RED configuration)
+Tests for config/settings.js -- the Node-RED settings for this project.
+
+HISTORY / WHY THIS FILE WAS REWRITTEN
+-------------------------------------
+The previous version had 33 tests that grepped config/settings.js for string
+literals, including keys that are NOT part of Node-RED's settings schema:
+`plugins`, `flowFiles`, `server.ssl`, `httpStaticHeaders`, and the dashboard's
+`ui.theme` / `ui.css` / `ui.tabs` / `ui.order`.
+
+That combination was self-consistent but wrong in two independent ways, and it
+broke CI on every push:
+
+  1. The file under test was YAML (starting with a '#' comment) saved as .js, so
+     Node-RED could never have loaded it. `node --check` rejected it.
+  2. Two tests asserted the fabricated plugin list. When the repo's plugin names
+     (node-red-node-hubitat / -unifi) diverged from the real npm packages
+     (node-red-contrib-hubitat / -unifi), the suite failed -- and CI went red on
+     every push, hiding real regressions.
+
+The rule these tests now enforce: settings.js must be VALID JAVASCRIPT and must
+contain ONLY keys Node-RED actually documents. A grep-based test cannot detect a
+fabricated key, because the test itself encodes which keys are expected.
 """
-import pytest
-import sys
 import json
+import subprocess
 from pathlib import Path
-import re
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+SETTINGS = ROOT / "config" / "settings.js"
+
+# Keys that are NOT Node-RED settings. Their presence means someone copied an
+# invented configuration; each one either breaks the file or is silently ignored.
+# See https://nodered.org/docs/user-guide/runtime/configuration
+FABRICATED = [
+    "plugins:",
+    "flowFiles",
+    "functionRepo",
+    "projectsDir",
+    "httpStaticHeaders",
+    "server:",
+    "ui.theme",
+    "ui.tabs",
+    "ui.order",
+]
 
 
-class TestSettingsConfiguration:
-    """Test suite for Node-RED settings configuration."""
+def _node_available():
+    try:
+        subprocess.run(["node", "--version"], capture_output=True, timeout=10)
+        return True
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return False
 
+
+needs_node = pytest.mark.skipif(
+    not _node_available(), reason="node not installed on this runner"
+)
+
+
+class TestSettingsFile:
     def test_settings_file_exists(self):
-        """Test that settings.js file exists."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        assert settings_path.exists(), f"Settings file not found at {settings_path}"
-
-    def test_settings_has_node_red_config(self):
-        """Test that settings has node-red configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'node_red:' in content
-
-    def test_settings_has_port_configuration(self):
-        """Test that settings has port configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'port:' in content
-        assert '1880' in content
-
-    def test_settings_has_admin_user(self):
-        """Test that settings has admin user configuration (env-resolved, not hardcoded)."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'admin:' in content
-        assert 'user:' in content
-        assert 'password:' in content
-        # Phase 6 hardening: password must come from env, never hardcoded
-        assert '${NODE_RED_PASS}' in content, \
-            "password must be resolved from NODE_RED_PASS env var, not hardcoded"
-
-    def test_settings_has_http_admin_root(self):
-        """Test that settings has httpAdminRoot configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpAdminRoot:' in content
-        assert 'node-red' in content
-
-    def test_settings_has_ui_theme(self):
-        """Test that settings has UI theme configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'ui:' in content
-        assert 'theme:' in content
-        assert 'complete' in content
-
-    def test_settings_has_tabs_configuration(self):
-        """Test that settings has tabs configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'tabs:' in content
-        assert 'file: flows/dashboard-configuration.js' in content
-
-    def test_settings_has_dashboard_tab(self):
-        """Test that settings has Dashboard tab configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert '- Dashboard' in content
-
-    def test_settings_has_order_configuration(self):
-        """Test that settings has tab order configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'order:' in content
-
-    def test_settings_has_http_node_enabled(self):
-        """Test that settings has httpNode enabled."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpNode: true' in content
-
-    def test_settings_has_http_node_admin_auth(self):
-        """Test that settings has httpNodeAdminAuth configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpNodeAdminAuth:' in content
-
-    def test_settings_has_http_node_cors(self):
-        """Test that settings has httpNodeCors configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpNodeCors:' in content
-        assert 'origin: "*"' in content
-
-    def test_settings_has_http_static_auth_enabled(self):
-        """Test that settings has httpStaticAuth enabled (Phase 6 hardening)."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpStaticAuth: true' in content, \
-            "httpStaticAuth must be enabled - static assets require authentication"
-
-    def test_settings_has_logging_configuration(self):
-        """Test that settings has logging configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'logging:' in content
-        assert 'console:' in content
-        assert 'file:' in content
-
-    def test_settings_has_console_logging(self):
-        """Test that settings has console logging configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'console:' in content
-        assert 'level: info' in content
-
-    def test_settings_has_file_logging(self):
-        """Test that settings has file logging configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'file:' in content
-        assert 'level: info' in content
-        assert 'maxFiles:' in content
-        assert 'maxSize:' in content
-
-    def test_settings_has_plugins_configuration(self):
-        """Test that settings has plugins configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'plugins:' in content
-
-    def test_settings_has_dashboard_plugin(self):
-        """Test that settings has dashboard plugin configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert '- dashboard' in content
-
-    def test_settings_has_hubitat_plugin(self):
-        """Test that settings has hubitat plugin configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert '- node-red-node-hubitat' in content
-
-    def test_settings_has_unifi_plugin(self):
-        """Test that settings has unifi plugin configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert '- node-red-node-unifi' in content
-
-    def test_settings_has_kanban_plugin(self):
-        """Test that settings has kanban plugin configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert '- node-red-contrib-kanbanflow' in content
-
-    def test_settings_has_ssl_configuration(self):
-        """Test that settings has SSL configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'ssl:' in content
-        assert 'enabled: true' in content
-
-    def test_settings_has_ssl_cert_path(self):
-        """Test that settings has SSL cert path."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'cert:' in content
-        assert '/etc/node-red/fullchain.pem' in content
-
-    def test_settings_has_ssl_key_path(self):
-        """Test that settings has SSL key path."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'key:' in content
-        assert '/etc/node-red/private.key' in content
-
-    def test_settings_has_static_file_path(self):
-        """Test that settings has static file path configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpStatic:' in content
-        assert '/usr/share/node-red' in content
-
-    def test_settings_has_static_csp_header(self):
-        """Test that CSP header restricts asset sources (Phase 6 hardening)."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'Content-Security-Policy:' in content, \
-            "Content-Security-Policy header required to restrict asset sources"
-
-    def test_settings_has_static_hsts_header(self):
-        """Test that HSTS header enforces HTTPS (Phase 6 hardening)."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'Strict-Transport-Security:' in content
-
-    def test_settings_has_static_auth_user(self):
-        """Test that settings has static auth user configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpStaticAuthUser:' in content
-
-    def test_settings_has_static_auth_pass(self):
-        """Test that settings has static auth password configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'httpStaticAuthPass:' in content
-
-    def test_settings_has_xheaders_configuration(self):
-        """Test that settings has xheaders configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'xheaders: false' in content
-
-    def test_settings_has_xforwarded_configuration(self):
-        """Test that settings has xforwarded configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'xforwarded: false' in content
-
-    def test_settings_has_server_configuration(self):
-        """Test that settings has server configuration."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'server:' in content
-
-    def test_settings_has_http_node_cors_credentials(self):
-        """Test that settings has httpNodeCors credentials configured."""
-        settings_path = Path(__file__).parent.parent / 'config' / 'settings.js'
-        content = settings_path.read_text()
-
-        assert 'credentials: false' in content
+        assert SETTINGS.exists(), "config/settings.js is missing"
+
+    def test_is_javascript_not_yaml(self):
+        """A .js file must not carry a YAML header -- it would never load."""
+        first = SETTINGS.read_text().splitlines()[0].strip()
+        assert not first.startswith("#"), (
+            f"config/settings.js starts with a YAML comment ({first!r}). "
+            "Node-RED cannot load this: it must be JavaScript."
+        )
+
+    @needs_node
+    def test_passes_node_syntax_check(self):
+        """The real gate: the file must parse as JavaScript.
+
+        This is what CI should rely on rather than substring greps -- it catches
+        malformed keys, unbalanced braces and YAML-in-a-.js-file.
+        """
+        r = subprocess.run(["node", "--check", str(SETTINGS)],
+                           capture_output=True, text=True)
+        assert r.returncode == 0, f"node --check failed:\n{r.stderr}"
+
+    @needs_node
+    def test_module_loads_and_exports_object(self):
+        r = subprocess.run(
+            ["node", "-e",
+             f"const s=require({json.dumps(str(SETTINGS))});"
+             "if (typeof s !== 'object' || s === null) process.exit(3);"
+             "console.log('OK')"],
+            capture_output=True, text=True)
+        assert r.returncode == 0, f"module did not load:\n{r.stderr}"
+
+
+class TestNoFabricatedKeys:
+    """Fail if a key that is not part of Node-RED's schema is present."""
+
+    @pytest.mark.parametrize("needle", FABRICATED)
+    def test_fabricated_key_absent(self, needle):
+        content = SETTINGS.read_text()
+        # Ignore matches inside comments -- the file documents these by name.
+        code = "\n".join(
+            line for line in content.splitlines()
+            if not line.strip().startswith(("//", "*", "/*"))
+        )
+        assert needle not in code, (
+            f"{needle!r} is not a Node-RED setting and must not appear in "
+            "config/settings.js"
+        )
+
+
+class TestRealKeys:
+    """Assert the keys that ARE real, at their documented names."""
+
+    @needs_node
+    def test_flow_file_singular(self):
+        """`flowFile` (one file), never `flowFiles`."""
+        r = subprocess.run(
+            ["node", "-e",
+             f"const s=require({json.dumps(str(SETTINGS))});"
+             "console.log(typeof s.flowFile, s.flowFiles)"] + [] ,
+            capture_output=True, text=True)
+        assert r.returncode == 0
+        assert r.stdout.startswith("string"), "flowFile should be set"
+        assert r.stdout.strip().endswith("undefined"), "flowFiles must not exist"
+
+    @needs_node
+    def test_ui_path_is_the_only_dashboard_setting(self):
+        """The dashboard runtime setting is `ui.path`; anything else is editor-side."""
+        r = subprocess.run(
+            ["node", "-e",
+             f"const s=require({json.dumps(str(SETTINGS))});"
+             "console.log(JSON.stringify(Object.keys(s.ui||{})))"],
+            capture_output=True, text=True)
+        assert r.returncode == 0
+        keys = json.loads(r.stdout)
+        assert keys == ["path"], f"ui must only contain 'path', found {keys}"
+
+    @needs_node
+    def test_ui_port_is_numeric(self):
+        r = subprocess.run(
+            ["node", "-e",
+             f"const s=require({json.dumps(str(SETTINGS))});"
+             "console.log(typeof s.uiPort)"],
+            capture_output=True, text=True)
+        assert r.returncode == 0
+        assert r.stdout.strip() == "number", "uiPort must be a number"
+
+    @needs_node
+    def test_userdir_points_at_the_service_userdir(self):
+        """Must match the systemd unit's userDir, or config silently does nothing."""
+        r = subprocess.run(
+            ["node", "-e",
+             f"const s=require({json.dumps(str(SETTINGS))});"
+             "console.log(s.userDir)"],
+            capture_output=True, text=True)
+        assert r.returncode == 0
+        assert r.stdout.strip() == "/root/.node-red"

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -16,8 +17,42 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Install test dependencies
         run: python -m pip install --upgrade pip pytest
+
+      # ---------------------------------------------------------------------
+      # Why each step exists (this workflow previously ran only pytest, which
+      # is why a broken UniFi wire and an unreferenced theme both shipped green)
+      # ---------------------------------------------------------------------
+
+      # settings.js must be valid JavaScript with only real Node-RED keys.
+      # Covered by tests/test_settings.py, but asserted directly too because a
+      # YAML file under a .js name is the failure this workflow used to hide.
+      - name: Validate Node-RED settings (syntax + load)
+        run: |
+          node --check config/settings.js
+          node -e "require('./config/settings.js'); console.log('settings.js loads OK')"
+
+      # Structural integrity of the flow graph: dangling wires, orphaned
+      # tab/group refs, empty function bodies, duplicate ids.
+      - name: Validate flow structure
+        run: python3 tools/validate_flows.py flows/all-flows.flow.json
+
+      # Runs the REAL function bodies extracted from the deployed flow JSON,
+      # so a broken guard/URL-construction is caught, not just Python.
+      - name: Test flow function logic
+        run: node tools/test_flow_functions.js
+
+      # Asserts the mobile theme is actually WIRED IN (carried by a ui_template,
+      # re-asserts the specificity override, hidden tab). A theme file that
+      # exists but is referenced by nothing passes a file-existence check.
+      - name: Verify theme is wired into the flows
+        run: python3 tests/test_theme_wiring.py
 
       - name: Run test suite
         run: python -m pytest -v
