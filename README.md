@@ -14,10 +14,10 @@ Deploy in a Proxmox LXC container for isolation and easy management.
 ```bash
 # Step 1: Create container via Proxmox Web UI
 # Navigate to: Datacenter → Nodes → your-node → Containers → Create LXC
-# Select: Debian 12 (bookworm), 2GB RAM, 2 cores, IP: 192.168.1.100
+# Select: Debian 12 (bookworm), 2GB RAM, 2 cores, IP: 192.168.1.100/24
 
 # Step 2: SSH into container
-qm terminal 101
+pct enter 101
 
 # Step 3: Run setup script (must be inside container)
 cd /root
