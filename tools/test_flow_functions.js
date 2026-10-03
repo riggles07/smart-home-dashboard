@@ -40,6 +40,24 @@ console.log('== UniFi: API-key path ==');
   check('X-API-KEY header set', out[1] && out[1].headers['X-API-KEY'] === 'KEY123');
   check('TLS verification relaxed for self-signed', out[1] && out[1].rejectUnauthorized === false);
 }
+{
+  // UniFi OS (UDM/Cloud Gateway): Network app is behind /proxy/network.
+  const { out } = run('Build UniFi auth', { UNIFI_URL: 'https://192.168.1.1/proxy/network', UNIFI_API_KEY: 'K' }, { payload: 1 });
+  check('UniFi OS prefix preserved in stat url',
+        out[1] && out[1].url === 'https://192.168.1.1/proxy/network/api/s/default/stat/sta',
+        out[1] && out[1].url);
+}
+{
+  // Trailing slash must not produce a double slash.
+  const { out } = run('Build UniFi auth', { UNIFI_URL: 'https://192.168.1.1/proxy/network/', UNIFI_API_KEY: 'K' }, { payload: 1 });
+  check('trailing slash trimmed', out[1] && out[1].url.indexOf('network//api') === -1, out[1] && out[1].url);
+}
+{
+  // UniFi OS login lives at /api/auth/login -- must be overridable.
+  const { out } = run('Build UniFi auth', { UNIFI_URL: 'https://192.168.1.1/proxy/network', UNIFI_USERNAME: 'u', UNIFI_PASSWORD: 'p', UNIFI_LOGIN_URL: 'https://192.168.1.1/api/auth/login' }, { payload: 1 });
+  check('UNIFI_LOGIN_URL override honoured',
+        out[0] && out[0].url === 'https://192.168.1.1/api/auth/login', out[0] && out[0].url);
+}
 
 console.log('== UniFi: legacy user/pass path ==');
 {
