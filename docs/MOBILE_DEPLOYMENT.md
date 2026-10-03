@@ -18,33 +18,42 @@ column at ≤1024px, with density tuning at 900px (A7 Lite portrait),
 
 ---
 
-## 1. Start the dashboard on the server
+## 1. The dashboard is a systemd service (do not run `node-red` by hand)
 
-Node-RED must listen on `0.0.0.0` (not `127.0.0.1`) so the tablet can
-reach it over the LAN:
+On this deployment Node-RED is managed by systemd, running **as root** with
+userDir `/root/.node-red`:
 
 ```bash
-# On the server / LXC container
-cd /root/smart-home-dashboard
-node-red
-# Dashboard: http://<server-ip>:1880
+systemctl status node-red
+systemctl restart node-red        # after editing /root/.node-red/.env
 ```
 
-Confirm the port is reachable from the device's network:
+Do **not** start it manually with `node-red` / `node-red -u ~/.node-red`. A
+hand-started process binds `:1880` and then the service cannot — the unit
+crash-loops with `Error: port in use` while the stray answers. (Recovering from
+that is `deploy/takeover-1880.sh`.) It also runs without the `.env`, so every
+flow fails with `ENOTFOUND` defaults.
+
+Confirm it is listening on all interfaces and reachable off-box:
 
 ```bash
-# On the server
-ss -tlnp | grep 1880
+ss -tlnp | grep 1880              # expect 0.0.0.0:1880 or *:1880, NOT 127.0.0.1
 ```
 
 ## 2. Access from the Galaxy A7 Lite
 
-1. Connect the tablet to the **same Wi-Fi network** as the server.
+1. Put the tablet on the **same network path** as the server — same Wi-Fi
+   (LAN) or the same tailnet (Tailscale).
 2. Open **Samsung Internet** or **Chrome**.
-3. Navigate to: `http://<server-ip>:1880` — e.g. `http://192.168.1.100:1880`.
-   - Use the server's LAN IP. **`localhost` will NOT work** — on the
-     tablet, `localhost` refers to the tablet itself, not the server.
-4. The responsive theme auto-selects the single-column layout.
+3. Navigate to `http://<server-ip>:1880/ui/`
+   - This deployment is reached over **Tailscale**: `http://100.76.56.35:1880/ui/`
+   - The short name `sh-dashboard` only resolves where MagicDNS is active
+     (it resolves via the search domain `tail5a1c91.ts.net`). **If the short
+     name fails but the IP works, use the IP** — that is a DNS/MagicDNS issue
+     on the client, not a dashboard problem.
+   - **`localhost` will NOT work** — on the tablet that means the tablet itself.
+4. Confirm you get the dark theme (see §3). If the page is light-grey, the
+   theme did not load.
 
 ## 3. Install as a home-screen app (recommended)
 
@@ -84,9 +93,10 @@ python3 -m pytest tests/test_mobile_ui.py -v
 
 | Symptom | Fix |
 |---------|-----|
-| "This site can't be reached" | Wrong IP or Node-RED bound to localhost — restart with `node-red -u ~/.node-red` bound to `0.0.0.0`, check `ss -tlnp` |
-| Page loads but looks desktop-sized | Theme not applied — confirm `css: "css/dashboard.css"` in the dashboard config and that the file is deployed |
-| Controls too small to tap | Verify `--shd-touch-target: 44px` rules in `css/dashboard.css` |
+| "This site can't be reached" | Wrong IP, or the tablet is not on the tailnet. Verify the service: `systemctl status node-red`, then `ss -tlnp \| grep 1880` (must not be `127.0.0.1`). See §1 — do not hand-start `node-red`. |
+| `sh-dashboard` won't resolve but the IP works | MagicDNS is not active on the client. Use the IP, or enable MagicDNS / `tailscale up --accept-dns=true` on the tablet. |
+| Page loads but looks light-grey / desktop-sized | The theme did not load. **`settings.js` cannot apply a CSS file** — the legacy dashboard has no `css:` setting (only `ui.path`, `ui.middleware`, `ui.ioMiddleware`, `ui.readOnly`, `ui.defaultGroup`). The theme is injected by the **`Mobile theme` `ui_template`** node (`tools/gen_flows.py`), which inlines `css/dashboard.css` into a `<style>` block and re-asserts `body.nr-dashboard-theme` so it beats the dashboard's own `#eee` rule. Verify: open devtools and check `getComputedStyle(document.body).backgroundColor` is `rgb(26, 26, 46)`. |
+| Controls too small to tap | The theme sets `--shd-touch-target: 44px`. Note the tab drawer entries and the toolbar hamburger are Angular Material elements (`md-list-item`, `button.md-icon-button`), **not** `.ui_tab .tab-link` — confirm the override in `THEME_OVERRIDE` is present, since those selectors must match the rendered DOM (verified 48px / 44px). |
 | Slow refresh on Wi-Fi | Move tablet closer to AP; check UniFi controller client stats for the tablet |
 | Certificate warnings | If SSL is enabled on port 1881, use `http://…:1880` on the LAN or install the CA cert on the tablet |
 | Dashboard stale after rotate | Pull-to-refresh or toggle airplane mode to force a socket reconnect |
