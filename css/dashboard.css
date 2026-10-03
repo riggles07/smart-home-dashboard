@@ -18,6 +18,12 @@
   --shd-accent: #667eea;
   --shd-accent-2: #764ba2;
   --shd-text: #eee;
+  /* Secondary text. Measured contrast: 8.02:1 on --shd-card, 9.07:1 on
+     --shd-surface, 9.74:1 on --shd-bg -- passes WCAG AA (4.5:1) and AAA
+     (7:1) on all three, so it reads as subdued without becoming decorative.
+     (A first candidate, #8fa3c4, only reached 5.49:1 -- fine, but this is
+     better on a tablet at arm's length in daylight.) */
+  --shd-muted: #b8c4de;
   --shd-text-dim: #aab;
   --shd-ok: #2ecc71;
   --shd-warn: #f1c40f;

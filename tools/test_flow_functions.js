@@ -157,6 +157,53 @@ console.log('== Proxmox: metric parsing ==');
   check('missing data -> null (no crash)', out === null || out === undefined, JSON.stringify(out));
 }
 
+console.log('== Proxmox: host detail (new outputs) ==');
+{
+  // Shape mirrors the LIVE /nodes/<node>/status response captured by
+  // tools/probe_proxmox_status.py -- real key names, real nesting.
+  const msg = { payload: { data: {
+    cpu: 0.0734,
+    memory: { used: 5153960755, total: 17179869184, available: 12025908429 },
+    rootfs: { used: 21474836480, total: 107374182400, avail: 85899345920, free: 85899345920 },
+    swap:   { used: 1073741824, total: 8589934592, free: 7516192768 },
+    uptime: 639066,
+    loadavg: [0.42, 0.3, 0.2],
+    pveversion: 'pve-manager/9.2.21/4f6e0ac86f9e8c7f',
+    kversion: 'Linux 7.0.14-19-pve',
+    cpuinfo: { model: 'AMD EPYC 7763 64-Core Processor', cores: 8, mhz: '2450' },
+    'current-kernel': { release: '7.0.14-19-pve' }
+  } } };
+  const { out } = run('Split metrics', {}, msg);
+  check('outputs 8 messages (was 4)', Array.isArray(out) && out.length === 8, String(out && out.length));
+
+  const detail = out[4] && out[4].payload;
+  check('detail.pveversion real', detail && /pve-manager/.test(detail.pveversion), detail && detail.pveversion);
+  check('detail.kversion real', detail && /Linux 7\.0\.14/.test(detail.kversion), detail && detail.kversion);
+  check('detail.model from cpuinfo', detail && /EPYC/.test(detail.model), detail && detail.model);
+  check('detail.cores from cpuinfo', detail && detail.cores === 8, String(detail && detail.cores));
+  check('detail.mhz from cpuinfo', detail && detail.mhz === '2450', String(detail && detail.mhz));
+  check('detail load1/5/15 split', detail && detail.load1 === 0.42 && detail.load5 === 0.3 && detail.load15 === 0.2,
+        detail && `${detail.load1}/${detail.load5}/${detail.load15}`);
+
+  check('swap -> % of total GB', /^12\.5% of 8 GB$/.test(out[5].payload), out[5].payload);
+  check('disk -> % of total + free', /^20% of 100 GB.*80 GB free/.test(out[6].payload), out[6].payload);
+  check('memory -> used/total/avail', /^4\.8 GB of 16 GB.*11\.2 GB avail/.test(out[7].payload), out[7].payload);
+}
+{
+  // Absent sub-objects must degrade to readable placeholders, not "undefined".
+  const { out } = run('Split metrics', {}, { payload: { data: { cpu: 0.1, uptime: 0 } } });
+  check('no rootfs/swap -> no "undefined" leak',
+        [out[5], out[6], out[7]].every(m => m && !/undefined/.test(String(m.payload))),
+        [out[5].payload, out[6].payload, out[7].payload].join(' | '));
+  const d = out[4] && out[4].payload;
+  check('missing cpuinfo -> model "unknown" not undefined',
+        d && d.model === 'unknown' && /unknown/.test(d.pveversion), JSON.stringify(d));
+}
+{
+  const { out } = run('Split metrics', {}, { payload: {} });
+  check('missing data -> null (no crash)', out === null || out === undefined, JSON.stringify(out));
+}
+
 console.log('== Hubitat: command building ==');
 {
   const { out } = run('Build Maker API call', { HUBITAT_URL: 'http://hub.local', HUBITAT_APP_ID: '42', HUBITAT_ACCESS_TOKEN: 'tok', HUBITAT_DEVICE_ID: '7' }, { topic: 'hubitat/power', payload: true });
