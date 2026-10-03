@@ -26,7 +26,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FLOWS = ROOT / "flows" / "all-flows.flow.json"
+# Optional argv[1] lets a caller point the guard at a mutated copy of the flows
+# (used to prove the guard actually FAILS -- a guard you cannot falsify is not a
+# guard). Defaults to the real generated file.
+FLOWS = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "flows" / "all-flows.flow.json"
 CSS = ROOT / "css" / "dashboard.css"
 
 
@@ -164,6 +167,84 @@ def main():
                              "by its own width")
         else:
             print("  PASS  no self-offsetting `right: 0` on the panel")
+
+        # 8. CONTRAST + the template panel.
+        # Measured failure: ui_templates rendered on the dashboard's OWN white
+        # panel (`.nr-dashboard-theme .nr-dashboard-template { background:#fff }`,
+        # specificity (0,2,0)) while themed text was #eee -> contrast 1.16:1,
+        # i.e. the device/client tables were unreadable. That selector BEATS the
+        # `body.nr-dashboard-theme md-content md-card` (0,1,3) rule, so a fix must
+        # match it at >= (0,2,0).
+        if re.search(r"body\.nr-dashboard-theme\s+\.nr-dashboard-template\s*\{",
+                     fmt_code):
+            print("  PASS  template panel override present (beats the dashboard's"
+                  " own (0,2,0) white rule)")
+        else:
+            failures += fail("no `.nr-dashboard-template` override -- templated "
+                             "widgets (device/client tables) render on the "
+                             "dashboard's white panel with light text, giving "
+                             "~1.16:1 contrast")
+
+        # Every colour used for text must clear WCAG AA (4.5:1) on the darkest
+        # and lightest surfaces it can land on. Parsed from the theme itself, so
+        # changing a token cannot silently drop below the floor.
+        def _lum(rgb):
+            def f(v):
+                v /= 255
+                return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+            r, g, b = (f(x) for x in rgb)
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+        def _hex(h):
+            h = h.lstrip("#")
+            if len(h) == 3:
+                h = "".join(c * 2 for c in h)
+            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+        def _ratio(a, b):
+            la, lb = _lum(a), _lum(b)
+            return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+        def _var(name):
+            m = re.search(rf"--{re.escape(name)}:\s*(#[0-9a-fA-F]{{3,6}})", fmt_code)
+            return m.group(1) if m else None
+
+        surfaces = [n for n in ("shd-card", "shd-surface", "shd-bg")
+                    if _var(n)]
+        if not surfaces:
+            failures += fail("theme defines none of --shd-card/-surface/-bg; the "
+                             "contrast check cannot run")
+        for tok in ("shd-text", "shd-muted"):
+            v = _var(tok)
+            if not v:
+                failures += fail(f"--{tok} is not defined as a hex colour")
+                continue
+            worst = min(_ratio(_hex(v), _hex(_var(s))) for s in surfaces)
+            if worst >= 4.5:
+                print(f"  PASS  --{tok} {v} clears WCAG AA on all surfaces "
+                      f"(worst {worst:.2f}:1)")
+            else:
+                failures += fail(f"--{tok} {v} only reaches {worst:.2f}:1 on its "
+                                 f"worst surface -- below the 4.5:1 AA floor for "
+                                 f"body text")
+
+        # 9. GAUGE TEXT COLOUR.
+        # justgage renders its labels as SVG <text fill="#111111"> (near-black).
+        # Measured ~1.4:1 on the dark card -- effectively invisible. The node's
+        # `valueFontColor` is NOT a fix in dashboard 3.6.6: its ui_gauge
+        # controller never forwards it to justgage (verified -- the rendered
+        # attribute stayed #111111 with the property set). A presentation
+        # attribute loses to ANY CSS rule, so the working fix is a CSS `fill`.
+        gauges = [n for n in nodes
+                  if isinstance(n, dict) and n.get("type") == "ui_gauge"]
+        if gauges and not re.search(
+                r"\.nr-dashboard-gauge\s+svg\s+text\s*\{[^}]*fill:", fmt_code):
+            failures += fail("no `fill` rule for .nr-dashboard-gauge svg text -- "
+                             "justgage's SVG text defaults to #111111, which is "
+                             "~1.4:1 on the dark card (invisible values)")
+        elif gauges:
+            print(f"  PASS  gauge SVG text recoloured via CSS "
+                  f"({len(gauges)} ui_gauge node(s) covered)")
 
     print()
     if failures:
