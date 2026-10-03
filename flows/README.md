@@ -72,12 +72,27 @@ sudoedit /home/node-red/.env          # fill in the values
 systemctl restart node-red            # env is only read at start
 ```
 
-Verify the env actually reached the process — this catches the single most
-common failure (`.env` written but never loaded):
+#### First: prove the vars actually reach the process
+
+If `systemctl show node-red -p Environment --value | tr ' ' '\n' | grep HUBITAT`
+prints **nothing**, `.env` is being ignored — no matter what is in the file. The
+unit shipped without `EnvironmentFile=`, so the file was written and chmod'd but
+never read. Fix it:
 
 ```bash
-systemctl show node-red -p Environment --value | tr ' ' '\n' | grep -E 'PROXMOX|HUBITAT|UNIFI'
+sudo bash deploy/fix-env-loading.sh    # idempotent; installs a drop-in
 ```
+
+Then verify against the **running process**, which is the only ground truth:
+
+```bash
+pid=$(systemctl show node-red -p MainPID --value)
+sudo tr '\0' '\n' < /proc/$pid/environ | grep -E '^(HUBITAT|UNIFI|PROXMOX)_'
+```
+
+> `systemctl show -p Environment` is **not** reliable for values sourced from
+> `EnvironmentFile=` — it can read empty on a working setup. Always confirm via
+> `/proc/<pid>/environ`.
 
 Then check the services are genuinely reachable with the same vars the flows use:
 
