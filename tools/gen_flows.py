@@ -102,6 +102,64 @@ body.nr-dashboard-theme ui-card-panel {
   background: var(--shd-card);
   color: var(--shd-text);
 }
+
+/* The dashboard paints ui_template content on its OWN white panel:
+     .nr-dashboard-theme .nr-dashboard-template { background-color: #fff }
+   That selector is specificity (0,2,0) and therefore BEATS the (0,1,3)
+   `body.nr-dashboard-theme md-content md-card` rule above -- so templated
+   widgets (the device and client tables) stayed white while the theme's
+   `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.
+   invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY
+   white surfaces left; every other widget card was already #1f2b47. */
+body.nr-dashboard-theme .nr-dashboard-template {
+  background: transparent;
+  color: var(--shd-text);
+}
+/* The dashboard's legacy `.table` class is written for a light background.
+   Its own rules only set borders/padding, so rows need explicit dark-theme
+   separation or the list reads as one undifferentiated block. */
+body.nr-dashboard-theme table.table {
+  color: var(--shd-text);
+  border-collapse: collapse;
+}
+body.nr-dashboard-theme table.table th {
+  color: var(--shd-text);
+  background: transparent;
+  border-bottom: 2px solid var(--shd-accent);
+}
+body.nr-dashboard-theme table.table td {
+  color: var(--shd-text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+body.nr-dashboard-theme table.table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.045);   /* zebra striping for scanability */
+}
+/* `--shd-muted` is deliberately lighter than the 4.5:1 floor against
+   --shd-card, so secondary text stays legible rather than decorative. */
+body.nr-dashboard-theme .nr-dashboard-template .shd-muted,
+body.nr-dashboard-theme .shd-muted {
+  color: var(--shd-muted);
+}
+/* The slider's floating value bubble paints TEXT on the dashboard's hardcoded
+   accent (--nr-dashboard-widgetBackgroundColor / #4FBAE4), which the theme's
+   light text sat on at ~2.2:1 -- the number was barely legible. Give the
+   bubble a dark surface. The track FILL keeps the accent: it is decorative
+   and carries no text, so it is not a contrast problem. */
+body.nr-dashboard-theme .nr-dashboard-slider .md-sign,
+body.nr-dashboard-theme md-slider .md-sign {
+  background-color: var(--shd-card);
+  color: var(--shd-text);
+}
+/* GAUGE TEXT -- this is the rule that actually works in dashboard 3.6.6.
+   justgage renders its labels as SVG <text fill="#111111"> (near-black).
+   A presentation attribute sits at the BOTTOM of the cascade, so any CSS rule
+   beats it -- no !important needed. Setting the node's `valueFontColor` does
+   NOT work here: the 3.6.6 ui_gauge controller never forwards it to justgage
+   (verified -- the attribute stayed #111111 with the property set). Measured
+   before: values 0/4.7/100 at ~1.4:1, effectively invisible on the dark card. */
+body.nr-dashboard-theme .nr-dashboard-gauge svg text {
+  fill: var(--shd-text);
+}
 body.nr-dashboard-theme md-toolbar {
   background: var(--shd-surface);
   color: var(--shd-text);
@@ -264,6 +322,34 @@ add({"id": nid("tpl-theme"), "type": "ui_template", "z": T, "name": "Mobile them
      "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
      "templateScope": "global", "x": 130, "y": 900, "wires": [[]]})
 
+# --- UI Settings (ui_base) --------------------------------------------------
+# This is what tells the dashboard it is on a DARK theme. Without it the
+# dashboard assumes light and derives every foreground colour from a boolean:
+#   @widgetTextColor = isDark ? '#FFFFFF' : '#000000'
+# Verified in the 3.6.6 bundle: `isDark` is only set when the theme declares
+#   theme.angularTheme.palette === 'dark'
+# and the chart engine then paints axis ticks/labels BLACK on our dark card
+# (measured: the faintest text on the page). A `ui_template` <style> cannot fix
+# that -- canvas text is drawn from JS, not CSS. The palette flag can.
+# `palette` is also what generates the Material palettes, so this fixes the
+# chart text AND any Material chrome we have not overridden by hand.
+add({"id": nid("uibase"), "type": "ui_base", "z": T, "name": "",
+     "theme": {
+        "name": "theme-custom",
+        "baseColor": "#667eea",
+        "page": {"name": "Page", "style": "dark", "light": False,
+                 "palette": "dark"},
+        "angularTheme": {"primary": "indigo", "accents": "blue",
+                         "warn": "red", "background": "grey",
+                         "palette": "dark"}
+     },
+     "site": {"title": "Smart Home", "dateFormat": "DD/MM/YYYY",
+              "sizes": {"sx": 48, "sy": 48, "gx": 6, "gy": 6, "cx": 6, "cy": 6,
+                        "px": 12, "py": 12},
+              "options": {"showPath": False}},
+     "x": 330, "y": 900, "wires": []})
+
+
 # ---------------------------------------------------------------- Tab 1: Home Lab
 T = nid("tab-homelab")
 add({"id": T, "type": "tab", "label": "Home Lab", "disabled": False, "info": ""})
@@ -271,7 +357,7 @@ add({"id": nid("uitab-h"), "type": "ui_tab", "z": T, "name": "Home Lab",
      "icon": "dashboard", "order": 1, "disabled": False, "hidden": False})
 G = nid("grp-pve")
 add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Host",
-     "tab": nid("uitab-h"), "order": 1, "disp": True, "width": "6", "collapse": False})
+     "tab": nid("uitab-h"), "order": 1, "disp": True, "width": "12", "collapse": False})
 
 add({"id": nid("gg-cpu"), "type": "ui_gauge", "z": T, "name": "Proxmox CPU",
      "group": G, "order": 1, "width": "5", "height": "5", "gtype": "gage",
@@ -294,6 +380,46 @@ add({"id": nid("ch-cpu"), "type": "ui_chart", "z": T, "name": "CPU History",
      "removeOlder": "5", "removeOlderPoints": "", "removeOlderUnit": "60",
      "cutout": 0, "useOneColor": False, "colors": ["#1f77b4", "#aec7e8"],
      "x": 650, "y": 420, "wires": []})
+
+# ---- Host detail widgets -------------------------------------------------
+# Field names below are NOT guessed: tools/probe_proxmox_status.py read the live
+# /nodes/<node>/status response and reported these top-level keys --
+#   boot-info, cpu, cpuinfo, current-kernel, idle, ksm, kversion, loadavg,
+#   memory, pveversion, rootfs, swap, uptime, wait
+# with the nested shapes:
+#   memory   -> used|free|available|total      rootfs -> used|total|free|avail
+#   swap     -> used|total|free                loadavg -> 0|1|2
+#   cpuinfo  -> cores|cpus|model|mhz|sockets|... current-kernel -> release
+# Every value below comes from one of those, so nothing renders as undefined.
+TEMPLATE_HOST = (
+    "<table class='table' style='width:100%'>\n"
+    "  <tbody>\n"
+    "    <tr><td class='shd-muted'>Proxmox</td><td>{{msg.payload.pveversion}}</td></tr>\n"
+    "    <tr><td class='shd-muted'>Kernel</td><td>{{msg.payload.kversion}}</td></tr>\n"
+    "    <tr><td class='shd-muted'>CPU model</td><td>{{msg.payload.model}}</td></tr>\n"
+    "    <tr><td class='shd-muted'>Cores</td><td>{{msg.payload.cores}} @ {{msg.payload.mhz}} MHz</td></tr>\n"
+    "    <tr><td class='shd-muted'>Load avg</td><td>{{msg.payload.load1}} / {{msg.payload.load5}} / {{msg.payload.load15}}</td></tr>\n"
+    "    <tr><td class='shd-muted'>Uptime</td><td>{{msg.payload.uptime}}</td></tr>\n"
+    "  </tbody>\n"
+    "</table>"
+)
+add({"id": nid("tpl-host"), "type": "ui_template", "z": T, "name": "Host Detail",
+     "group": G, "order": 5, "width": "7", "height": "5",
+     "format": TEMPLATE_HOST, "storeOutMessages": True, "fwdInMessages": True,
+     "resendOnRefresh": True, "templateScope": "local",
+     "x": 650, "y": 520, "wires": [[]]})
+add({"id": nid("txt-swap"), "type": "ui_text", "z": T, "name": "Swap",
+     "group": G, "order": 6, "width": "4", "height": "2",
+     "label": "Swap", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 650, "y": 620, "wires": []})
+add({"id": nid("txt-disk"), "type": "ui_text", "z": T, "name": "Disk (rootfs)",
+     "group": G, "order": 7, "width": "4", "height": "2",
+     "label": "Disk", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 650, "y": 700, "wires": []})
+add({"id": nid("txt-mem"), "type": "ui_text", "z": T, "name": "Memory Detail",
+     "group": G, "order": 8, "width": "4", "height": "2",
+     "label": "Memory", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 650, "y": 780, "wires": []})
 
 add({"id": nid("inj-h"), "type": "inject", "z": T, "name": "Every 30s",
      "props": [{"p": "payload"}], "repeat": "30", "crontab": "", "once": True,
@@ -336,16 +462,44 @@ add({"id": nid("fn-h-parse"), "type": "function", "z": T, "name": "Split metrics
         "var up = d.uptime || 0;\n"
         "var days = Math.floor(up / 86400), hrs = Math.floor((up % 86400) / 3600);\n"
         "node.status({fill:'green',shape:'dot',text:cpu + '% cpu'});\n"
+        "// Human-readable byte formatting for the disk/swap/memory rows.\n"
+        "function gb(v) { return (Math.round(v / 1073741824 * 10) / 10) + ' GB'; }\n"
+        "function pct(u, t) { return t ? Math.round(u / t * 1000) / 10 + '%' : 'n/a'; }\n"
+        "// Nested sub-objects are flattened onto the payload so the Host Detail\n"
+        "// template can reach them with plain dotted paths -- confirmed present in\n"
+        "// the live response by tools/probe_proxmox_status.py.\n"
+        "var rootfs = d.rootfs || {}, swap = d.swap || {};\n"
+        "var mem2 = d.memory || {};\n"
+        "var ci = d.cpuinfo || {}, kd = d['current-kernel'] || {}, la = d.loadavg || [];\n"
+        "var detail = {\n"
+        "  payload: {\n"
+        "    pveversion: d.pveversion || 'unknown',\n"
+        "    kversion: d.kversion || kd.release || 'unknown',\n"
+        "    model: ci.model || 'unknown',\n"
+        "    cores: ci.cores || ci.cpus || '?',\n"
+        "    mhz: ci.mhz || '?',\n"
+        "    load1: (la[0] != null ? Math.round(la[0] * 100) / 100 : '?'),\n"
+        "    load5: (la[1] != null ? Math.round(la[1] * 100) / 100 : '?'),\n"
+        "    load15: (la[2] != null ? Math.round(la[2] * 100) / 100 : '?'),\n"
+        "    uptime: days + 'd ' + hrs + 'h'\n"
+        "  }\n"
+        "};\n"
+        "var mSwap = {payload: pct(swap.used, swap.total) + ' of ' + gb(swap.total || 0)};\n"
+        "var mDisk = {payload: pct(rootfs.used, rootfs.total) + ' of ' + gb(rootfs.total || 0)\n"
+        "  + '  (' + gb(rootfs.avail || 0) + ' free)'};\n"
+        "var mMem  = {payload: gb(mem2.used || 0) + ' of ' + gb(mem2.total || 0)\n"
+        "  + '  (' + gb(mem2.available || 0) + ' avail)'};\n"
         "var mCpu = {payload: cpu};\n"
-        "var mMem = {payload: mem};\n"
+        "var mMemG = {payload: mem};\n"
         "var mStat = {payload: 'Up ' + days + 'd ' + hrs + 'h' + "
         "(d.loadavg ? ' | load ' + (Math.round(d.loadavg[0]*100)/100) : '')};\n"
         "var mChart = {payload: cpu, topic: 'cpu'};\n"
-        "return [mCpu, mMem, mStat, mChart];"
+        "return [mCpu, mMemG, mStat, mChart, detail, mSwap, mDisk, mMem];"
      ),
-     "outputs": 4, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "outputs": 8, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 900, "y": 120,
-     "wires": [[nid("gg-cpu")], [nid("gg-mem")], [nid("txt-status")], [nid("ch-cpu")]]})
+     "wires": [[nid("gg-cpu")], [nid("gg-mem")], [nid("txt-status")], [nid("ch-cpu")],
+               [nid("tpl-host")], [nid("txt-swap")], [nid("txt-disk")], [nid("txt-mem")]]})
 add({"id": nid("dbg-h"), "type": "debug", "z": T, "name": "Proxmox raw",
      "active": True, "tosidebar": True, "console": False, "tostatus": False,
      "complete": "payload", "targetType": "msg", "statusVal": "", "statusType": "auto",
