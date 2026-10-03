@@ -150,7 +150,7 @@
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Format result",
-    "func": "if (msg.statusCode && msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  msg.payload = 'Error ' + (msg.statusCode || '') + ' ' + msg.payload;\n}\nreturn msg;",
+    "func": "// http request sets msg.error on a transport failure.\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n  return msg;\n}\nif (msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'http ' + msg.statusCode});\n  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n}\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
