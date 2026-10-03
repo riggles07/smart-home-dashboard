@@ -98,7 +98,7 @@ see the ❌/⚠️ rows above.**
 - [x] **`.env` exclusion** — done
 
 ### Low
-- [ ] **Deprecated `proxmox/` path** — marked DO-NOT-USE; could be deleted outright
+- [x] **Deprecated `proxmox/` path** — deleted outright on 2026-10-03; it provisioned a runtime that cannot start
 - [ ] **`deploy/setup.sh`** — verify it provisions a working runtime on a fresh
       container (partially verified this session)
 

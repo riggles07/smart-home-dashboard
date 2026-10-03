@@ -17,14 +17,17 @@ Deploy in a Proxmox LXC container for full Linux access with Node-RED isolation.
 # Select: Debian 12 (bookworm), 2GB RAM, 2 cores, IP: 192.168.1.100/24
 
 # Step 2: SSH into container
-ct terminal 101
+pct enter 101
 
-# Step 3: Run setup script (must be inside container)
-cd /root
-wget https://raw.githubusercontent.com/riggles07/smart-home-dashboard/main/proxmox/setup-smarthome.sh
-chmod +x setup-smarthome.sh
-./setup-smarthome.sh 101
+# Step 3: Run the setup script (inside the container)
+# Deploy the repo into the container first, then:
+bash deploy/setup.sh
 ```
+
+> The old `proxmox/` deployment tree was **deleted**: it provisioned a runtime
+> that cannot start (`User=node-red` with no such account → `217/USER`;
+> `MemoryDenyWriteExecute=true` → V8 JIT killed, `SIGSYS`). `deploy/setup.sh` is
+> the supported path.
 
 ### Docker (Alternative)
 
@@ -57,13 +60,13 @@ Install directly on your host system (for local development or single-instance d
 2. **Start container:**
    ```bash
    # From Proxmox host
-   ct start 101
+   pct start 101
    ```
 
 3. **SSH into container:**
    ```bash
    # From Proxmox host
-   ct terminal 101
+   pct enter 101
    ```
 
 4. **Install Node-RED (inside container):**
@@ -182,8 +185,7 @@ cp -r ~/.node-red/flows ~/.node-red/flows.backup
 
 - `flows/*.js` - Dashboard flows
 - `config/settings.js` - Node-RED configuration
-- `proxmox/` - Proxmox LXC deployment scripts
-- `proxmox/README-LXC-CONTAINER.md` - Complete LXC guide
+- `deploy/` - **the supported deployment path** (`setup.sh`, env template, runtime helpers). The old `proxmox/` tree was deleted because it provisioned a runtime that cannot start.
 
 ## References
 
