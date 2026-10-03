@@ -27,6 +27,83 @@ flows_all = []
 def add(*nodes):
     flows_all.extend(nodes)
 
+# ---------------------------------------------------------------- Global theming
+#
+# The legacy node-red-dashboard has NO `css:` setting. Verified against the
+# bundled README: the only documented settings are
+#   ui.path / ui.middleware / ui.ioMiddleware / ui.readOnly / ui.defaultGroup
+# and theme/layout live in the `ui_base` (UI Settings) config node, not here.
+# `config/settings.js` therefore cannot apply css/dashboard.css, and it is not
+# served over HTTP (httpStatic is unset) -- so a <link> would 404.
+#
+# The working, dependency-free route is to INLINE the theme into a ui_template
+# on an invisible ui_group. A ui_template renders into the page, so a <style>
+# block inside it applies globally, and the dashboard pushes it over the
+# existing websocket -- no extra HTTP plumbing required.
+THEME_CSS_PATH = "/root/.hermes/projects/smart-home-dashboard/css/dashboard.css"
+
+
+def load_theme_css(path=THEME_CSS_PATH):
+    """Inline the theme, stripping anything that could break the <style> block."""
+    with open(path) as fh:
+        css = fh.read()
+    # A stray "</style" would terminate the block early and spill CSS as text.
+    css = css.replace("</style", "<\\/style")
+    # Strip comments: they carry no runtime value and keep the node compact.
+    while "/*" in css and "*/" in css:
+        a = css.index("/*")
+        b = css.index("*/", a) + 2
+        css = css[:a] + css[b:]
+    return css
+
+
+# The dashboard ships its own rule:
+#     body.nr-dashboard-theme { background-color: #eee; ... }
+# Specificity (0,1,1) beats the theme's plain `body {...}` (0,0,1) REGARDLESS of
+# source order, so the theme's dark background silently loses and the page paints
+# light while the text colour flips to #eee -- unreadable. Re-assert the page
+# colours at the SAME specificity (injected later, so it wins on the tie) instead
+# of reaching for !important, which would also stomp the dashboard's widget themes.
+#
+# Measured in the live UI (Node-RED 5.0.7 + legacy dashboard 3.6.6), the theme's
+# own `.ui_tab .tab-link` rule matches NOTHING -- those classes are not in this
+# version's DOM. Tab entries render as `md-list-item` (48px, fine) and the toolbar
+# hamburger as `button.md-icon-button` (40px, UNDER the 44px target). Target the
+# selectors that actually exist; the extra `body.nr-dashboard-theme` qualifier
+# also lifts specificity above Angular Material's own rules.
+THEME_OVERRIDE = """
+body.nr-dashboard-theme {
+  background: var(--shd-bg);
+  color: var(--shd-text);
+}
+body.nr-dashboard-theme md-sidenav md-list-item,
+body.nr-dashboard-theme md-sidenav .md-button {
+  min-height: var(--shd-touch-target);
+  touch-action: manipulation;
+}
+body.nr-dashboard-theme button.md-icon-button,
+body.nr-dashboard-theme .md-icon-button {
+  min-height: var(--shd-touch-target);
+  min-width: var(--shd-touch-target);
+  touch-action: manipulation;
+}
+"""
+
+
+_theme_css = load_theme_css()
+T = nid("tab-homelab")
+add({"id": nid("uitab-theme"), "type": "ui_tab", "z": T, "name": "Theme",
+     "icon": "paint-brush", "order": 99, "disabled": False, "hidden": True})
+_TG = nid("grp-theme")
+add({"id": _TG, "type": "ui_group", "z": T, "name": "Theme",
+     "tab": nid("uitab-theme"), "order": 1, "disp": True, "width": "12",
+     "collapse": False})
+add({"id": nid("tpl-theme"), "type": "ui_template", "z": T, "name": "Mobile theme",
+     "group": _TG, "order": 1, "width": "0", "height": "0",
+     "format": "<style>\n" + _theme_css + "\n" + THEME_OVERRIDE + "</style>",
+     "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "global", "x": 130, "y": 900, "wires": [[]]})
+
 # ---------------------------------------------------------------- Tab 1: Home Lab
 T = nid("tab-homelab")
 add({"id": T, "type": "tab", "label": "Home Lab", "disabled": False, "info": ""})
