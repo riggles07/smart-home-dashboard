@@ -24,6 +24,38 @@
   --shd-err: #e74c3c;
   --shd-touch-target: 44px;   /* minimum Apple/Google touch target */
   --shd-radius: 10px;
+
+  /* ------------------------------------------------------------------
+     Legacy node-red-dashboard theming variables.
+
+     The dashboard ships these and styles everything from them, so they are
+     the INTENDED theming surface -- overridable, no selector fighting and
+     nothing to break on upgrade. Measured defaults (dashboard 3.6.6):
+       pageBackgroundColor           #eee
+       pageSidebarBackgroundColor    #eee
+       pageTitlebarBackgroundColor   #0094CE
+       groupBackgroundColor          #fff   <- the white card behind each group
+       groupBorderColor              #fff
+       groupTextColor                #00A4DE
+       widgetBackgroundColor         #4FBAE4
+       widgetBgndColor               #fff   <- the white widget tile
+       widgetBorderColor             #fff
+       widgetColor                   #4FBAE4
+       widgetTextColor               #000
+     Set here so the dashboard's own <style> (emitted at runtime) inherits the
+     dark palette instead of painting light panels on a dark page.
+     ------------------------------------------------------------------ */
+  --nr-dashboard-pageBackgroundColor:         var(--shd-bg);
+  --nr-dashboard-pageSidebarBackgroundColor:  var(--shd-surface);
+  --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);
+  --nr-dashboard-groupBackgroundColor:        var(--shd-card);
+  --nr-dashboard-groupBorderColor:            var(--shd-card);
+  --nr-dashboard-groupTextColor:              var(--shd-accent);
+  --nr-dashboard-widgetBackgroundColor:       var(--shd-card);
+  --nr-dashboard-widgetBgndColor:             var(--shd-card);
+  --nr-dashboard-widgetBorderColor:           var(--shd-card);
+  --nr-dashboard-widgetColor:                 var(--shd-accent);
+  --nr-dashboard-widgetTextColor:             var(--shd-text);
 }
 
 html { font-size: 16px; }

@@ -76,16 +76,67 @@ body.nr-dashboard-theme {
   background: var(--shd-bg);
   color: var(--shd-text);
 }
+
+/* ------------------------------------------------------------------
+   The dashboard's own theme block defines the --nr-dashboard-* variables
+   but then PAINTS its primary surfaces with hardcoded colours that ignore
+   them. Measured in dashboard 3.6.6 (selector -> colour):
+     body.nr-dashboard-theme md-content md-card   -> #fff
+     .nr-dashboard-theme ui-card-panel            -> #fff
+     body.nr-dashboard-theme md-toolbar           -> #0094CE
+     body.nr-dashboard-theme md-sidenav           -> #eee
+   Overriding only the variables therefore darkens :root while the page
+   still renders light. These rules match or exceed each original's
+   specificity, and this block is injected last, so ties resolve here.
+   Deliberately not !important: nothing here is inline, and !important
+   would also defeat the dashboard's later runtime theming.
+   ------------------------------------------------------------------ */
+body.nr-dashboard-theme md-content md-card {
+  background: var(--shd-card);
+  color: var(--shd-text);
+}
+body.nr-dashboard-theme ui-card-panel {
+  background: var(--shd-card);
+  color: var(--shd-text);
+}
+body.nr-dashboard-theme md-toolbar {
+  background: var(--shd-surface);
+  color: var(--shd-text);
+}
+body.nr-dashboard-theme md-sidenav {
+  background: var(--shd-surface);
+  color: var(--shd-text);
+}
+
+/* Tab drawer entries and the toolbar button are Angular Material elements,
+   not `.ui_tab .tab-link` (which matches nothing in this version). The
+   toolbar button measured 40px -- under the 44px touch target. */
 body.nr-dashboard-theme md-sidenav md-list-item,
 body.nr-dashboard-theme md-sidenav .md-button {
   min-height: var(--shd-touch-target);
   touch-action: manipulation;
+}
+body.nr-dashboard-theme md-sidenav md-list-item p,
+body.nr-dashboard-theme md-sidenav .md-button {
+  color: var(--shd-text);
 }
 body.nr-dashboard-theme button.md-icon-button,
 body.nr-dashboard-theme .md-icon-button {
   min-height: var(--shd-touch-target);
   min-width: var(--shd-touch-target);
   touch-action: manipulation;
+  color: var(--shd-text);
+}
+
+/* Charts/gauge/template content the dashboard paints on its own light panel. */
+body.nr-dashboard-theme md-card .nr-dashboard-text,
+body.nr-dashboard-theme md-card table,
+body.nr-dashboard-theme md-card th,
+body.nr-dashboard-theme md-card td {
+  color: var(--shd-text);
+}
+body.nr-dashboard-theme md-card th {
+  border-bottom-color: var(--shd-accent);
 }
 """
 
