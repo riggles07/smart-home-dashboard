@@ -260,13 +260,13 @@ NODE_RED_PORT=1880
 NODE_RED_SECURE=false
 
 # Hubitat Settings
-HUBITAT_URL=http://hubitat.local:80
+HUBITAT_URL=http://192.168.4.86
 HUBITAT_USERNAME=your_username
 HUBITAT_PASSWORD=your_password
 HUBITAT_API_KEY=your_api_key
 
 # Hubitat Maker API (read by the Devices-tab flow)
-# App id + token from the Maker API app page: http://<hub>/apps/api/<app_id>/...
+# App id + token from the Maker API app page: http://192.168.4.86/apps/api/<app_id>/...
 HUBITAT_APP_ID=your_maker_api_app_id
 HUBITAT_ACCESS_TOKEN=your_maker_api_access_token
 # Device the Devices-tab power switch / brightness slider controls.
@@ -274,16 +274,18 @@ HUBITAT_ACCESS_TOKEN=your_maker_api_access_token
 HUBITAT_DEVICE_ID=your_device_id
 
 # UniFi Settings
-# UNIFI_URL is read by the Network-tab flow (scheme + host + port).
-UNIFI_URL=https://unifi.local:8443
-UNIFI_HOST=unifi.local
-UNIFI_PORT=8443
+# UNIFI_URL is read by the Network-tab flow. This is a UniFi OS console
+# (UDM/Cloud Gateway), so the Network app lives under /proxy/network.
+# A self-hosted controller would instead be https://<host>:8443 (no prefix).
+UNIFI_URL=https://192.168.1.1/proxy/network
+# UniFi OS login path differs from legacy; set explicitly when using
+# username/password instead of an API key.
+UNIFI_LOGIN_URL=https://192.168.1.1/api/auth/login
+UNIFI_SITE=default
+# UniFi Network 8+ API key. If set, the flow uses X-API-KEY and never logs in.
+UNIFI_API_KEY=
 UNIFI_USERNAME=your_username
 UNIFI_PASSWORD=your_password
-UNIFI_SITE=default
-# UniFi Network 8+ API key. If unset, the flow logs in with
-# UNIFI_USERNAME + UNIFI_PASSWORD instead.
-UNIFI_API_KEY=
 
 # Proxmox API (read by the Home Lab tab flow)
 # Token: Datacenter -> Permissions -> API Tokens -> Add
