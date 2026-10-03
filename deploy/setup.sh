@@ -297,28 +297,8 @@ chown node-red:node-red /home/node-red/.env
 echo_success "Environment file created"
 echo ""
 
-# Step 11: Import dashboard flows
-echo_color "Step 11: Importing dashboard flows..."
-FLOWS_SRC="$(dirname "$0")/../flows"
-if [ -f "$FLOWS_SRC/all-flows.flow.json" ]; then
-    # Push the full flow set via the Admin API. HTTP 204 == accepted.
-    code=$(curl -s -o /dev/null -w "%{http_code}" \
-        -X POST "http://localhost:1880/flows" \
-        -H "Content-Type: application/json" \
-        -H "Node-RED-Deployment-Type: full" \
-        --data-binary "@${FLOWS_SRC}/all-flows.flow.json")
-    if [ "$code" = "204" ]; then
-        echo_success "Flows imported (HTTP 204)"
-    else
-        echo_error "Flow import returned HTTP $code (expected 204)"
-    fi
-else
-    echo "  No all-flows.flow.json found at $FLOWS_SRC -- import manually."
-fi
-echo ""
-
-# Step 12: Start Node-RED
-echo_color "Step 12: Starting Node-RED..."
+# Step 11: Start Node-RED
+echo_color "Step 11: Starting Node-RED..."
 systemctl start node-red
 
 if systemctl is-active --quiet node-red; then
@@ -326,6 +306,39 @@ if systemctl is-active --quiet node-red; then
 else
     echo_error "Failed to start Node-RED"
     exit 1
+fi
+echo ""
+
+# Step 12: Import dashboard flows
+# Must run AFTER the service is up -- the Admin API needs a live listener.
+echo_color "Step 12: Importing dashboard flows..."
+FLOWS_SRC="$(cd "$(dirname "$0")/.." && pwd)/flows"
+if [ -f "$FLOWS_SRC/all-flows.flow.json" ]; then
+    # Wait for the Admin API to answer before posting.
+    ready=0
+    for _ in $(seq 1 20); do
+        if curl -s -o /dev/null --max-time 2 http://localhost:1880/settings; then
+            ready=1; break
+        fi
+        sleep 1
+    done
+    if [ "$ready" = "1" ]; then
+        # Full deploy. HTTP 204 == accepted.
+        code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "http://localhost:1880/flows" \
+            -H "Content-Type: application/json" \
+            -H "Node-RED-Deployment-Type: full" \
+            --data-binary "@${FLOWS_SRC}/all-flows.flow.json")
+        if [ "$code" = "204" ]; then
+            echo_success "Flows imported (HTTP 204)"
+        else
+            echo_error "Flow import returned HTTP $code (expected 204)"
+        fi
+    else
+        echo_error "Admin API did not become ready -- import flows manually"
+    fi
+else
+    echo "  No all-flows.flow.json found at $FLOWS_SRC -- import manually."
 fi
 echo ""
 
