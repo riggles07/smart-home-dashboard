@@ -124,12 +124,25 @@ chmod 600 .env
 
 ## Security
 
-- Never commit `.env` files to repositories
-- HTTPS enabled for production (`config/settings.js`, port 1881) with HSTS, X-Frame-Options, CSP headers
-- Firewall: ufw default-deny with LAN-only allow rules for 1880/1881
-- Node-RED runs as the non-root `node-red` user under a hardened systemd unit
-- Regular credential rotation: `./scripts/rotate-credentials.sh` (admin password, SSL cert, .env tokens)
-- Verify hardening: `./scripts/verify-security.sh`
+**Actual posture** (measured against the running container on 2026-10-03; see
+`docs/SECURITY.md` for the full statement):
+
+- Never commit `.env` files to repositories. Secrets live in
+  `/root/.node-red/.env` (the systemd unit's `EnvironmentFile`), not in the flows.
+- **No TLS.** The dashboard serves plain HTTP on 1880. Nothing listens on 1881.
+- **Firewall: not verified.** ufw rules are referenced by some scripts but have
+  not been confirmed applied on the container.
+- **Node-RED runs as root**, userDir `/root/.node-red`. This is deliberate for a
+  single-purpose LAN container, not a hardening claim — a non-root `node-red`
+  account was the original cause of the deployment failure (`217/USER`).
+- Credential rotation tooling: `./scripts/rotate-credentials.sh`
+- Static checks: `./scripts/verify-security.sh` (checks FILES, not the running
+  host — a pass does not prove the properties above)
+- ⚠️ Anyone who can reach port 1880 can read and edit the flows and therefore
+  read the credentials they use. If that matters, enable `adminAuth` with a real
+  bcrypt hash first, then add TLS via the `https` key in the userDir settings.
+- CI: `.github/workflows/ci.yml` runs pytest + flow structure + settings syntax
+  + theme wiring on every push.
 
 ## Troubleshooting
 

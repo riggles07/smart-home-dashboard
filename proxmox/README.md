@@ -1,5 +1,27 @@
 # SmartHome Dashboard - Proxmox LXC Deployment Guide
 
+> ## ⚠️ DEPRECATED — use `deploy/` instead
+>
+> This directory describes the ORIGINAL deployment path, which does not work and
+> cost a full debugging session to untangle. Do not follow this guide.
+>
+> What is wrong with it:
+>
+> | This directory | Reality |
+> |----------------|---------|
+> | `useradd -m node-red` + `User=node-red` | The account is not present on a fresh deploy; systemd fails with **217/USER** ("Failed to determine user credentials") |
+> | `WorkingDirectory=/home/node-red` | That directory is never created; Node-RED cannot write flows or credentials |
+> | `MemoryDenyWriteExecute=true` | Disables W^X, which **V8's JIT requires** — Node exits immediately with **SIGSYS** and never starts |
+> | References port 1881 / TLS | Nothing listens on 1881; the service serves plain HTTP on 1880 |
+>
+> **The working deployment is `deploy/setup.sh`**, which runs Node-RED as root
+> with userDir `/root/.node-red` and `MemoryDenyWriteExecute=false`. See
+> `deploy/README.md` and the main `README.md`.
+>
+> Files here are kept for history only. The container-creation scripts
+> (`create-smarthome-lxc.sh`, `lxc-config.json`) are still useful for making the
+> LXC itself; everything after that is superseded.
+
 This guide shows how to deploy the SmartHome Dashboard (Node-RED based) in a Proxmox LXC container.
 
 ## Quick Start (5 Minutes)

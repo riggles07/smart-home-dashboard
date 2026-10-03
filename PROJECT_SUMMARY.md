@@ -42,13 +42,22 @@ This project implements a comprehensive smart home monitoring dashboard with the
 - [x] Touch-friendly controls (44px targets, `touch-action: manipulation`)
 
 ### Phase 6: Testing & Deployment (In Progress)
-- [x] Security hardening — HTTPS/SSL (`config/settings.js`, port 1881, security headers)
-- [x] Security hardening — Firewall (ufw default-deny, LAN-only 1880/1881)
-- [x] Security hardening — Non-root Node-RED (`node-red` user, systemd sandboxing)
-- [x] Security hardening — Credential rotation (`scripts/rotate-credentials.sh`)
+- [x] CI: pytest suite + flow-structure + settings-syntax + theme-wiring gates
+      (`.github/workflows/ci.yml`, green on every push)
 - [x] Security verification tooling (`scripts/verify-security.sh`)
+      — see the caveat below: it checks files, not the running host
+- [x] Credential rotation tooling (`scripts/rotate-credentials.sh`)
+- [ ] HTTPS/TLS — NOT deployed. The service serves plain HTTP on 1880; nothing
+      listens on 1881. `config/settings.js` is not read by the runtime (Node-RED
+      only reads settings from its userDir), so setting `server.ssl` there would
+      have no effect even if the key existed.
+- [ ] Firewall (ufw) — NOT verified on the container; no ufw rules are known to
+      be applied there.
+- [ ] Non-root Node-RED — NOT deployed, and deliberately so: the service runs as
+      root with userDir `/root/.node-red`. A non-root `node-red` account was the
+      original cause of the deployment failure (`217/USER`, `/home/node-red`
+      missing). See `deploy/README.md`.
 - [ ] Integration validation
-- [ ] Auto-refresh configuration
 - [ ] Production deployment
 
 ## File Structure
@@ -142,8 +151,17 @@ curl http://localhost:1880/api/
 
 ## Next Steps
 
-1. Complete Hubitat integration (Phase 3)
-2. Implement UniFi monitoring (Phase 4)
-3. ~~Build mobile-responsive UI (Phase 5)~~ ✅ Done — see `css/dashboard.css`, `docs/MOBILE_DEPLOYMENT.md`, `tests/test_mobile_ui.py`
-4. ~~Security hardening~~ ✅ Done — HTTPS, firewall, non-root Node-RED, credential rotation; run `./scripts/verify-security.sh`
+1. ~~Complete Hubitat integration (Phase 3)~~ ✅ Done — Devices tab is live against the Maker API
+2. ~~Implement UniFi monitoring (Phase 4)~~ ✅ Done — Network tab renders 63 clients
+3. ~~Build mobile-responsive UI (Phase 5)~~ ✅ Done — theme inlined into a hidden
+   `ui_template`; verified in-browser. See `css/dashboard.css`,
+   `docs/MOBILE_DEPLOYMENT.md`, `tests/test_theme_wiring.py`
+4. Security hardening — **partially done, and partly NOT DONE on purpose.**
+   HTTPS and firewall are NOT deployed (verified: nothing listens on 1881).
+   Non-root Node-RED is deliberately NOT used: running as root with userDir
+   `/root/.node-red` is what fixed the deployment. Tooling exists
+   (`scripts/verify-security.sh`, `scripts/rotate-credentials.sh`); the
+   non-root/SSL assertions inside `verify-security.sh` check FILES, not the
+   running host, so they can pass while asserting an architecture this project
+   does not have. Reconcile before trusting that script's exit code.
 5. Integration validation + production deployment (Phase 6 remainder)

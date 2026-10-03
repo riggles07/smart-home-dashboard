@@ -1,37 +1,61 @@
 # Smart Home Dashboard - Verification Report
 
+> **Corrected 2026-10-03.** The previous version of this file claimed "10/10
+> requirements implemented (100%)" and stated that HTTPS, firewall, non-root
+> Node-RED and `adminAuth` were all "✅ Done (Phase 6)". None of that was true of
+> the deployed system. They were read from config files and setup scripts rather
+> than from the running host — and the config file they were read from
+> (`config/settings.js`) is not even read by Node-RED. Every claim below was
+> re-checked against the live container.
+
 ## Test Run Summary
 
 | Metric | Result |
 |--------|--------|
-| Test Command | `python -m pytest` (via `.github/workflows/ci.yml`, runs on every push/PR) |
-| Tests Executed | 232 |
-| Pass/Fail | 232 passed, 0 failed (local run 2026-09-22: `232 passed in 0.27s`) |
-| Coverage | N/A - No coverage tooling configured |
+| Test Command | `python -m pytest` (also via `.github/workflows/ci.yml` on every push) |
+| Tests Executed | 221 |
+| Pass/Fail | **221 passed, 0 failed** (2026-10-03) |
+| CI | Green (sha `cb351bf`, all 9 steps) — pytest + flow structure + settings syntax + theme wiring |
+| Coverage | N/A — no coverage tooling configured |
 
-**Note**: A full Python test suite (232 tests in `tests/`) exists and passes locally. The CI workflow now runs it on every push and pull request (see "Open Issues" below — the 'Add CI tests' item is resolved).
+The count moved from 232 to 221 because 33 grep-based tests in
+`tests/test_settings.py` were replaced by 17 behavioural ones (they asserted
+keys that are not Node-RED settings and had been failing in CI). New coverage
+was added in their place: theme wiring, env-template drift, flow structure.
+
+### What the previous claim got wrong
+
+| Previous claim | Measured reality |
+|----------------|------------------|
+| HTTPS on 1881 | **Nothing listens on 1881.** `:1880` serves plain HTTP 200 |
+| Firewall (ufw) | **Not verified** on the container |
+| Non-root `node-red` user | **Not used.** Service runs as root, userDir `/root/.node-red`. The non-root account was the *cause* of the deployment failure (`217/USER`) |
+| `adminAuth` enabled | **Not enabled** |
+| `config/settings.js` as "Node-RED configuration" | It was YAML under a `.js` name (unloadable) and is not read at runtime. Now valid JS, but still only a deploy-time template |
+
+The lesson: a static check over files can pass while describing an architecture
+the system does not have. `scripts/verify-security.sh` had exactly this flaw and
+has been corrected.
 
 ---
 
 ## Documentation Review
 
-### ✅ Present
-- **README.md** - Complete project overview with installation, configuration, and troubleshooting
-- **PROJECT_SUMMARY.md** - Detailed implementation status and architecture
-- **flows/README.md** - Flow file documentation
-- **config/settings.js** - Node-RED configuration
-- **`.env.example`** - Environment variable template
-- **CI/CD workflows** - Deployment and CI configurations
-- **UniFi Network Monitoring** - Phase 4 complete with client, traffic, and AP status
-- **Home Lab Monitor** - Proxmox & Docker monitoring
-- **Dashboard Configuration** - Tab and view layout
-- **Integration Functions** - API clients (Hubitat/UniFi)
-- **Python Test Suite** - 232 tests passing
+### ✅ Present (and correct as of this revision)
+- **README.md** — overview, install, config, troubleshooting; security section rewritten to actual posture
+- **PROJECT_SUMMARY.md** — phase status corrected (security items marked not-done)
+- **docs/SECURITY.md** — rewritten: states no TLS, firewall unverified, root process
+- **deploy/README.md** — real deployment path; firewall step marked optional/unverified
+- **deploy/.env.example** — single env template, checked against the flows by `tests/test_env_template.py`
+- **config/settings.js** — valid JavaScript, documented keys only
+- **tests/** — 221 tests, plus flow-structure and theme-wiring guards
+- **CI** — `ci.yml` enforces all of the above on every push
 
 ### ⚠️ Missing
-- **CHANGELOG.md** - No changelog for tracking changes
-- **Integration Tests** - No API validation tests (unit tests only)
-- **`.gitignore`** - Exists but verify `.env` exclusion
+- **CHANGELOG.md** — none
+- **Integration tests** — no live-API tests in the suite (`tools/verify_live_data.py`
+  exists as a manual probe, not a CI test)
+- **`adminAuth`** — the editor/admin API is open to anyone who can reach :1880
 
 ---
 
@@ -39,46 +63,58 @@
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
-| Node-RED Dashboard UI | ✅ Implemented | `flows/dashboard-configuration.js` |
-| Hubitat Integration | ✅ Implemented | `flows/hubitat-integration.js` + `node-red-node-hubitat` |
-| UniFi Network Monitoring | ✅ Implemented | `flows/unifi-network-monitor.js` + `node-red-node-unifi` |
-| Home Lab Monitor (Proxmox/Docker) | ✅ Implemented | `flows/home-lab-monitor.js` |
-| Kanban Board | ✅ Implemented | `flows/kanban-flow.js` + `node-red-contrib-kanbanflow` |
-| Mobile Responsive Design | ✅ Implemented | `css/dashboard.css` + `docs/MOBILE_DEPLOYMENT.md` (Phase 5) |
-| HTTPS in Production | ✅ Implemented | `config/settings.js` SSL enabled (port 1881), HSTS/CSP headers; `deploy/setup.sh` generates cert + hardened runtime settings (Phase 6) |
-| Firewall Rules | ✅ Implemented | ufw default-deny, LAN-only 1880/1881 in `deploy/setup.sh`, `proxmox/setup-smarthome.sh`, `proxmox/post-install.sh` (Phase 6) |
-| Non-root User | ✅ Implemented | `node-red` user + systemd sandboxing in all service definitions (Phase 6) |
-| Credential Rotation | ✅ Implemented | `scripts/rotate-credentials.sh` (admin password, SSL cert, .env tokens) + `scripts/verify-security.sh` (Phase 6) |
+| Node-RED Dashboard UI | ✅ Working | 5 tabs served live at `http://sh-dashboard:1880/ui/`; 51 nodes deployed |
+| Hubitat Integration | ✅ Working | Devices tab live; Maker API HTTP 200 (20588 B) |
+| UniFi Network Monitoring | ✅ Working | Network tab renders **63 clients** (hostname/IP/MAC) |
+| Home Lab Monitor (Proxmox) | ✅ Working | CPU/memory gauges render live (HTTP 200, 1636 B) |
+| Kanban Board | ✅ Working | Typed a task, pressed Add, row rendered (verified in-browser) |
+| Mobile Responsive Design | ✅ Working | Dark theme applied; verified in-browser (bg `rgb(26,26,46)`, 44px targets) |
+| Settings / Deployment Info tab | ✅ Working | Renders (was blank: one-shot inject + wrong `props` schema) |
+| **HTTPS / TLS** | ❌ **Not implemented** | No listener on 1881 |
+| **Firewall (ufw)** | ⚠️ **Unverified** | Rules referenced in scripts; not confirmed applied |
+| **Non-root Node-RED** | ❌ **Not used (deliberate)** | Runs as root so it works; non-root was the failure mode |
+| **adminAuth** | ❌ **Not enabled** | Editor/Admin API unauthenticated on :1880 |
+| Credential rotation tooling | ✅ Exists | `scripts/rotate-credentials.sh` (executable, syntax-checked) |
 
-**Coverage**: 10/10 requirements implemented (100%)
+**Coverage: 7/8 functional requirements working. Security items are partial —
+see the ❌/⚠️ rows above.**
 
 ---
 
 ## Open Issues / Recommendations
 
 ### Critical
-- [ ] **Add integration tests** - Expand test suite with API validation tests
-- [x] **Add CI tests** - ✅ Done: `.github/workflows/ci.yml` rewritten as a real workflow — checks out the repo, sets up Python 3.11, installs pytest, and runs `python -m pytest` (232 tests) on every push and pull request. No `continue-on-error` or exit-code swallowing: a failing test fails the job.
-- [x] **Create `.env` exclusion** - ✅ Done (Phase 6): `.env`, `*.key`, `*.pem` in `.gitignore`
+- [ ] **Enable `adminAuth`** — anyone reaching :1880 can edit flows and read the
+      credentials they use. Generate a real hash: `node-red admin hash-pw`.
+- [ ] **Integration tests** — `tools/verify_live_data.py` is manual; wire a
+      network-free variant into CI if useful
 
-### Medium Priority
-- [ ] **Add CHANGELOG.md** - Track version changes and bug fixes
-- [x] **Enable SSL** - ✅ Done (Phase 6): HTTPS on 1881, security headers, `docs/SECURITY.md`
-- [x] **Add user management** - ✅ Done (Phase 6): non-root `node-red` user + adminAuth
-- [ ] **Add flow validation** - Test Node-RED flow imports in CI
+### Medium
+- [ ] **TLS** — optional; the real key is `https` in `/root/.node-red/settings.js`
+- [ ] **Firewall** — decide whether to apply ufw on the container, or delete the
+      claim from the scripts
+- [ ] **CHANGELOG.md**
+- [x] **CI tests** — done: rewritten to run pytest + 3 static gates; green
+- [x] **`.env` exclusion** — done
 
-### Low Priority
-- [ ] **Add health checks** - Create `/api/health` endpoint
-- [ ] **Document API endpoints** - Complete Hubitat/UniFi API docs
-- [ ] **Production deployment** - Complete deployment checklist
+### Low
+- [ ] **Deprecated `proxmox/` path** — marked DO-NOT-USE; could be deleted outright
+- [ ] **`deploy/setup.sh`** — verify it provisions a working runtime on a fresh
+      container (partially verified this session)
 
 ---
 
 ## Conclusion
 
-The Smart Home Dashboard is **functionally complete** with:
-1. ✅ Automated testing infrastructure (232 Python tests, all passing)
-2. ✅ Production-ready security configuration (Phase 6: HTTPS, firewall, non-root Node-RED, credential rotation)
-3. ✅ Complete mobile responsive UI (Phase 5)
+The dashboard is **functionally complete and deployed**: 5 tabs, live data from
+Proxmox, Hubitat and UniFi, a working mobile theme, and a green CI pipeline that
+enforces flow structure, settings validity and theme wiring.
 
-**Status**: Phases 1-6 implemented. Phase 6 remainder (live integration validation, production deployment) requires the target LXC container. Verify security posture anytime with `./scripts/verify-security.sh`.
+It is **not security-hardened**. It serves plain HTTP, with no authentication,
+on a private LAN, and the process runs as root. That is an acceptable posture for
+a single-purpose LAN dashboard behind a trusted network — but it should be stated
+plainly rather than described as "production-ready security configuration".
+
+Verify the static checks with `./scripts/verify-security.sh`. Note that the
+script inspects files, not the running host, so treat its exit code as necessary
+but not sufficient.
