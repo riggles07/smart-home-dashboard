@@ -20,11 +20,36 @@ Import dialog expects.
 
 Regenerate them with `tools/gen_flows.py` (deterministic IDs, palette-validated).
 
+## Which host runs what
+
+Confusing these wastes a round trip. The scripts are **not** all meant for the LXC.
+
+| Tool | Run on | Why |
+|------|--------|-----|
+| `deploy/repair-settings.sh` | **Node-RED LXC** | edits `/root/.node-red/settings.js` |
+| `deploy/fix-node-red-service.sh` | **Node-RED LXC** | installs a systemd drop-in |
+| `deploy/node-red-start.sh` | **Node-RED LXC** | launcher (only if not using systemd) |
+| `deploy/check-connectivity.sh` | **Node-RED LXC** | reads the LXC's env file and probes from there |
+| `deploy/.env.example` | reference | copy values into the LXC's `.env` |
+| `tools/probe_runtime_env.py` | **anywhere** | talks to the Admin API over HTTP |
+| `tools/gen_flows.py`, `validate_flows.py`, `test_flow_functions.js` | **dev machine** | build/verify flow JSON before deploy |
+
+`probe_runtime_env.py` needs no local files — it deploys a temporary probe tab,
+triggers it, reads the result back, and restores your flows. Point it at the host:
+
+```bash
+python3 tools/probe_runtime_env.py http://sh-dashboard:1880
+```
+
+There is nothing to download to the LXC for it. If you tried
+`/tmp/shd/probe_runtime_env.py` there, that path never existed — the file is in
+`tools/`, not `deploy/`.
+
 ## Credentials — never hardcoded
 
 Function nodes read connection details from **environment variables**. In the
-LXC these come from `/home/node-red/.env`, loaded by the systemd unit via
-`EnvironmentFile=`:
+LXC these live in `/root/.node-red/.env` and must be present in the **process
+environment** of the running Node-RED:
 
 | Variable | Used by |
 |----------|---------|
@@ -158,22 +183,6 @@ npm install -g node-red node-red-dashboard
 |----------------|-------------|
 | `ui_tab`, `ui_group`, `ui_gauge`, `ui_text`, `ui_chart`, `ui_switch`, `ui_slider`, `ui_button`, `ui_text_input`, `ui_template` | `node-red-dashboard` (legacy) |
 | `inject`, `function`, `http request`, `json`, `debug` | core (`node-red`) |
-
-## Credentials — never hardcoded
-
-Function nodes read connection details from **environment variables**:
-
-| Variable | Used by |
-|----------|---------|
-| `PROXMOX_URL`, `PROXMOX_NODE`, `PROXMOX_TOKEN` | Home Lab tab |
-| `HUBITAT_URL`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices tab |
-| `UNIFI_URL` | Network tab |
-
-Set these in the LXC before starting Node-RED (see `deploy/.env.example`).
-
-**Until they are set**, the inject nodes fire and log expected failures
-(e.g. `ENOTFOUND proxmox.local`) — that is the flows running correctly against
-an unconfigured backend, not a fault.
 
 ## Legacy vs Dashboard 2.0
 
