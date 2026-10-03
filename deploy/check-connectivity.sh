@@ -36,15 +36,28 @@ root_of() { echo "$1" | sed -E 's#^([a-z]+://[^/]+).*$#\1#'; }
 # --- are the env vars even loaded into the service? -------------------------
 echo
 echo "== service environment =="
-if ! systemctl show node-red -p Environment --value 2>/dev/null | grep -q "="; then
-    echo "  !! no Environment= lines on node-red.service"
-fi
-if command -v systemctl >/dev/null && systemctl show node-red -p EnvironmentFiles --value 2>/dev/null | grep -q ".env"; then
-    echo "  EnvironmentFile is set"
+# /proc/<pid>/environ is the only ground truth: `systemctl show -p Environment`
+# is NOT reliably populated for values that came from EnvironmentFile, so it can
+# report "empty" on a perfectly working setup (and vice versa).
+svc_pid=$(systemctl show node-red -p MainPID --value 2>/dev/null || echo "")
+if [ -n "$svc_pid" ] && [ "$svc_pid" != "0" ] && [ -r "/proc/$svc_pid/environ" ]; then
+    if tr '\0' '\n' < "/proc/$svc_pid/environ" | grep -qE '^(HUBITAT|UNIFI|PROXMOX)_'; then
+        echo "  env vars ARE loaded into node-red (pid $svc_pid):"
+        tr '\0' '\n' < "/proc/$svc_pid/environ" \
+            | grep -E '^(HUBITAT|UNIFI|PROXMOX)_' \
+            | sed -E 's/=(.*)$/=<set>/' | sed 's/^/    /'
+    else
+        echo "  !! env vars NOT in the running process (pid $svc_pid)."
+        echo "     No EnvironmentFile= is being read. Fix with:"
+        echo "       sudo bash deploy/fix-env-loading.sh"
+    fi
 else
-    echo "  !! EnvironmentFile NOT set -- /home/node-red/.env is never read."
-    echo "     Add to [Service]:  EnvironmentFile=/home/node-red/.env"
-    echo "     then: systemctl daemon-reload && systemctl restart node-red"
+    echo "  ?? cannot read /proc/$svc_pid/environ (not root, or service down)"
+fi
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl cat node-red 2>/dev/null | grep -q "^EnvironmentFile=" \
+        && echo "  unit: EnvironmentFile= present" \
+        || echo "  unit: no EnvironmentFile= directive"
 fi
 
 # --- Proxmox ----------------------------------------------------------------
