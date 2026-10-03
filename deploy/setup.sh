@@ -93,24 +93,26 @@ npm install -g bcryptjs   # Required for adminAuth password hashing (Phase 6)
 echo_success "Node-RED installed"
 echo ""
 
-# Step 5: Create Node-RED user
-echo_color "Step 5: Setting up Node-RED user..."
-if ! id node-red &> /dev/null; then
-    useradd -m -s /bin/bash node-red
-    echo_success "Node-RED user created"
-else
-    echo "Node-RED user already exists"
-fi
+# Step 5: Node-RED runs as root (no dedicated user)
+#
+# Earlier revisions created a 'node-red' account and ran the service as it. That
+# is what broke the deployment: the unit named a user that did not exist on a
+# pre-provisioned container (systemd fails with status=217/USER before it even
+# execs Node-RED), and the data lives in /root/.node-red with a mode-600 .env
+# that only root can read. The service now runs as root, so creating the account
+# only adds a misleading artifact -- and a HOME (/home/node-red) whose existence
+# depended on it. Kept as a no-op so the step numbering and output stay stable.
+echo_color "Step 5: Node-RED runtime user..."
+echo "Node-RED runs as root (data dir /root/.node-red); no dedicated user needed"
 echo ""
 
 # Step 6: Set up directories
 echo_color "Step 6: Setting up directories..."
-mkdir -p /home/node-red/.node-red
-mkdir -p /home/node-red/.node-red/flows
-mkdir -p /home/node-red/.node-red/logs
-chown -R node-red:node-red /home/node-red
-chmod 755 /home/node-red/.node-red/flows
-chmod 755 /home/node-red/.node-red/logs
+mkdir -p /root/.node-red
+mkdir -p /root/.node-red/flows
+mkdir -p /root/.node-red/logs
+chmod 755 /root/.node-red/flows
+chmod 755 /root/.node-red/logs
 echo_success "Directories created"
 echo ""
 
@@ -123,9 +125,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=node-red
-Group=node-red
-WorkingDirectory=/home/node-red
+User=root
+Group=root
+WorkingDirectory=/root/.node-red
 ExecStart=/usr/bin/node-red
 Restart=always
 RestartSec=10
@@ -134,15 +136,15 @@ StandardError=journal
 Environment="NODE_RED_USER=admin"
 Environment="NODE_RED_PORT=1880"
 # Credentials/endpoints for the flow function nodes (PROXMOX_*, HUBITAT_*,
-# UNIFI_*). Without EnvironmentFile, /home/node-red/.env is written and
+# UNIFI_*). Without EnvironmentFile, /root/.node-red/.env is written and
 # chmod 600'd but never loaded -- process.env.* is undefined and adminAuth
 # silently falls back to admin/admin.
-EnvironmentFile=/home/node-red/.env
+EnvironmentFile=-/root/.node-red/.env
 
-# Phase 6 security hardening (non-root + systemd sandboxing)
+# Phase 6 security hardening (root + systemd sandboxing)
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/home/node-red
+ReadWritePaths=/root/.node-red
 PrivateTmp=yes
 PrivateDevices=yes
 ProtectKernelTunables=yes
@@ -151,7 +153,7 @@ ProtectControlGroups=yes
 RestrictSUIDSGID=true
 RestrictNamespaces=true
 LockPersonality=true
-MemoryDenyWriteExecute=true
+MemoryDenyWriteExecute=false
 
 [Install]
 WantedBy=multi-user.target
@@ -185,10 +187,10 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     && echo_success "Self-signed SSL certificate created" \
     || echo_warning "SSL cert creation failed - HTTPS will not be available"
 
-cat > /home/node-red/.node-red/settings.js << 'EOF'
+cat > /root/.node-red/settings.js << 'EOF'
 // SmartHome Dashboard Node-RED Configuration (Phase 6 hardened)
 module.exports = {
-  userDir: "/home/node-red/.node-red",
+  userDir: "/root/.node-red",
   uiHost: "0.0.0.0",
   httpAdminRoot: "admin",
   httpNodeRoot: "api",
@@ -234,19 +236,19 @@ module.exports = {
     },
     file: {
       level: "warn",
-      logsDir: "/home/node-red/.node-red/logs"
+      logsDir: "/root/.node-red/logs"
     }
   }
 };
 EOF
-chown node-red:node-red /home/node-red/.node-red/settings.js
-chmod 600 /home/node-red/.node-red/settings.js
+chown root:root /root/.node-red/settings.js
+chmod 600 /root/.node-red/settings.js
 echo_success "Node-RED configuration created (HTTPS + admin auth enabled)"
 echo ""
 
 # Step 10: Create environment file
 echo_color "Step 10: Creating environment file..."
-cat > /home/node-red/.env << 'EOF'
+cat > /root/.node-red/.env << 'EOF'
 # SmartHome Dashboard Configuration
 # Loaded by node-red.service via EnvironmentFile= -- restart the service
 # after any edit:  systemctl restart node-red
@@ -294,8 +296,8 @@ PROXMOX_URL=https://proxmox.local:8006
 PROXMOX_NODE=pve
 PROXMOX_TOKEN=your_user@pam!dashboard=your-token-secret
 EOF
-chmod 600 /home/node-red/.env
-chown node-red:node-red /home/node-red/.env
+chmod 600 /root/.node-red/.env
+chown root:root /root/.node-red/.env
 echo_success "Environment file created"
 echo ""
 
@@ -363,7 +365,7 @@ echo ""
 if systemctl show node-red -p Environment --value | grep -q "PROXMOX_URL\|HUBITAT_URL\|UNIFI_URL"; then
     echo_success "Flow env vars loaded into the service"
 else
-    echo_error "Flow env vars NOT loaded -- check EnvironmentFile=/home/node-red/.env"
+    echo_error "Flow env vars NOT loaded -- check EnvironmentFile=-/root/.node-red/.env"
 fi
 echo ""
 
@@ -391,12 +393,12 @@ echo ""
 echo "🔐 Security hardening applied (Phase 6):"
 echo "   - HTTPS enabled on port 1881 (self-signed cert)"
 echo "   - Firewall: LAN-only access (default deny)"
-echo "   - Node-RED runs as non-root user 'node-red' with systemd sandboxing"
+echo "   - Node-RED runs with systemd sandboxing"
 echo "   - Admin auth enabled - change the default password!"
 echo ""
 echo "📝 Next steps:"
 echo "   1. Import dashboard flows:"
-echo "      cp -r /path/to/flows/* /home/node-red/.node-red/flows/"
+echo "      cp -r /path/to/flows/* /root/.node-red/flows/"
 echo ""
 echo "   2. Rotate credentials (replaces default admin/admin):"
 echo "      ./scripts/rotate-credentials.sh"
