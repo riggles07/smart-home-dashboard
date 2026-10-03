@@ -65,13 +65,17 @@ add({"id": nid("inj-h"), "type": "inject", "z": T, "name": "Every 30s",
 add({"id": nid("fn-h-build"), "type": "function", "z": T, "name": "Build Proxmox request",
      "func": (
         "// Credentials come from env vars -- never hardcoded.\n"
-        "var base = env.get('PROXMOX_URL') || 'https://proxmox.local:8006';\n"
+        "var base = env.get('PROXMOX_URL');\n"
+        "var tok  = env.get('PROXMOX_TOKEN');\n"
+        "if (!base || !tok) {\n"
+        "  node.status({fill:'red',shape:'ring',text:'missing config'});\n"
+        "  return null;\n"
+        "}\n"
         "var node = env.get('PROXMOX_NODE') || 'pve';\n"
         "msg.method = 'GET';\n"
         "msg.url = base.replace(/\\/+$/, '') + '/api2/json/nodes/' + node + '/status';\n"
         "msg.headers = {};\n"
-        "var tok = env.get('PROXMOX_TOKEN');\n"
-        "if (tok) { msg.headers['Authorization'] = 'PVEAPIToken=' + tok; }\n"
+        "msg.headers['Authorization'] = 'PVEAPIToken=' + tok;\n"
         "msg.rejectUnauthorized = false;\n"
         "return msg;"
      ),

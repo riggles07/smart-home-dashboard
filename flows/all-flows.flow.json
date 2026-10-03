@@ -157,7 +157,7 @@
     "type": "function",
     "z": "7021a0b2d35572fb",
     "name": "Build Proxmox request",
-    "func": "// Credentials come from env vars -- never hardcoded.\nvar base = env.get('PROXMOX_URL') || 'https://proxmox.local:8006';\nvar node = env.get('PROXMOX_NODE') || 'pve';\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/api2/json/nodes/' + node + '/status';\nmsg.headers = {};\nvar tok = env.get('PROXMOX_TOKEN');\nif (tok) { msg.headers['Authorization'] = 'PVEAPIToken=' + tok; }\nmsg.rejectUnauthorized = false;\nreturn msg;",
+    "func": "// Credentials come from env vars -- never hardcoded.\nvar base = env.get('PROXMOX_URL');\nvar tok  = env.get('PROXMOX_TOKEN');\nif (!base || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  return null;\n}\nvar node = env.get('PROXMOX_NODE') || 'pve';\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/api2/json/nodes/' + node + '/status';\nmsg.headers = {};\nmsg.headers['Authorization'] = 'PVEAPIToken=' + tok;\nmsg.rejectUnauthorized = false;\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",

@@ -121,6 +121,19 @@ console.log('== UniFi: client parsing ==');
   check('error path -> 0 + ERROR row', out[0].payload === 0 && /ERROR/.test(out[1].payload), out[1].payload);
 }
 
+console.log('== Proxmox: request building ==');
+{
+  const { out } = run('Build Proxmox request', { PROXMOX_URL: 'https://pve.local:8006', PROXMOX_NODE: 'pve', PROXMOX_TOKEN: 'u@pam!t=s' }, {});
+  check('builds node status url', out && out.url === 'https://pve.local:8006/api2/json/nodes/pve/status', out && out.url);
+  check('sends PVEAPIToken header', out && out.headers['Authorization'] === 'PVEAPIToken=u@pam!t=s');
+  check('trailing slash trimmed', out && out.url.indexOf('8006//api2') === -1);
+}
+{
+  const { out, statuses } = run('Build Proxmox request', {}, {});
+  check('missing config -> null (no request)', out === null || out === undefined);
+  check('missing config -> status red', statuses.some(s => s.fill === 'red'));
+}
+
 console.log('== Proxmox: metric parsing ==');
 {
   const msg = { payload: { data: { cpu: 0.0734, memory: { used: 2000, total: 8000 }, uptime: 90061, loadavg: [0.42, 0.3, 0.2] } } };

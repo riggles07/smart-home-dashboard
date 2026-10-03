@@ -36,9 +36,14 @@ root_of() { echo "$1" | sed -E 's#^([a-z]+://[^/]+).*$#\1#'; }
 # Load the env file into this shell's environment. Without this, every ${VAR}
 # below reads the invoking shell (which has none of them) and reports a false
 # "unset" for a perfectly configured host.
-env_file="${NODE_RED_ENV_FILE:-/home/node-red/.env}"
-if [ ! -f "$env_file" ] && [ -f /root/.node-red/.env ]; then env_file=/root/.node-red/.env; fi
-if [ -f "$env_file" ]; then
+#
+# Candidate locations, most-specific first: the unit's userDir home (what
+# systemd would use) then $HOME (what a hand-started process would use).
+env_file=""
+for cand in "${NODE_RED_ENV_FILE:-}" /home/node-red/.env /root/.node-red/.env "$HOME/.node-red/.env"; do
+    [ -n "$cand" ] && [ -f "$cand" ] && { env_file="$cand"; break; }
+done
+if [ -n "$env_file" ]; then
     set -a
     # shellcheck disable=SC1090
     . "$env_file" 2>/dev/null \
@@ -46,7 +51,8 @@ if [ -f "$env_file" ]; then
         || echo "  ?? could not load $env_file -- check quoting/spaces in values"
     set +a
 else
-    echo "note: no env file at $env_file (set NODE_RED_ENV_FILE to point elsewhere)"
+    echo "note: no env file found in /home/node-red/.env, /root/.node-red/.env or \$HOME/.node-red/.env"
+    echo "      (set NODE_RED_ENV_FILE to point elsewhere)"
 fi
 
 # --- are the env vars even loaded into the flows? ---------------------------
@@ -61,19 +67,25 @@ echo "== service environment =="
 #      meaningful when we cannot inspect the live process)
 env_vars=""
 env_src=""
+# 1. Prefer the environment of the actual Node-RED process. That is the only
+#    thing that proves the flows can see the values.
 svc_pid=$(systemctl show node-red -p MainPID --value 2>/dev/null || echo "")
-if [ -n "$svc_pid" ] && [ "$svc_pid" != "0" ] && [ -r "/proc/$svc_pid/environ" ]; then
-    env_vars=$(tr '\0' '\n' < "/proc/$svc_pid/environ" 2>/dev/null)
-    env_src="running process (pid $svc_pid)"
+if [ -z "$svc_pid" ] || [ "$svc_pid" = "0" ]; then
+    svc_pid=$(pgrep -f 'node-red' 2>/dev/null | head -1 || echo "")
+fi
+if [ -n "$svc_pid" ] && [ -r "/proc/$svc_pid/environ" ]; then
+    proc_vars=$(tr '\0' '\n' < "/proc/$svc_pid/environ" 2>/dev/null)
+    if echo "$proc_vars" | grep -qE '^(HUBITAT|UNIFI|PROXMOX)_'; then
+        env_vars="$proc_vars"
+        env_src="running process (pid $svc_pid) -- these ARE visible to the flows"
+    fi
 fi
 
-# Locate the env file the unit is (or should be) using.
-env_file="${NODE_RED_ENV_FILE:-/home/node-red/.env}"
-if [ ! -f "$env_file" ] && [ -f /root/.node-red/.env ]; then env_file=/root/.node-red/.env; fi
-
-if [ -z "$env_vars" ] && [ -f "$env_file" ]; then
+# 2. Fall back to the env file we already resolved above (same list, so the two
+#    sections can never disagree about which file is in use).
+if [ -z "$env_vars" ] && [ -n "$env_file" ] && [ -f "$env_file" ]; then
     env_vars=$(grep -E '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' "$env_file" 2>/dev/null)
-    env_src="env file $env_file (live process not inspectable)"
+    env_src="env file $env_file (NOT confirmed in the running process)"
 fi
 
 if [ -n "$env_vars" ]; then
@@ -86,22 +98,48 @@ if [ -n "$env_vars" ]; then
         echo "  !! no HUBITAT_/UNIFI_/PROXMOX_ variables found in this source."
         echo "     The flows will fall back to *.local defaults and ENOTFOUND."
     fi
+    if [ -n "$env_file" ] && [ -z "$(echo "$env_vars" | grep -c '^')" ]; then :; fi
 else
-    echo "  ?? no env source found (no readable process, no $env_file)."
+    echo "  ?? no env source found (no readable process, no env file)."
 fi
+echo "  NOTE: values defined in a file are only used by the running Node-RED if"
+echo "        the process that started it had them -- see 'running' below."
 
 # What is actually running Node-RED, and is the env file wired to it?
 if command -v systemctl >/dev/null 2>&1; then
-    printf '  unit: node-red is %s' "$(systemctl is-active node-red 2>/dev/null || echo unknown)"
-    systemctl is-active --quiet node-red 2>/dev/null || printf '  <- not active; the env fix will not apply to whatever else is serving :1880'
-    echo
-    systemctl cat node-red 2>/dev/null | grep -q "^EnvironmentFile=" \
-        && echo "  unit: EnvironmentFile= present" \
-        || echo "  unit: no EnvironmentFile= directive"
+    printf '  unit: node-red is %s\n' "$(systemctl is-active node-red 2>/dev/null || echo unknown)"
+    if systemctl cat node-red >/dev/null 2>&1; then
+        systemctl cat node-red 2>/dev/null | grep -q "^EnvironmentFile=" \
+            && echo "  unit: EnvironmentFile= present" \
+            || echo "  unit: no EnvironmentFile= directive"
+    else
+        echo "  unit: no node-red.service in this container -- systemd is not managing it"
+    fi
 fi
+# How is it actually running? An LXC often runs Node-RED by hand or under its
+# own init, in which case the systemd unit (and any EnvironmentFile= on it) is
+# irrelevant -- the process env is whatever its launcher had.
 if command -v pgrep >/dev/null 2>&1; then
-    echo "  processes matching node-red:"
-    pgrep -af 'node-red|node .*red' 2>/dev/null | sed 's/^/    /' || echo "    (none)"
+    rpid=$(pgrep -f 'node-red' 2>/dev/null | head -1 || echo "")
+    if [ -n "$rpid" ]; then
+        echo "  running: pid $rpid"
+        if [ "$rpid" = "1" ]; then
+            echo "    !! pid 1 is the container's init -- Node-RED is PID 1 (started as the"
+            echo "       container command, not via systemd). Its env comes from the"
+            echo "       container/process launcher, so an EnvironmentFile= drop-in has no"
+            echo "       effect. Either put the variables in the container config, or start"
+            echo "       it via a wrapper that sources the env file."
+        fi
+        if [ -r "/proc/$rpid/environ" ]; then
+            if tr '\0' '\n' < "/proc/$rpid/environ" | grep -qE '^(HUBITAT|UNIFI|PROXMOX)_'; then
+                echo "    flow vars ARE in pid $rpid's environment"
+            else
+                echo "    !! flow vars are NOT in pid $rpid's environment -- the running"
+                echo "       Node-RED cannot see them (this is what makes the flows fall"
+                echo "       back to *.local and ENOTFOUND)"
+            fi
+        fi
+    fi
 fi
 
 # --- Proxmox ----------------------------------------------------------------
