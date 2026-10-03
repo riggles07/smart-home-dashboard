@@ -1,0 +1,99 @@
+// Smart Home Dashboard - Node-RED Settings
+// Main configuration file for Node-RED
+
+module.exports = {
+  // User Directory (where flows, credentials, and other user data are stored)
+  userDir: process.env.NODE_RED_USERDIR || process.env.HOME + "/.node-red",
+
+  // Function Directory (where function nodes store their code)
+  functionRepo: process.env.HOME + "/.node-red/functionRepo",
+
+  // Projects Directory (where project files are stored)
+  projectsDir: process.env.HOME + "/.node-red/projects",
+
+  // Flow file to load on startup
+  flowFile: process.env.HOME + "/.node-red/flows/all-flows.js",
+
+  // Flow Files to load (alternative - load individual files)
+  flowFiles: [
+    process.env.HOME + "/.node-red/flows/dashboard-configuration.js",
+    process.env.HOME + "/.node-red/flows/home-lab-monitor.js",
+    process.env.HOME + "/.node-red/flows/hubitat-integration.js",
+    process.env.HOME + "/.node-red/flows/integration-functions.js",
+    process.env.HOME + "/.node-red/flows/kanban-flow.js",
+    process.env.HOME + "/.node-red/flows/unifi-network-monitor.js"
+  ],
+
+  credentials: process.env.HOME + "/.node-red/credentials/default_*/**",
+  imports: {},
+  plugins: [],
+
+  // HTTP Server Configuration
+  httpAdminRoot: "node-red-admin",
+  httpStatic: process.env.HOME + "/.node-red/static",
+  httpStaticCORS: "*",
+
+  // UI Configuration
+  ui: {
+    theme: "complete",
+    css: "css/dashboard.css",
+    tabs: [
+      {
+        file: "flows/dashboard-configuration.js",
+        name: "Dashboard"
+      }
+    ],
+    order: ["Dashboard"]
+  },
+
+  // Server Configuration
+  server: {
+    // Port - change to 1881 if HTTPS is enabled
+    port: process.env.NODE_RED_PORT || 1880,
+    // Enable HTTPS
+    ssl: {
+      enabled: true,
+      cert: process.env.HOME + "/.node-red/fullchain.pem",
+      key: process.env.HOME + "/.node-red/private.key",
+      port: 1881
+    },
+    // Security Headers
+    xheaders: false,
+    xforwarded: false,
+    headers: {
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "X-XSS-Protection": "1; mode=block",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    }
+  },
+
+  // Logging Configuration
+  logging: {
+    console: {
+      level: "info"
+    },
+    file: {
+      level: "info",
+      maxFiles: 10,
+      maxSize: "10485760"
+    }
+  },
+
+  // Plugin Configuration
+  plugins: {
+    dashboard: {
+      path: "",
+      port: process.env.NODE_RED_PORT || 1880,
+      zip: true,
+      allowInit: false,
+      show: {
+        setting: false,
+        debug: false,
+        world: false,
+        tabs: false
+      }
+    }
+  }
+};
