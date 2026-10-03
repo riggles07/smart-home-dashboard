@@ -33,31 +33,75 @@ host_of() { echo "$1" | sed -E 's#^[a-z]+://##; s#[/:].*$##'; }
 # scheme://authority (drops any path prefix) -> for probing the console root
 root_of() { echo "$1" | sed -E 's#^([a-z]+://[^/]+).*$#\1#'; }
 
-# --- are the env vars even loaded into the service? -------------------------
+# Load the env file into this shell's environment. Without this, every ${VAR}
+# below reads the invoking shell (which has none of them) and reports a false
+# "unset" for a perfectly configured host.
+env_file="${NODE_RED_ENV_FILE:-/home/node-red/.env}"
+if [ ! -f "$env_file" ] && [ -f /root/.node-red/.env ]; then env_file=/root/.node-red/.env; fi
+if [ -f "$env_file" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$env_file" 2>/dev/null \
+        && echo "loaded env: $env_file" \
+        || echo "  ?? could not load $env_file -- check quoting/spaces in values"
+    set +a
+else
+    echo "note: no env file at $env_file (set NODE_RED_ENV_FILE to point elsewhere)"
+fi
+
+# --- are the env vars even loaded into the flows? ---------------------------
 echo
 echo "== service environment =="
-# /proc/<pid>/environ is the only ground truth: `systemctl show -p Environment`
-# is NOT reliably populated for values that came from EnvironmentFile, so it can
-# report "empty" on a perfectly working setup (and vice versa).
+# The probe must test the environment the FLOWS run in, not this shell -- a
+# plain ${VAR} here would always look unset and report a false failure.
+#
+# Preference order for the source of truth:
+#   1. the running Node-RED process  (/proc/<pid>/environ)
+#   2. the env file itself           (parsed, so the file's own contents are still
+#      meaningful when we cannot inspect the live process)
+env_vars=""
+env_src=""
 svc_pid=$(systemctl show node-red -p MainPID --value 2>/dev/null || echo "")
 if [ -n "$svc_pid" ] && [ "$svc_pid" != "0" ] && [ -r "/proc/$svc_pid/environ" ]; then
-    if tr '\0' '\n' < "/proc/$svc_pid/environ" | grep -qE '^(HUBITAT|UNIFI|PROXMOX)_'; then
-        echo "  env vars ARE loaded into node-red (pid $svc_pid):"
-        tr '\0' '\n' < "/proc/$svc_pid/environ" \
-            | grep -E '^(HUBITAT|UNIFI|PROXMOX)_' \
-            | sed -E 's/=(.*)$/=<set>/' | sed 's/^/    /'
+    env_vars=$(tr '\0' '\n' < "/proc/$svc_pid/environ" 2>/dev/null)
+    env_src="running process (pid $svc_pid)"
+fi
+
+# Locate the env file the unit is (or should be) using.
+env_file="${NODE_RED_ENV_FILE:-/home/node-red/.env}"
+if [ ! -f "$env_file" ] && [ -f /root/.node-red/.env ]; then env_file=/root/.node-red/.env; fi
+
+if [ -z "$env_vars" ] && [ -f "$env_file" ]; then
+    env_vars=$(grep -E '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=' "$env_file" 2>/dev/null)
+    env_src="env file $env_file (live process not inspectable)"
+fi
+
+if [ -n "$env_vars" ]; then
+    echo "  source: $env_src"
+    matched=$(echo "$env_vars" | grep -E '^(HUBITAT|UNIFI|PROXMOX)_' || true)
+    if [ -n "$matched" ]; then
+        # Show that values are set, never the values themselves.
+        echo "$matched" | sed -E 's/=(.*)$/=<set>/' | sed 's/^/    /'
     else
-        echo "  !! env vars NOT in the running process (pid $svc_pid)."
-        echo "     No EnvironmentFile= is being read. Fix with:"
-        echo "       sudo bash deploy/fix-env-loading.sh"
+        echo "  !! no HUBITAT_/UNIFI_/PROXMOX_ variables found in this source."
+        echo "     The flows will fall back to *.local defaults and ENOTFOUND."
     fi
 else
-    echo "  ?? cannot read /proc/$svc_pid/environ (not root, or service down)"
+    echo "  ?? no env source found (no readable process, no $env_file)."
 fi
+
+# What is actually running Node-RED, and is the env file wired to it?
 if command -v systemctl >/dev/null 2>&1; then
+    printf '  unit: node-red is %s' "$(systemctl is-active node-red 2>/dev/null || echo unknown)"
+    systemctl is-active --quiet node-red 2>/dev/null || printf '  <- not active; the env fix will not apply to whatever else is serving :1880'
+    echo
     systemctl cat node-red 2>/dev/null | grep -q "^EnvironmentFile=" \
         && echo "  unit: EnvironmentFile= present" \
         || echo "  unit: no EnvironmentFile= directive"
+fi
+if command -v pgrep >/dev/null 2>&1; then
+    echo "  processes matching node-red:"
+    pgrep -af 'node-red|node .*red' 2>/dev/null | sed 's/^/    /' || echo "    (none)"
 fi
 
 # --- Proxmox ----------------------------------------------------------------
@@ -162,17 +206,29 @@ if [ -n "${UNIFI_URL:-}" ]; then
             *) echo "  ?? API key: HTTP $code" ;;
         esac
     elif [ -n "${UNIFI_USERNAME:-}" ] && [ -n "${UNIFI_PASSWORD:-}" ]; then
-        login_url="${UNIFI_LOGIN_URL:-${UNIFI_URL%/}/api/login}"
-        echo "  login URL: ${login_url}"
+        # Mirror the flow's own login-URL logic exactly, or this check tests a
+        # different endpoint than the flow uses and misleads either way:
+        #   UNIFI_LOGIN_URL if set -> else /api/auth/login at the console root
+        #   for a /proxy/network base (UniFi OS) -> else <UNIFI_URL>/api/login
+        if [ -n "${UNIFI_LOGIN_URL:-}" ]; then
+            login_url="$UNIFI_LOGIN_URL"
+        else
+            console_root=$(root_of "$UNIFI_URL")
+            case "$UNIFI_URL" in
+                */proxy/network*) login_url="${console_root}/api/auth/login" ;;
+                *) login_url="${UNIFI_URL%/}/api/login" ;;
+            esac
+        fi
+        echo "  login URL: ${login_url}  (matches the flow's derivation)"
         code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 8 \
             -H "Content-Type: application/json" \
             -d "{\"username\":\"${UNIFI_USERNAME}\",\"password\":\"${UNIFI_PASSWORD}\"}" \
             "$login_url" 2>/dev/null)
         case "$code" in
             200) echo "  login: 200 OK (credentials accepted)" ;;
-            400) echo "  !! login: 400 -- endpoint exists but request rejected. UniFi OS uses" \
-                      "/api/auth/login; set UNIFI_LOGIN_URL to that path." ;;
+            400) echo "  !! login: 400 -- endpoint reached but request rejected." ;;
             401) echo "  !! login: 401 -- credentials rejected" ;;
+            404) echo "  !! login: 404 -- wrong login path for this controller type" ;;
             000) echo "  !! login: unreachable" ;;
             *) echo "  ?? login: HTTP $code" ;;
         esac
