@@ -48,6 +48,15 @@ node_red:
       maxSize: 10485760
   plugins:
     - dashboard
-    - node-red-node-hubitat
-    - node-red-node-unifi
+    - node-red-contrib-hubitat
+    - node-red-contrib-unifi
     - node-red-contrib-kanbanflow
+  flowFiles: [
+  "/root/.node-red/flows/dashboard-configuration.js",
+  "/root/.node-red/flows/home-lab-monitor.js",
+  "/root/.node-red/flows/hubitat-integration.js",
+  "/root/.node-red/flows/integration-functions.js",
+  "/root/.node-red/flows/kanban-flow.js",
+  "/root/.node-red/flows/unifi-network-monitor.js"
+]
+
