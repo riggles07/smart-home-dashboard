@@ -98,9 +98,9 @@ apt-get install -y nodejs
 npm install -g node-red
 
 # Install Node-RED modules (if needed)
-npm install -g node-red-dashboard
-npm install -g node-red-node-hubitat
-npm install -g node-red-node-unifi
+npm install -g @flowfuse/node-red-dashboard
+npm install -g node-red-contrib-hubitat
+npm install -g node-red-contrib-unifi
 npm install -g node-red-contrib-kanbanflow
 ```
 
