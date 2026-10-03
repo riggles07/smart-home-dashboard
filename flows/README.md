@@ -30,7 +30,39 @@ LXC these come from `/home/node-red/.env`, loaded by the systemd unit via
 |----------|---------|
 | `PROXMOX_URL`, `PROXMOX_NODE`, `PROXMOX_TOKEN` | Home Lab tab |
 | `HUBITAT_URL`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices tab |
-| `UNIFI_URL`, `UNIFI_SITE`, `UNIFI_API_KEY` *or* `UNIFI_USERNAME`+`UNIFI_PASSWORD` | Network tab |
+| `UNIFI_URL`, `UNIFI_SITE`, `UNIFI_API_KEY` *or* `UNIFI_USERNAME`+`UNIFI_PASSWORD`, `UNIFI_LOGIN_URL` | Network tab |
+
+### UniFi: get the URL form right
+
+This is the one setting that silently 404s. UniFi serves its Network API at a
+different path depending on the product:
+
+| Product | Port | `UNIFI_URL` |
+|---------|------|-------------|
+| UniFi OS console (UDM, Cloud Gateway, Dream Router) | 443 | `https://<host>/proxy/network` |
+| Self-hosted Network controller | 8443 | `https://<host>:8443` |
+
+Check which one you have — a UniFi OS console answers with
+`<title>UniFi OS</title>` at the host root:
+
+```bash
+curl -sk https://<host>/ | grep -o '<title>[^<]*</title>'
+```
+
+If you use username/password on a UniFi OS console, also set the login path,
+which differs from the legacy one:
+
+```
+UNIFI_LOGIN_URL=https://<host>/api/auth/login
+```
+
+An API key avoids the login entirely and is the better option if your UniFi
+version supports it (Network 8+: *Settings → Control Plane → Integrations*).
+
+**Diagnostic caveat:** UniFi OS returns **401 for every `/api/*` path**,
+including bogus ones. So a 401 proves nothing about whether a path is correct —
+only a **404** proves a prefix is wrong. Don't conclude the URL is right just
+because it 401s.
 
 ### Setup
 
