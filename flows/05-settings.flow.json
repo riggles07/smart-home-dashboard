@@ -51,12 +51,12 @@
     "name": "Load info",
     "props": [
       {
-        "name": "payload",
-        "value": "Smart Home Dashboard\\nNode-RED flows deployed.\\n\\nSet credentials in the LXC env:\\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL",
+        "p": "payload",
+        "v": "Smart Home Dashboard\nNode-RED flows deployed.\n\nSet credentials in the LXC env:\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL",
         "vt": "str"
       }
     ],
-    "repeat": "",
+    "repeat": "300",
     "crontab": "",
     "once": true,
     "onceDelay": 2.0,

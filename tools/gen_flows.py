@@ -388,6 +388,11 @@ add({"id": nid("fn-u-login"), "type": "function", "z": T, "name": "Build UniFi a
         "  msg.method = 'GET';\n"
         "  msg.url = msg.url_stat;\n"
         "  msg.headers['X-API-KEY'] = key;\n"
+        "  // out1 is the API-key path and MUST still go through the HTTP request\n"
+        "  // node. Returning it on out0 (the login path) sent it straight to the\n"
+        "  // parser, which then read the inject's Date payload instead of client\n"
+        "  // data and always rendered 0 clients. Both auth routes converge on the\n"
+        "  // same HTTP node; out0 only differs in that it needs a login first.\n"
         "  return [null, msg];\n"
         "}\n"
         "if (!user || !pass) {\n"
@@ -412,7 +417,14 @@ add({"id": nid("fn-u-login"), "type": "function", "z": T, "name": "Build UniFi a
         "return [msg, null];"
      ),
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 340, "y": 120, "wires": [[nid("http-u-login")], [nid("fn-u-parse")]]})
+     # out0 (login required) -> the login HTTP node.
+     # out1 (API key, request already built) -> the SAME stat HTTP node the
+     # login path reaches after Capture session. It must NOT go to the parser
+     # directly -- that skipped the request entirely and always rendered 0
+     # clients. `msg.url` is already set on both routes, and the http request
+     # node is method:"use", so it honours whatever the function set.
+     "x": 340, "y": 120,
+     "wires": [[nid("http-u-login")], [nid("http-u-stat")]]})
 
 add({"id": nid("http-u-login"), "type": "http request", "z": T, "name": "UniFi login",
      "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
@@ -523,7 +535,7 @@ add({"id": nid("fn-k-render"), "type": "function", "z": T, "name": "Render board
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 350, "y": 200, "wires": [[nid("tbl-cards")], [nid("dbg-k")]]})
 add({"id": nid("inj-k"), "type": "inject", "z": T, "name": "Load board",
-     "props": [{"p": "payload"}], "repeat": "", "crontab": "", "once": True,
+     "props": [{"p": "payload"}], "repeat": "60", "crontab": "", "once": True,
      "onceDelay": 1.5, "topic": "", "payload": "", "payloadType": "date",
      "x": 140, "y": 280, "wires": [[nid("fn-k-render")]]})
 add({"id": nid("dbg-k"), "type": "debug", "z": T, "name": "Cards",
@@ -544,8 +556,16 @@ add({"id": nid("txt-info"), "type": "ui_text", "z": T, "name": "Deployment Info"
      "label": "Info", "format": "{{msg.payload}}", "layout": "row-left",
      "className": "", "x": 640, "y": 120, "wires": []})
 add({"id": nid("inj-s"), "type": "inject", "z": T, "name": "Load info",
-     "props": [{"name": "payload", "value": "Smart Home Dashboard\\nNode-RED flows deployed.\\n\\nSet credentials in the LXC env:\\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL", "vt": "str"}],
-     "repeat": "", "crontab": "", "once": True, "onceDelay": 2.0, "topic": "",
+     # Inject property schema is {"p":<property>,"v":<value>,"vt":<type>} --
+     # NOT {"name":...,"value":...}. The wrong keys are silently ignored, the
+     # node falls back to payloadType, and the widget renders a timestamp (or
+     # nothing) instead of the intended string.
+     "props": [{"p": "payload", "v": "Smart Home Dashboard\nNode-RED flows deployed.\n\nSet credentials in the LXC env:\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL", "vt": "str"}],
+     # repeat is REQUIRED, not cosmetic: a one-shot inject fires once at DEPLOY
+     # time, so any browser that connects afterwards finds the widget empty. A
+     # widget only shows data pushed after it subscribed, so every inject that
+     # feeds a display must re-fire on an interval.
+     "repeat": "300", "crontab": "", "once": True, "onceDelay": 2.0, "topic": "",
      "payload": "", "payloadType": "date", "x": 150, "y": 120, "wires": [[nid("txt-info")]]})
 
 # ---------------------------------------------------------------- write files
