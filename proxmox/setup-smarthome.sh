@@ -21,7 +21,7 @@ else
     echo "✗ Not running inside container - this script must be run from within the LXC container"
     echo ""
     echo "To use from outside container:"
-    echo "  qm terminal ${CONTAINER_ID}"
+    echo "  ct terminal ${CONTAINER_ID}"
     echo "  ./setup-smarthome.sh ${CONTAINER_ID}"
     exit 1
 fi

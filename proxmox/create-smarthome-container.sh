@@ -83,7 +83,7 @@ if echo "$RESPONSE" | grep -q "data:.*task"; then
         echo -e "${GREEN}Access Node-RED at: http://${CONTAINER_IP}:1880${NC}"
         echo ""
         echo -e "${YELLOW}Next steps:${NC}"
-        echo "  1. SSH into container: qm terminal ${CONTAINER_ID}"
+        echo "  1. SSH into container: ct terminal ${CONTAINER_ID}"
         echo "  2. Install Node.js: apt-get update && apt-get install -y nodejs npm"
         echo "  3. Install Node-RED: npm install -g node-red"
         echo "  4. Start: node-red"

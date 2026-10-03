@@ -70,22 +70,22 @@ cd /root
 ssh root@<proxmox-host>
 
 # Create container
-qm create 101 --template debian-12-standard --cores 2 --memory 2048 \
+ct create 101 --template debian-12-standard --cores 2 --memory 2048 \
     --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100,type=veth" \
     --name "smarthome-dashboard"
 
 # Start container
-qm start 101
+ct start 101
 ```
 
 ### Step 2: Configure Container
 
 ```bash
 # Set static IP
-qm set 101 --ip 192.168.1.100 --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100,type=veth"
+ct set 101 --ip 192.168.1.100 --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100,type=veth"
 
 # SSH into container
-qm terminal 101
+ct terminal 101
 ```
 
 ## Inside Container Setup
@@ -156,15 +156,15 @@ docker run -d -p 1880:1880 --name smarthome nodered/node-red
 
 | Command | Description |
 |---------|-------------|
-| `qm create 101 ...` | Create container |
-| `qm start 101` | Start container |
-| `qm stop 101` | Stop container |
-| `qm restart 101` | Restart container |
-| `qm terminal 101` | Open shell |
-| `qm list` | List containers |
-| `qm snapshot 101 "backup"` | Create snapshot |
-| `qm export 101 /backup.tar.gz` | Export backup |
-| `qm delete 101 --purge` | Delete container |
+| `ct create 101 ...` | Create container |
+| `ct start 101` | Start container |
+| `ct stop 101` | Stop container |
+| `ct restart 101` | Restart container |
+| `ct terminal 101` | Open shell |
+| `ct list` | List containers |
+| `ct snapshot 101 "backup"` | Create snapshot |
+| `ct export 101 /backup.tar.gz` | Export backup |
+| `ct delete 101 --purge` | Delete container |
 
 ## Proxmox API Example (From Container)
 
@@ -236,14 +236,14 @@ If container needs to expose ports to host network:
 
 ```bash
 # On Proxmox host:
-qm set 101 --nameserver 8.8.8.8 --ipconfig0 'ip=192.168.1.100,gw=192.168.1.1'
+ct set 101 --nameserver 8.8.8.8 --ipconfig0 'ip=192.168.1.100,gw=192.168.1.1'
 ```
 
 ### Container Can't Reach Internet
 
 ```bash
 # Set gateway in container:
-qm set 101 --net0 "bridge=vmbr0,firewall=0,ip=192.168.1.100,gw=192.168.1.1,type=veth"
+ct set 101 --net0 "bridge=vmbr0,firewall=0,ip=192.168.1.100,gw=192.168.1.1,type=veth"
 ```
 
 ## Summary
