@@ -1,8 +1,17 @@
 // Unit-test the flow function nodes by extracting real `func` bodies from the
 // deployed flow JSON and running them against stubbed Node-RED globals.
+//
+// Resolve the flow file RELATIVE TO THIS SCRIPT, not by an absolute path.
+// This previously hardcoded the author's dev path (/root/.hermes/...), which
+// made the script pass locally and fail in CI with EACCES -- and it made a
+// clean-clone check pass too, because the absolute path still existed on the
+// machine doing the checking.
 const fs = require('fs');
-const path = '/root/.hermes/projects/smart-home-dashboard/flows/all-flows.flow.json';
-const nodes = JSON.parse(fs.readFileSync(path, 'utf8'));
+const path = require('path');
+const here = __dirname;                              // .../tools
+const flowPath = process.argv[2] ||
+    path.join(here, '..', 'flows', 'all-flows.flow.json');
+const nodes = JSON.parse(fs.readFileSync(path.resolve(flowPath), 'utf8'));
 const byName = {};
 for (const n of nodes) if (n.type === 'function') byName[n.name] = n.func;
 

@@ -13,7 +13,10 @@ Credentials are NEVER hardcoded: function nodes read them from env vars
 """
 import json, os, hashlib
 
-OUT = "/root/.hermes/projects/smart-home-dashboard/flows"
+# Resolve output paths relative to THIS script so the generator works in any
+# checkout (CI, fresh clone), not only on the author's machine.
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(_ROOT, "flows")
 
 def _id(seed):
     """Deterministic 16-hex-char node id."""
@@ -40,7 +43,7 @@ def add(*nodes):
 # on an invisible ui_group. A ui_template renders into the page, so a <style>
 # block inside it applies globally, and the dashboard pushes it over the
 # existing websocket -- no extra HTTP plumbing required.
-THEME_CSS_PATH = "/root/.hermes/projects/smart-home-dashboard/css/dashboard.css"
+THEME_CSS_PATH = os.path.join(_ROOT, "css", "dashboard.css")
 
 
 def load_theme_css(path=THEME_CSS_PATH):
