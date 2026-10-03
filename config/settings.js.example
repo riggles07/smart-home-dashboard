@@ -1,99 +1,85 @@
-// Smart Home Dashboard - Node-RED Settings
-// Main configuration file for Node-RED
+/**
+ * Node-RED settings -- Smart Home Dashboard
+ *
+ * Only keys documented at
+ *   https://nodered.org/docs/user-guide/runtime/configuration
+ * are used here.
+ *
+ * DO NOT add keys that are not part of Node-RED's settings schema. Common
+ * fabrications that will break the file or be silently ignored:
+ *   flowFiles  plugins  server  ui.theme  ui.css  ui.tabs  ui.order
+ *   functionRepo  projectsDir  httpStaticHeaders
+ * There is exactly ONE flow file option: `flowFile`.
+ *
+ * Verify any edit before restarting:
+ *   node --check /root/.node-red/settings.js
+ *   node -e "require('/root/.node-red/settings.js'); console.log('loads OK')"
+ */
 
 module.exports = {
-  // User Directory (where flows, credentials, and other user data are stored)
-  userDir: process.env.NODE_RED_USERDIR || process.env.HOME + "/.node-red",
+    // ---------------------------------------------------------------------
+    // Runtime
+    // ---------------------------------------------------------------------
 
-  // Function Directory (where function nodes store their code)
-  functionRepo: process.env.HOME + "/.node-red/functionRepo",
+    // Directory holding user data (flows, credentials, library).
+    // Default is $HOME/.node-red -- for root that is already /root/.node-red,
+    // so this line is optional. It is a real setting; `functionRepo` and
+    // `projectsDir` are not.
+    userDir: process.env.NODE_RED_USERDIR || "/root/.node-red",
 
-  // Projects Directory (where project files are stored)
-  projectsDir: process.env.HOME + "/.node-red/projects",
+    // The file (relative to userDir, or absolute) that stores the flows.
+    flowFile: "flows.json",
 
-  // Flow file to load on startup
-  flowFile: process.env.HOME + "/.node-red/flows/all-flows.js",
+    // Write the flow file with indentation so diffs are readable.
+    flowFilePretty: true,
 
-  // Flow Files to load (alternative - load individual files)
-  flowFiles: [
-    process.env.HOME + "/.node-red/flows/dashboard-configuration.js",
-    process.env.HOME + "/.node-red/flows/home-lab-monitor.js",
-    process.env.HOME + "/.node-red/flows/hubitat-integration.js",
-    process.env.HOME + "/.node-red/flows/integration-functions.js",
-    process.env.HOME + "/.node-red/flows/kanban-flow.js",
-    process.env.HOME + "/.node-red/flows/unifi-network-monitor.js"
-  ],
+    // Editor/API port. Default 1880.
+    uiPort: process.env.NODE_RED_PORT || 1880,
 
-  credentials: process.env.HOME + "/.node-red/credentials/default_*/**",
-  imports: {},
-  plugins: [],
+    // Secret used to encrypt the credentials file. Set this to a fixed value:
+    // if it changes, stored credentials become unreadable. Not needed by this
+    // project (the flows read secrets from the environment, not from
+    // credential nodes), but harmless and good practice.
+    credentialSecret: process.env.NODE_RED_CREDENTIAL_SECRET || "shd-local-secret",
 
-  // HTTP Server Configuration
-  httpAdminRoot: "node-red-admin",
-  httpStatic: process.env.HOME + "/.node-red/static",
-  httpStaticCORS: "*",
+    // ---------------------------------------------------------------------
+    // Dashboard (node-red-dashboard)
+    // ---------------------------------------------------------------------
+    // `path` is the ONLY dashboard runtime setting. Everything else about the
+    // dashboard (theme, tabs, layout, css) is configured in the editor UI, not
+    // here. Default path is "ui".
+    ui: { path: "ui" },
 
-  // UI Configuration
-  ui: {
-    theme: "complete",
-    css: "css/dashboard.css",
-    tabs: [
-      {
-        file: "flows/dashboard-configuration.js",
-        name: "Dashboard"
-      }
-    ],
-    order: ["Dashboard"]
-  },
-
-  // Server Configuration
-  server: {
-    // Port - change to 1881 if HTTPS is enabled
-    port: process.env.NODE_RED_PORT || 1880,
-    // Enable HTTPS
-    ssl: {
-      enabled: true,
-      cert: process.env.HOME + "/.node-red/fullchain.pem",
-      key: process.env.HOME + "/.node-red/private.key",
-      port: 1881
-    },
-    // Security Headers
-    xheaders: false,
-    xforwarded: false,
-    headers: {
-      "X-Frame-Options": "DENY",
-      "X-Content-Type-Options": "nosniff",
-      "X-XSS-Protection": "1; mode=block",
-      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    // ---------------------------------------------------------------------
+    // Logging
+    // ---------------------------------------------------------------------
+    logging: {
+        console: { level: process.env.NODE_RED_LOG_LEVEL || "info" }
     }
-  },
 
-  // Logging Configuration
-  logging: {
-    console: {
-      level: "info"
-    },
-    file: {
-      level: "info",
-      maxFiles: 10,
-      maxSize: "10485760"
-    }
-  },
+    // ---------------------------------------------------------------------
+    // Admin authentication -- disabled to match the current setup.
+    // To enable, uncomment and generate a real hash first:
+    //   node-red admin hash-pw
+    // Never hand-write a placeholder hash; bcrypt hashes must be valid or
+    // login breaks.
+    // ---------------------------------------------------------------------
+    // adminAuth: {
+    //     type: "credentials",
+    //     users: [{
+    //         username: process.env.NODE_RED_USER || "admin",
+    //         password: "$2b$08$REPLACE_WITH_HASH_FROM_node-red_admin_hash-pw",
+    //         permissions: "*"
+    //     }]
+    // },
 
-  // Plugin Configuration
-  plugins: {
-    dashboard: {
-      path: "",
-      port: process.env.NODE_RED_PORT || 1880,
-      zip: true,
-      allowInit: false,
-      show: {
-        setting: false,
-        debug: false,
-        world: false,
-        tabs: false
-      }
-    }
-  }
+    // ---------------------------------------------------------------------
+    // HTTPS -- disabled; this instance serves plain HTTP on uiPort.
+    // To enable, uncomment and provide real certificate files. `https` is the
+    // real key; `server` is not.
+    // ---------------------------------------------------------------------
+    // https: {
+    //     key:  require("fs").readFileSync("/etc/node-red/private.key"),
+    //     cert: require("fs").readFileSync("/etc/node-red/fullchain.pem")
+    // },
 };
