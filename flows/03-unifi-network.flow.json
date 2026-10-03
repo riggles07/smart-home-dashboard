@@ -1,0 +1,170 @@
+[
+  {
+    "id": "1292414d65358a68",
+    "type": "tab",
+    "label": "Network",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "453b38c70c013c67",
+    "type": "ui_tab",
+    "z": "1292414d65358a68",
+    "name": "Network",
+    "icon": "wifi",
+    "order": 3,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "626e7274ee98c352",
+    "type": "ui_group",
+    "z": "1292414d65358a68",
+    "name": "Network Overview",
+    "tab": "453b38c70c013c67",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "b600ad1c10e3da25",
+    "type": "ui_text",
+    "z": "1292414d65358a68",
+    "name": "Clients Online",
+    "group": "626e7274ee98c352",
+    "order": 1,
+    "width": "6",
+    "height": "2",
+    "label": "Clients",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "dcf1d5cee4fd6ca6",
+    "type": "ui_template",
+    "z": "1292414d65358a68",
+    "name": "Client List",
+    "group": "626e7274ee98c352",
+    "order": 2,
+    "width": "12",
+    "height": "8",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Client</th><th>IP</th><th>MAC</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='c in msg.payload'>\n      <td>{{c.hostname}}</td><td>{{c.ip}}</td><td>{{c.mac}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 220,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "e457487ebf2d80ca",
+    "type": "inject",
+    "z": "1292414d65358a68",
+    "name": "Every 60s",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "eccb2ee646eab148"
+      ]
+    ]
+  },
+  {
+    "id": "eccb2ee646eab148",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Build UniFi request",
+    "func": "// UniFi controller API -- credentials from env vars, never hardcoded.\nvar base = env.get('UNIFI_URL') || 'https://unifi.local:8443';\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/api/s/default/stat/sta';\nmsg.headers = {'Accept': 'application/json'};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'blue',shape:'dot',text:'polling'});\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 120,
+    "wires": [
+      [
+        "5ae07df71fefadea"
+      ]
+    ]
+  },
+  {
+    "id": "5ae07df71fefadea",
+    "type": "http request",
+    "z": "1292414d65358a68",
+    "name": "UniFi API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 570,
+    "y": 120,
+    "wires": [
+      [
+        "0b59605185efbea8"
+      ]
+    ]
+  },
+  {
+    "id": "0b59605185efbea8",
+    "type": "json",
+    "z": "1292414d65358a68",
+    "name": "Parse",
+    "property": "payload",
+    "action": "obj",
+    "pretty": false,
+    "x": 730,
+    "y": 120,
+    "wires": [
+      [
+        "62f102051af2d959"
+      ]
+    ]
+  },
+  {
+    "id": "62f102051af2d959",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Split client data",
+    "func": "var rows = [];\nvar data = msg.payload && msg.payload.data ? msg.payload.data : [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: c.ip || '', mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 900,
+    "y": 120,
+    "wires": [
+      [
+        "b600ad1c10e3da25"
+      ],
+      [
+        "dcf1d5cee4fd6ca6"
+      ]
+    ]
+  }
+]

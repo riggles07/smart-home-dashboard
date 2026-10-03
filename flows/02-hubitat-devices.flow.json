@@ -1,0 +1,167 @@
+[
+  {
+    "id": "b30173dcd6d85862",
+    "type": "tab",
+    "label": "Devices",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "b75f1a13a781d3de",
+    "type": "ui_tab",
+    "z": "b30173dcd6d85862",
+    "name": "Devices",
+    "icon": "lightbulb-o",
+    "order": 2,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "0b3790228c6385f0",
+    "type": "ui_group",
+    "z": "b30173dcd6d85862",
+    "name": "Device Control",
+    "tab": "b75f1a13a781d3de",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ecb11dbf21c0d18c",
+    "type": "ui_switch",
+    "z": "b30173dcd6d85862",
+    "name": "Power",
+    "label": "Power",
+    "tooltip": "",
+    "group": "0b3790228c6385f0",
+    "order": 1,
+    "width": 0,
+    "height": 0,
+    "passthru": true,
+    "decouple": "false",
+    "topic": "hubitat/power",
+    "topicType": "str",
+    "style": "",
+    "onvalue": "true",
+    "onvalueType": "bool",
+    "onicon": "",
+    "oncolor": "",
+    "offvalue": "false",
+    "offvalueType": "bool",
+    "officon": "",
+    "offcolor": "",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "8ddcf421c3694424"
+      ]
+    ]
+  },
+  {
+    "id": "5a16dc7980d6d961",
+    "type": "ui_slider",
+    "z": "b30173dcd6d85862",
+    "name": "Brightness",
+    "label": "Brightness",
+    "tooltip": "",
+    "group": "0b3790228c6385f0",
+    "order": 2,
+    "width": 0,
+    "height": 0,
+    "passthru": true,
+    "outs": "all",
+    "topic": "hubitat/level",
+    "topicType": "str",
+    "min": 0,
+    "max": "100",
+    "step": 1,
+    "x": 130,
+    "y": 220,
+    "wires": [
+      [
+        "8ddcf421c3694424"
+      ]
+    ]
+  },
+  {
+    "id": "8ea1dae49ea2f59a",
+    "type": "ui_text",
+    "z": "b30173dcd6d85862",
+    "name": "Last Result",
+    "group": "0b3790228c6385f0",
+    "order": 3,
+    "width": "6",
+    "height": "2",
+    "label": "Result",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 320,
+    "wires": []
+  },
+  {
+    "id": "8ddcf421c3694424",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Build Maker API call",
+    "func": "// Hubitat Maker API: GET /apps/api/<appId>/devices/<devId>/<cmd>/<value>?access_token=<tok>\nvar base = env.get('HUBITAT_URL') || 'http://hubitat.local';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nvar dev  = env.get('HUBITAT_DEVICE_ID') || '';\nif (!app || !tok || !dev) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = 'Set HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN and HUBITAT_DEVICE_ID in the LXC env';\n  return [null, msg];\n}\nvar cmd, val = null;\nif (msg.topic === 'hubitat/power') { cmd = msg.payload ? 'on' : 'off'; }\nelse if (msg.topic === 'hubitat/level') { cmd = 'setLevel'; val = msg.payload; }\nelse { node.status({fill:'grey',shape:'ring',text:'ignored'}); return null; }\nvar url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices/' + dev + '/' + cmd;\nif (val !== null) { url += '/' + val; }\nurl += '?access_token=' + tok;\nmsg.method = 'GET';\nmsg.url = url;\nnode.status({fill:'blue',shape:'dot',text:cmd});\nreturn [msg, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 170,
+    "wires": [
+      [
+        "ca0ba149ba035f16"
+      ],
+      [
+        "8ea1dae49ea2f59a"
+      ]
+    ]
+  },
+  {
+    "id": "ca0ba149ba035f16",
+    "type": "http request",
+    "z": "b30173dcd6d85862",
+    "name": "Hubitat Maker API",
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 590,
+    "y": 170,
+    "wires": [
+      [
+        "3955c5258b61b1cc"
+      ]
+    ]
+  },
+  {
+    "id": "3955c5258b61b1cc",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Format result",
+    "func": "if (msg.statusCode && msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  msg.payload = 'Error ' + (msg.statusCode || '') + ' ' + msg.payload;\n}\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 790,
+    "y": 170,
+    "wires": [
+      [
+        "8ea1dae49ea2f59a"
+      ]
+    ]
+  }
+]
