@@ -134,14 +134,19 @@ systemctl enable node-red
 systemctl start node-red
 ```
 
-#### Step 5: Configure Firewall (Phase 6 hardening - LAN-only access)
+#### Step 5: Configure Firewall (OPTIONAL - not currently applied)
+
+> This step is **not** part of the working deployment and has not been verified
+> on the container. Port 1880 is reachable on the LAN and over the tailnet.
+> There is no TLS listener, so the 1881 rule below is forward-looking only.
 
 ```bash
-# Allow Node-RED ports from the local network only (default deny otherwise)
+# OPTIONAL. Allow Node-RED from the local network only (default deny otherwise)
 ufw allow from 192.168.1.0/24 to any port 1880 comment "Node-RED HTTP - LAN only"
-ufw allow from 192.168.1.0/24 to any port 1881 comment "Node-RED HTTPS - LAN only"
+# Only meaningful if you have added TLS via the 'https' key in
+# /root/.node-red/settings.js -- nothing listens on 1881 by default.
+# ufw allow from 192.168.1.0/24 to any port 1881 comment "Node-RED HTTPS - LAN only"
 
-# Enable UFW (default-deny incoming)
 ufw --force enable
 ```
 
