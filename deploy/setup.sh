@@ -133,6 +133,11 @@ StandardOutput=journal
 StandardError=journal
 Environment="NODE_RED_USER=admin"
 Environment="NODE_RED_PORT=1880"
+# Credentials/endpoints for the flow function nodes (PROXMOX_*, HUBITAT_*,
+# UNIFI_*). Without EnvironmentFile, /home/node-red/.env is written and
+# chmod 600'd but never loaded -- process.env.* is undefined and adminAuth
+# silently falls back to admin/admin.
+EnvironmentFile=/home/node-red/.env
 
 # Phase 6 security hardening (non-root + systemd sandboxing)
 NoNewPrivileges=true
@@ -243,11 +248,13 @@ echo ""
 echo_color "Step 10: Creating environment file..."
 cat > /home/node-red/.env << 'EOF'
 # SmartHome Dashboard Configuration
-# Edit these values for your environment
+# Loaded by node-red.service via EnvironmentFile= -- restart the service
+# after any edit:  systemctl restart node-red
+# Verify with:     systemctl show node-red -p Environment --value
 
 # Node-RED Settings
 NODE_RED_USER=admin
-NODE_RED_PASS=admin
+NODE_RED_PASS=CHANGE_ME
 NODE_RED_HOST=localhost
 NODE_RED_PORT=1880
 NODE_RED_SECURE=false
@@ -258,20 +265,60 @@ HUBITAT_USERNAME=your_username
 HUBITAT_PASSWORD=your_password
 HUBITAT_API_KEY=your_api_key
 
+# Hubitat Maker API (read by the Devices-tab flow)
+# App id + token from the Maker API app page: http://<hub>/apps/api/<app_id>/...
+HUBITAT_APP_ID=your_maker_api_app_id
+HUBITAT_ACCESS_TOKEN=your_maker_api_access_token
+# Device the Devices-tab power switch / brightness slider controls.
+# List devices: GET /apps/api/<app_id>/devices?access_token=<token>
+HUBITAT_DEVICE_ID=your_device_id
+
 # UniFi Settings
+# UNIFI_URL is read by the Network-tab flow (scheme + host + port).
+UNIFI_URL=https://unifi.local:8443
 UNIFI_HOST=unifi.local
 UNIFI_PORT=8443
 UNIFI_USERNAME=your_username
 UNIFI_PASSWORD=your_password
 UNIFI_SITE=default
+# UniFi Network 8+ API key. If unset, the flow logs in with
+# UNIFI_USERNAME + UNIFI_PASSWORD instead.
+UNIFI_API_KEY=
+
+# Proxmox API (read by the Home Lab tab flow)
+# Token: Datacenter -> Permissions -> API Tokens -> Add
+# Format: <user>@pam!<tokenid>=<secret>
+PROXMOX_URL=https://proxmox.local:8006
+PROXMOX_NODE=pve
+PROXMOX_TOKEN=your_user@pam!dashboard=your-token-secret
 EOF
 chmod 600 /home/node-red/.env
 chown node-red:node-red /home/node-red/.env
 echo_success "Environment file created"
 echo ""
 
-# Step 11: Start Node-RED
-echo_color "Step 11: Starting Node-RED..."
+# Step 11: Import dashboard flows
+echo_color "Step 11: Importing dashboard flows..."
+FLOWS_SRC="$(dirname "$0")/../flows"
+if [ -f "$FLOWS_SRC/all-flows.flow.json" ]; then
+    # Push the full flow set via the Admin API. HTTP 204 == accepted.
+    code=$(curl -s -o /dev/null -w "%{http_code}" \
+        -X POST "http://localhost:1880/flows" \
+        -H "Content-Type: application/json" \
+        -H "Node-RED-Deployment-Type: full" \
+        --data-binary "@${FLOWS_SRC}/all-flows.flow.json")
+    if [ "$code" = "204" ]; then
+        echo_success "Flows imported (HTTP 204)"
+    else
+        echo_error "Flow import returned HTTP $code (expected 204)"
+    fi
+else
+    echo "  No all-flows.flow.json found at $FLOWS_SRC -- import manually."
+fi
+echo ""
+
+# Step 12: Start Node-RED
+echo_color "Step 12: Starting Node-RED..."
 systemctl start node-red
 
 if systemctl is-active --quiet node-red; then
@@ -282,8 +329,8 @@ else
 fi
 echo ""
 
-# Step 12: Verify setup
-echo_color "Step 12: Verifying setup..."
+# Step 13: Verify setup
+echo_color "Step 13: Verifying setup..."
 echo ""
 
 echo "System Information:"
@@ -296,6 +343,19 @@ curl -s http://localhost:1880/api/ | head -c 100
 echo "..."
 echo_success "Node-RED is running"
 echo ""
+
+# Confirm env vars reached the process (they do NOT unless EnvironmentFile= is set)
+if systemctl show node-red -p Environment --value | grep -q "PROXMOX_URL\|HUBITAT_URL\|UNIFI_URL"; then
+    echo_success "Flow env vars loaded into the service"
+else
+    echo_error "Flow env vars NOT loaded -- check EnvironmentFile=/home/node-red/.env"
+fi
+echo ""
+
+# Confirm flows actually landed (count nodes beside 'tab')
+node_count=$(curl -s http://localhost:1880/flows \
+    | tr ',' '\n' | grep -c '"type"')
+echo "  Flow nodes deployed: ${node_count} (5 tabs + widgets/processing)"
 
 echo "Firewall Status:"
 ufw status verbose | head -5

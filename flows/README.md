@@ -18,7 +18,63 @@ Every file is a JSON array of node **instances** (`tab`, `ui_*` widgets,
 `inject`, `function`, `http request`, `json`, `debug`) — the format Node-RED's
 Import dialog expects.
 
-Regenerate them with `/tmp/gen_flows.py` (deterministic IDs, palette-validated).
+Regenerate them with `tools/gen_flows.py` (deterministic IDs, palette-validated).
+
+## Credentials — never hardcoded
+
+Function nodes read connection details from **environment variables**. In the
+LXC these come from `/home/node-red/.env`, loaded by the systemd unit via
+`EnvironmentFile=`:
+
+| Variable | Used by |
+|----------|---------|
+| `PROXMOX_URL`, `PROXMOX_NODE`, `PROXMOX_TOKEN` | Home Lab tab |
+| `HUBITAT_URL`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices tab |
+| `UNIFI_URL`, `UNIFI_SITE`, `UNIFI_API_KEY` *or* `UNIFI_USERNAME`+`UNIFI_PASSWORD` | Network tab |
+
+### Setup
+
+```bash
+# on the Node-RED LXC
+sudoedit /home/node-red/.env          # fill in the values
+systemctl restart node-red            # env is only read at start
+```
+
+Verify the env actually reached the process — this catches the single most
+common failure (`.env` written but never loaded):
+
+```bash
+systemctl show node-red -p Environment --value | tr ' ' '\n' | grep -E 'PROXMOX|HUBITAT|UNIFI'
+```
+
+Then check the services are genuinely reachable with the same vars the flows use:
+
+```bash
+bash deploy/check-connectivity.sh
+```
+
+Every `!!` line is an item to fix. A `DNS: ... does NOT resolve` line means the
+hostname needs adding to the LXC's DNS or replacing with an IP in `.env`.
+
+**Until credentials are set**, inject nodes still fire and log expected failures
+(e.g. `ENOTFOUND proxmox.local`). That is the flows running correctly against an
+unconfigured backend, not a fault.
+
+## Testing
+
+```bash
+node tools/test_flow_functions.js     # 34 assertions against real func bodies
+python3 tools/validate_flows.py flows/all-flows.flow.json   # structure/wire integrity
+```
+
+`test_flow_functions.js` extracts the `func` source straight out of the flow
+JSON and runs it against stubbed `env`/`node`/`flow` globals, so it tests the
+deployed logic rather than a copy. It covers the UniFi API-key path, the legacy
+login path, the missing-credentials path, cookie capture, Proxmox metric maths,
+Hubitat URL construction, error formatting, and the Kanban store.
+
+`validate_flows.py` catches dangling wires, orphaned `z`/`group`/`tab` refs, and
+empty function bodies — run it before importing.
 
 ## Import
 
@@ -31,6 +87,8 @@ curl -s -X POST http://<host>:1880/flows \
   --data-binary @flows/all-flows.flow.json
 # -> HTTP 204; the canvas populates immediately
 ```
+
+`deploy/setup.sh` runs this automatically (Step 11) and verifies it.
 
 ### Option B — Web UI
 

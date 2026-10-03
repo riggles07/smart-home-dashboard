@@ -81,38 +81,41 @@
     "topic": "",
     "payload": "",
     "payloadType": "date",
-    "x": 150,
+    "x": 130,
     "y": 120,
     "wires": [
       [
-        "eccb2ee646eab148"
+        "5c8c0661415fa783"
       ]
     ]
   },
   {
-    "id": "eccb2ee646eab148",
+    "id": "5c8c0661415fa783",
     "type": "function",
     "z": "1292414d65358a68",
-    "name": "Build UniFi request",
-    "func": "// UniFi controller API -- credentials from env vars, never hardcoded.\nvar base = env.get('UNIFI_URL') || 'https://unifi.local:8443';\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/api/s/default/stat/sta';\nmsg.headers = {'Accept': 'application/json'};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'blue',shape:'dot',text:'polling'});\nreturn msg;",
-    "outputs": 1,
+    "name": "Build UniFi auth",
+    "func": "// UniFi controllers need auth: either an API key (X-API-KEY) or the\n// legacy POST /api/login cookie flow. Credentials come from env vars.\nvar base = env.get('UNIFI_URL') || 'https://unifi.local:8443';\nvar site = env.get('UNIFI_SITE') || 'default';\nvar key  = env.get('UNIFI_API_KEY');\nbase = base.replace(/\\/+$/, '');\nmsg.rejectUnauthorized = false;\nmsg.headers = {'Accept': 'application/json'};\nmsg.url_stat = base + '/api/s/' + site + '/stat/sta';\nmsg.base = base;\nif (key) {\n  node.status({fill:'green',shape:'dot',text:'api key'});\n  msg.method = 'GET';\n  msg.url = msg.url_stat;\n  msg.headers['X-API-KEY'] = key;\n  return [null, msg];\n}\nvar user = env.get('UNIFI_USERNAME');\nvar pass = env.get('UNIFI_PASSWORD');\nif (!user || !pass) {\n  node.status({fill:'red',shape:'ring',text:'no credentials'});\n  msg.payload = 'Set UNIFI_API_KEY, or UNIFI_USERNAME + UNIFI_PASSWORD, in the service environment';\n  return [null, {payload: [], topic: 'unifi/error', _error: msg.payload}];\n}\nnode.status({fill:'blue',shape:'dot',text:'logging in'});\nmsg.method = 'POST';\nmsg.url = base + '/api/login';\nmsg.headers['Content-Type'] = 'application/json';\nmsg.payload = JSON.stringify({username: user, password: pass, remember: true});\nreturn [msg, null];",
+    "outputs": 2,
     "noerr": 0,
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "x": 360,
+    "x": 340,
     "y": 120,
     "wires": [
       [
-        "5ae07df71fefadea"
+        "84efc45dd60503fb"
+      ],
+      [
+        "62f102051af2d959"
       ]
     ]
   },
   {
-    "id": "5ae07df71fefadea",
+    "id": "84efc45dd60503fb",
     "type": "http request",
     "z": "1292414d65358a68",
-    "name": "UniFi API",
+    "name": "UniFi login",
     "method": "use",
     "ret": "obj",
     "paytoqs": "ignore",
@@ -121,24 +124,48 @@
     "persist": false,
     "proxy": "",
     "authType": "",
-    "x": 570,
-    "y": 120,
+    "x": 540,
+    "y": 60,
     "wires": [
       [
-        "0b59605185efbea8"
+        "9f4a7680b3bdb142"
       ]
     ]
   },
   {
-    "id": "0b59605185efbea8",
-    "type": "json",
+    "id": "9f4a7680b3bdb142",
+    "type": "function",
     "z": "1292414d65358a68",
-    "name": "Parse",
-    "property": "payload",
-    "action": "obj",
-    "pretty": false,
+    "name": "Capture session",
+    "func": "// Carry the UniFi session cookie (or X-CSRF-Token on newer builds)\n// into the stat request.\nvar h = msg.headers || {};\nvar setCookie = h['set-cookie'] || h['Set-Cookie'];\nvar cookie = null;\nif (Array.isArray(setCookie)) { setCookie = setCookie.join('; '); }\nif (setCookie) {\n  var part = String(setCookie).split(';')[0];\n  if (part) { cookie = part; }\n}\nif (!cookie) {\n  node.status({fill:'red',shape:'ring',text:'login failed'});\n  msg.payload = [];\n  msg.topic = 'unifi/error';\n  msg._error = 'UniFi login returned no session cookie (HTTP ' + (msg.statusCode || '?') + ')';\n  return msg;\n}\nnode.status({fill:'green',shape:'dot',text:'session ok'});\nmsg.method = 'GET';\nmsg.url = msg.url_stat;\nmsg.headers = {'Accept': 'application/json'};\nif (msg.csrfToken || (h['x-csrf-token'])) {\n  msg.headers['X-CSRF-Token'] = msg.csrfToken || h['x-csrf-token'];\n}\nmsg.headers['Cookie'] = cookie;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
     "x": 730,
-    "y": 120,
+    "y": 60,
+    "wires": [
+      [
+        "41c85a6a5aa569f9"
+      ]
+    ]
+  },
+  {
+    "id": "41c85a6a5aa569f9",
+    "type": "http request",
+    "z": "1292414d65358a68",
+    "name": "UniFi clients",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 420,
+    "y": 200,
     "wires": [
       [
         "62f102051af2d959"
@@ -150,14 +177,14 @@
     "type": "function",
     "z": "1292414d65358a68",
     "name": "Split client data",
-    "func": "var rows = [];\nvar data = msg.payload && msg.payload.data ? msg.payload.data : [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: c.ip || '', mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
+    "func": "// Handles both the success path and the config-error path.\nif (msg.topic === 'unifi/error' || msg._error) {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  var errMsg = msg._error || String(msg.payload || '');\n  return [ {payload: 0}, {payload: 'ERROR: ' + errMsg} ];\n}\nvar data = (msg.payload && msg.payload.data) ? msg.payload.data : [];\nvar rows = [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: (c.ip || (c['ip'] || '')), mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",
     "finalize": "",
     "libs": [],
     "x": 900,
-    "y": 120,
+    "y": 300,
     "wires": [
       [
         "b600ad1c10e3da25"
