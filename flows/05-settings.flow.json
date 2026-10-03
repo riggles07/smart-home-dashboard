@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1743dae8afd71d46",
+    "type": "tab",
+    "label": "Settings",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "6ce99278d5cb3466",
+    "type": "ui_tab",
+    "z": "1743dae8afd71d46",
+    "name": "Settings",
+    "icon": "cog",
+    "order": 5,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ae101a8bec8318ce",
+    "type": "ui_group",
+    "z": "1743dae8afd71d46",
+    "name": "System Info",
+    "tab": "6ce99278d5cb3466",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "b094712d07a28780",
+    "type": "ui_text",
+    "z": "1743dae8afd71d46",
+    "name": "Deployment Info",
+    "group": "ae101a8bec8318ce",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "label": "Info",
+    "format": "{{msg.payload}}",
+    "layout": "row-left",
+    "className": "",
+    "x": 640,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "a3c65a55543834fe",
+    "type": "inject",
+    "z": "1743dae8afd71d46",
+    "name": "Load info",
+    "props": [
+      {
+        "name": "payload",
+        "value": "Smart Home Dashboard\\nNode-RED flows deployed.\\n\\nSet credentials in the LXC env:\\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "b094712d07a28780"
+      ]
+    ]
+  }
+]

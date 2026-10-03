@@ -1,0 +1,189 @@
+[
+  {
+    "id": "9171e542e4309e3f",
+    "type": "tab",
+    "label": "Kanban",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "c171fcfe86f1ab0c",
+    "type": "ui_tab",
+    "z": "9171e542e4309e3f",
+    "name": "Kanban",
+    "icon": "tasks",
+    "order": 4,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "e1f9a25b6ae24226",
+    "type": "ui_group",
+    "z": "9171e542e4309e3f",
+    "name": "Task Board",
+    "tab": "c171fcfe86f1ab0c",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "27235caad41afb89",
+    "type": "ui_text_input",
+    "z": "9171e542e4309e3f",
+    "name": "New task",
+    "label": "New task",
+    "tooltip": "",
+    "group": "e1f9a25b6ae24226",
+    "order": 1,
+    "width": 0,
+    "height": 0,
+    "passthru": true,
+    "mode": "text",
+    "delay": 300,
+    "topic": "kanban/new",
+    "sendOnBlur": true,
+    "className": "",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "5c6df7c479179e47"
+      ]
+    ]
+  },
+  {
+    "id": "45d4f806d82a96d5",
+    "type": "ui_button",
+    "z": "9171e542e4309e3f",
+    "name": "Add",
+    "group": "e1f9a25b6ae24226",
+    "order": 2,
+    "width": 0,
+    "height": 0,
+    "passthru": false,
+    "label": "Add",
+    "tooltip": "",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "",
+    "payload": "",
+    "payloadType": "str",
+    "topic": "kanban/render",
+    "topicType": "str",
+    "x": 130,
+    "y": 200,
+    "wires": [
+      [
+        "bd1a48dec02a2883"
+      ]
+    ]
+  },
+  {
+    "id": "e24cd17178a0d001",
+    "type": "ui_template",
+    "z": "9171e542e4309e3f",
+    "name": "Cards",
+    "group": "e1f9a25b6ae24226",
+    "order": 3,
+    "width": "12",
+    "height": "8",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Task</th><th>Status</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='c in msg.payload'>\n      <td>{{c.task}}</td><td>{{c.status}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 220,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "5c6df7c479179e47",
+    "type": "function",
+    "z": "9171e542e4309e3f",
+    "name": "Add card",
+    "func": "var task = (typeof msg.payload === 'string' ? msg.payload : '').trim();\nif (!task) { node.status({fill:'grey',shape:'ring',text:'empty'}); return null; }\nvar cards = flow.get('kanban_cards') || [];\ncards.push({task: task, status: 'todo'});\nflow.set('kanban_cards', cards);\nnode.status({fill:'green',shape:'dot',text:cards.length + ' cards'});\nmsg.payload = cards;\nreturn [msg, msg];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "flow.set('kanban_cards', flow.get('kanban_cards') || []);",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "e24cd17178a0d001"
+      ],
+      [
+        "cd9414cf8a93b02c"
+      ]
+    ]
+  },
+  {
+    "id": "bd1a48dec02a2883",
+    "type": "function",
+    "z": "9171e542e4309e3f",
+    "name": "Render board",
+    "func": "var cards = flow.get('kanban_cards') || [];\nnode.status({fill:'blue',shape:'dot',text:cards.length + ' cards'});\nmsg.payload = cards;\nreturn [msg, msg];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 200,
+    "wires": [
+      [
+        "e24cd17178a0d001"
+      ],
+      [
+        "cd9414cf8a93b02c"
+      ]
+    ]
+  },
+  {
+    "id": "f0a7f7248adade1f",
+    "type": "inject",
+    "z": "9171e542e4309e3f",
+    "name": "Load board",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 280,
+    "wires": [
+      [
+        "bd1a48dec02a2883"
+      ]
+    ]
+  },
+  {
+    "id": "cd9414cf8a93b02c",
+    "type": "debug",
+    "z": "9171e542e4309e3f",
+    "name": "Cards",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 320,
+    "wires": []
+  }
+]
