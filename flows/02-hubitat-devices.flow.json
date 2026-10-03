@@ -36,8 +36,8 @@
     "tooltip": "",
     "group": "0b3790228c6385f0",
     "order": 1,
-    "width": 0,
-    "height": 0,
+    "width": "4",
+    "height": "3",
     "passthru": true,
     "decouple": "false",
     "topic": "hubitat/power",
@@ -68,8 +68,8 @@
     "tooltip": "",
     "group": "0b3790228c6385f0",
     "order": 2,
-    "width": 0,
-    "height": 0,
+    "width": "4",
+    "height": "3",
     "passthru": true,
     "outs": "all",
     "topic": "hubitat/level",
@@ -91,7 +91,7 @@
     "z": "b30173dcd6d85862",
     "name": "Last Result",
     "group": "0b3790228c6385f0",
-    "order": 3,
+    "order": 4,
     "width": "6",
     "height": "2",
     "label": "Result",
@@ -101,6 +101,134 @@
     "x": 650,
     "y": 320,
     "wires": []
+  },
+  {
+    "id": "8824314092076504",
+    "type": "ui_text",
+    "z": "b30173dcd6d85862",
+    "name": "Device Count",
+    "group": "0b3790228c6385f0",
+    "order": 3,
+    "width": "6",
+    "height": "2",
+    "label": "Devices",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "501357c8c65d74b4",
+    "type": "ui_template",
+    "z": "b30173dcd6d85862",
+    "name": "Device List",
+    "group": "0b3790228c6385f0",
+    "order": 5,
+    "width": "12",
+    "height": "10",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n      <td>{{d.label || d.name}}</td>\n      <td>{{d.type}}</td>\n      <td>{{d.room}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 470,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "79096e91e2e6c3a8",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Build device list call",
+    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = [];\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/,'') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 560,
+    "wires": [
+      [
+        "61554049c9a117c6"
+      ],
+      [
+        "501357c8c65d74b4",
+        "8824314092076504"
+      ]
+    ]
+  },
+  {
+    "id": "61554049c9a117c6",
+    "type": "http request",
+    "z": "b30173dcd6d85862",
+    "name": "Hubitat device list",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 590,
+    "y": 560,
+    "wires": [
+      [
+        "27a11686ba678c7a"
+      ]
+    ]
+  },
+  {
+    "id": "27a11686ba678c7a",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Format device list",
+    "func": "var body = msg.payload;\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = [];\n  return [msg, msg];\n}\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch (e) { body = []; }\n}\nvar list = Array.isArray(body) ? body : (body && body.devices) || [];\nnode.status({fill:'green',shape:'dot',text:list.length + ' devices'});\nmsg.payload = list;\nvar c = {payload: list.length};\nreturn [msg, c];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 790,
+    "y": 560,
+    "wires": [
+      [
+        "501357c8c65d74b4"
+      ],
+      [
+        "8824314092076504"
+      ]
+    ]
+  },
+  {
+    "id": "8f53335844426c61",
+    "type": "inject",
+    "z": "b30173dcd6d85862",
+    "name": "Load devices",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 560,
+    "wires": [
+      [
+        "79096e91e2e6c3a8"
+      ]
+    ]
   },
   {
     "id": "8ddcf421c3694424",

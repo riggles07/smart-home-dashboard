@@ -175,6 +175,41 @@ console.log('== Hubitat: command building ==');
   check('unknown topic -> ignored (null)', out === null || out === undefined);
 }
 
+console.log('== Hubitat: device list ==');
+{
+  const { out } = run('Build device list call', { HUBITAT_URL: 'http://hub.local', HUBITAT_APP_ID: '42', HUBITAT_API_KEY: 'k' }, {});
+  check('list URL uses /devices (no device id)',
+        out[0] && out[0].url === 'http://hub.local/apps/api/42/devices?access_token=k', out[0] && out[0].url);
+}
+{
+  const { out } = run('Build device list call', {}, {});
+  check('missing config -> empty list on out1 (no crash)',
+        Array.isArray(out[1] && out[1].payload) && out[1].payload.length === 0,
+        JSON.stringify(out[1] && out[1].payload));
+}
+{
+  const items = [{ id: '1', label: 'Lamp', type: 'Virtual Switch', room: 'Office' },
+                 { id: '2', label: 'Fan', type: 'Virtual Fan', room: '' }];
+  const { out } = run('Format device list', {}, { statusCode: 200, payload: items });
+  check('array body -> passes through', out[0] && out[0].payload.length === 2);
+  check('count emitted on out1', out[1] && out[1].payload === 2, JSON.stringify(out[1]));
+}
+{
+  // Hubitat can answer with an object wrapper; the flow accepts both shapes.
+  const { out } = run('Format device list', {}, { statusCode: 200, payload: { devices: [{ id: '9' }] } });
+  check('wrapped {devices:[...]} -> extracted', out[0] && out[0].payload.length === 1);
+}
+{
+  const { out } = run('Format device list', {}, { error: 'ENOTFOUND' });
+  check('transport error -> empty list (no crash)',
+        Array.isArray(out[0] && out[0].payload) && out[0].payload.length === 0);
+}
+{
+  const { out } = run('Format device list', {}, { statusCode: 200, payload: 'not json' });
+  check('non-JSON body -> empty list (no crash)',
+        Array.isArray(out[0] && out[0].payload) && out[0].payload.length === 0);
+}
+
 console.log('== Hubitat: result formatting ==');
 {
   const { out } = run('Format result', {}, { statusCode: 200, payload: '{"ok":true}' });
