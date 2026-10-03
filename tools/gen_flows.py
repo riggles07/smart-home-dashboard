@@ -141,6 +141,112 @@ body.nr-dashboard-theme md-card td {
 body.nr-dashboard-theme md-card th {
   border-bottom-color: var(--shd-accent);
 }
+
+/* ==================================================================
+   LANDSCAPE / WIDE-SCREEN LAYOUT
+   ------------------------------------------------------------------
+   The dashboard's masonry JS writes INLINE pixel widths onto
+   `.nr-dashboard-cardcontainer` (measured: width 318px for a width-12
+   group -> ~53.3px per grid unit) and INLINE `left`/`top` onto
+   `ui-card-panel`. It derives those from the group's `width` in grid
+   units and ignores the viewport, so on a 2166px screen every tab is a
+   ~320px column pinned near the centre and the rest of the screen is
+   empty.
+
+   Because the widths are INLINE they outrank any normal CSS rule, so
+   `!important` is required here — this is the case it exists for. We
+   then reflow the cards ourselves.
+
+   `!important` cannot beat inline styles for `left` on the same
+   element, so a group that sits right-of-centre would still be offset;
+   `margin-left: auto` is therefore applied with `!important` too, and
+   the panel is pinned with left/right as well. Measured before/after
+   below in tests/test_theme_wiring.py. */
+
+/* Any reasonably wide viewport: stop the dashboard pinning a fixed
+   narrow column. */
+@media (min-width: 900px) {
+  body.nr-dashboard-theme ui-card-panel {
+    width: auto !important;
+    max-width: none !important;
+    /* The panel carries inline left/top from the masonry layout. `auto` with
+       !important neutralises them without introducing an offset of its own
+       (`right` must NOT be set here: on a relatively-positioned box a non-auto
+       `right` shifts the element left by its own width). */
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  body.nr-dashboard-theme .nr-dashboard-cardcontainer {
+    width: 100% !important;
+    height: auto !important;
+  }
+  /* The title bar carries an inline width matching the old fixed column. */
+  body.nr-dashboard-theme .nr-dashboard-cardtitle {
+    width: auto !important;
+  }
+  /* Let the masonry container span the content area. */
+  body.nr-dashboard-theme .masonry-container {
+    width: 100% !important;
+  }
+  /* The widgets inside a card are `position: absolute` with an inline `top`
+     (measured: top 0/54/108/216/324px), so the card had no height of its own
+     and collapsed to 0 -- the panel then shrank to a 56px strip and the
+     widgets, though still painted, were clipped out of the layout. Returning
+     them to normal flow makes the container grow to fit.
+
+     They are then laid out as a wrapping row rather than stretched to the full
+     width: the dashboard sizes each widget's inline height for the ORIGINAL
+     ~318px column, so stretching a widget to 2166px stretched its canvas to
+     2144x221 (measured) -- a badly distorted, unreadable gauge. Content-sized
+     cards that wrap into columns keep every widget at a sane aspect ratio and
+     still fill the screen.
+
+     `height` is deliberately left alone: gauges and charts depend on their
+     dashboard-computed inline height to size the canvas. */
+  body.nr-dashboard-theme .nr-dashboard-cardcontainer md-card,
+  body.nr-dashboard-theme .nr-dashboard-card {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: inline-block;
+    vertical-align: top;
+    width: auto !important;
+    max-width: 100% !important;
+    min-width: 180px;
+    margin: 8px 12px 12px 0;
+  }
+}
+
+/* Genuinely wide screens (tablet landscape, desktop, wall panel). Every tab
+   currently carries ONE group, so the panel fills the content width.
+   NOTE: this block must NOT set a width on `md-card` -- the 900px block above
+   already sizes widgets for their own aspect ratio, and an equal-specificity
+   `width: 100% !important` here would win on source order and stretch every
+   canvas again (measured: a gauge canvas blown out to 2144x221). */
+@media (min-width: 1280px) {
+  body.nr-dashboard-theme ui-card-panel {
+    display: block;
+    width: 100% !important;
+  }
+  body.nr-dashboard-theme .masonry-container {
+    text-align: left;
+  }
+}
+
+/* Short-and-wide (tablet held in landscape): trim vertical padding so
+   more fits above the fold. */
+@media (max-height: 600px) and (orientation: landscape) {
+  body.nr-dashboard-theme .nr-dashboard-cardcontainer {
+    padding-top: 0;
+  }
+  body.nr-dashboard-theme ui-card-panel {
+    margin-top: 0;
+  }
+}
+
 """
 
 
@@ -168,12 +274,12 @@ add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Host",
      "tab": nid("uitab-h"), "order": 1, "disp": True, "width": "6", "collapse": False})
 
 add({"id": nid("gg-cpu"), "type": "ui_gauge", "z": T, "name": "Proxmox CPU",
-     "group": G, "order": 1, "width": "6", "height": "4", "gtype": "gage",
+     "group": G, "order": 1, "width": "5", "height": "5", "gtype": "gage",
      "title": "CPU", "label": "%", "format": "{{value}}", "min": 0, "max": "100",
      "colors": ["#00b500", "#e6e600", "#ca3838"], "seg1": "", "seg2": "",
      "x": 640, "y": 120, "wires": []})
 add({"id": nid("gg-mem"), "type": "ui_gauge", "z": T, "name": "Proxmox Memory",
-     "group": G, "order": 2, "width": "6", "height": "4", "gtype": "gage",
+     "group": G, "order": 2, "width": "5", "height": "5", "gtype": "gage",
      "title": "Memory", "label": "%", "format": "{{value}}", "min": 0, "max": "100",
      "colors": ["#00b500", "#e6e600", "#ca3838"], "seg1": "", "seg2": "",
      "x": 640, "y": 220, "wires": []})
@@ -182,7 +288,7 @@ add({"id": nid("txt-status"), "type": "ui_text", "z": T, "name": "Host Status",
      "label": "Status", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 320, "wires": []})
 add({"id": nid("ch-cpu"), "type": "ui_chart", "z": T, "name": "CPU History",
-     "group": G, "order": 4, "width": "6", "height": "5", "label": "CPU %",
+     "group": G, "order": 4, "width": "7", "height": "6", "label": "CPU %",
      "chartType": "line", "legend": "false", "xformat": "HH:mm:ss",
      "interpolate": "linear", "nodata": "", "dot": False, "ymin": "0", "ymax": "100",
      "removeOlder": "5", "removeOlderPoints": "", "removeOlderUnit": "60",
@@ -255,19 +361,94 @@ add({"id": G, "type": "ui_group", "z": T, "name": "Device Control",
      "tab": nid("uitab-d"), "order": 1, "disp": True, "width": "6", "collapse": False})
 
 add({"id": nid("sw-power"), "type": "ui_switch", "z": T, "name": "Power",
-     "label": "Power", "tooltip": "", "group": G, "order": 1, "width": 0, "height": 0,
+     "label": "Power", "tooltip": "", "group": G, "order": 1, "width": "4", "height": "3",
      "passthru": True, "decouple": "false", "topic": "hubitat/power", "topicType": "str",
      "style": "", "onvalue": "true", "onvalueType": "bool", "onicon": "", "oncolor": "",
      "offvalue": "false", "offvalueType": "bool", "officon": "", "offcolor": "",
      "x": 130, "y": 120, "wires": [[nid("fn-d-cmd")]]})
 add({"id": nid("sl-level"), "type": "ui_slider", "z": T, "name": "Brightness",
-     "label": "Brightness", "tooltip": "", "group": G, "order": 2, "width": 0, "height": 0,
+     "label": "Brightness", "tooltip": "", "group": G, "order": 2, "width": "4", "height": "3",
      "passthru": True, "outs": "all", "topic": "hubitat/level", "topicType": "str",
      "min": 0, "max": "100", "step": 1, "x": 130, "y": 220, "wires": [[nid("fn-d-cmd")]]})
 add({"id": nid("txt-dev"), "type": "ui_text", "z": T, "name": "Last Result",
-     "group": G, "order": 3, "width": "6", "height": "2",
+     "group": G, "order": 4, "width": "6", "height": "2",
      "label": "Result", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 320, "wires": []})
+
+# Device list. Reads the Maker API list endpoint and renders every device.
+# Field names are NOT guessed -- they were read back from the live hub via
+# tools/probe_hubitat_devices.py, which reported the real keys:
+#   dni, id, label, name, notes, room, roomId, type, zigbeeId
+# (116 devices on the target hub). `label` is the user-facing name; `room` is
+# empty on this hub, so the column degrades to blank rather than lying.
+TEMPLATE_DEVICES = (
+    "<table class='table' style='width:100%'>\n"
+    "  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n"
+    "  <tbody>\n"
+    "    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n"
+    "      <td>{{d.label || d.name}}</td>\n"
+    "      <td>{{d.type}}</td>\n"
+    "      <td>{{d.room}}</td>\n"
+    "    </tr>\n"
+    "  </tbody>\n"
+    "</table>"
+)
+add({"id": nid("txt-devcount"), "type": "ui_text", "z": T, "name": "Device Count",
+     "group": G, "order": 3, "width": "6", "height": "2",
+     "label": "Devices", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 650, "y": 400, "wires": []})
+add({"id": nid("tbl-devices"), "type": "ui_template", "z": T, "name": "Device List",
+     "group": G, "order": 5, "width": "12", "height": "10",
+     "format": TEMPLATE_DEVICES, "storeOutMessages": True, "fwdInMessages": True,
+     "resendOnRefresh": True, "templateScope": "local",
+     "x": 650, "y": 470, "wires": [[]]})
+
+# Build the list request. Separate from the control path above so a control
+# failure cannot blank the list, and vice versa.
+add({"id": nid("fn-d-list"), "type": "function", "z": T, "name": "Build device list call",
+     "func": (
+        "var base = env.get('HUBITAT_URL') || '';\n"
+        "var app  = env.get('HUBITAT_APP_ID') || '';\n"
+        "var tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\n"
+        "if (!base || !app || !tok) {\n"
+        "  node.status({fill:'red',shape:'ring',text:'missing config'});\n"
+        "  msg.payload = [];\n"
+        "  return [null, msg];\n"
+        "}\n"
+        "msg.method = 'GET';\n"
+        "msg.url = base.replace(/\\/+$/,'') + '/apps/api/' + app + '/devices?access_token=' + tok;\n"
+        "node.status({fill:'blue',shape:'dot',text:'listing'});\n"
+        "return [msg, null];"
+     ),
+     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 360, "y": 560, "wires": [[nid("http-d-list")], [nid("tbl-devices"), nid("txt-devcount")]]})
+add({"id": nid("http-d-list"), "type": "http request", "z": T, "name": "Hubitat device list",
+     "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
+     "persist": False, "proxy": "", "authType": "", "x": 590, "y": 560,
+     "wires": [[nid("fn-d-listfmt")]]})
+add({"id": nid("fn-d-listfmt"), "type": "function", "z": T, "name": "Format device list",
+     "func": (
+        "var body = msg.payload;\n"
+        "if (msg.error || !msg.statusCode) {\n"
+        "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
+        "  msg.payload = [];\n"
+        "  return [msg, msg];\n"
+        "}\n"
+        "if (typeof body === 'string') {\n"
+        "  try { body = JSON.parse(body); } catch (e) { body = []; }\n"
+        "}\n"
+        "var list = Array.isArray(body) ? body : (body && body.devices) || [];\n"
+        "node.status({fill:'green',shape:'dot',text:list.length + ' devices'});\n"
+        "msg.payload = list;\n"
+        "var c = {payload: list.length};\n"
+        "return [msg, c];"
+     ),
+     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 790, "y": 560, "wires": [[nid("tbl-devices")], [nid("txt-devcount")]]})
+add({"id": nid("inj-d-list"), "type": "inject", "z": T, "name": "Load devices",
+     "props": [{"p": "payload"}], "repeat": "300", "crontab": "", "once": True,
+     "onceDelay": 1.5, "topic": "", "payload": "", "payloadType": "date",
+     "x": 140, "y": 560, "wires": [[nid("fn-d-list")]]})
 
 add({"id": nid("fn-d-cmd"), "type": "function", "z": T, "name": "Build Maker API call",
      "func": (
@@ -500,7 +681,7 @@ add({"id": G, "type": "ui_group", "z": T, "name": "Task Board",
      "tab": nid("uitab-k"), "order": 1, "disp": True, "width": "12", "collapse": False})
 
 add({"id": nid("ti-task"), "type": "ui_text_input", "z": T, "name": "New task",
-     "label": "New task", "tooltip": "", "group": G, "order": 1, "width": 0, "height": 0,
+     "label": "New task", "tooltip": "", "group": G, "order": 1, "width": "6", "height": "3",
      "passthru": True, "mode": "text", "delay": 300, "topic": "kanban/new",
      "sendOnBlur": True, "className": "", "x": 130, "y": 120, "wires": [[nid("fn-k-add")]]})
 add({"id": nid("btn-add"), "type": "ui_button", "z": T, "name": "Add",

@@ -99,6 +99,72 @@ def main():
             failures += fail(f"{fmt.count('</style')} '</style' occurrences -- "
                              "the block terminates early and CSS spills as text")
 
+        # 7. landscape / wide-screen layout.
+        # The dashboard masonry JS writes INLINE pixel widths (measured: 318px
+        # for a width-12 group => ~53.3px per unit) and inline left/top, so a
+        # 2166px screen shows a ~320px column with the rest empty. Inline styles
+        # outrank normal CSS, so these overrides MUST carry !important. Assert
+        # both the !important and the specific properties that do the reflow.
+        required = {
+            ".nr-dashboard-cardcontainer": ["width: 100% !important"],
+            "ui-card-panel": ["left: auto !important", "width: auto !important"],
+            ".nr-dashboard-cardtitle": ["width: auto !important"],
+            ".masonry-container": ["width: 100% !important"],
+        }
+        for sel, needles in required.items():
+            if sel in fmt:
+                missing = [n for n in needles if n not in fmt]
+                if missing:
+                    failures += fail(f"landscape rule for {sel!r} is missing "
+                                     f"{missing} -- inline styles will win and "
+                                     f"the tab stays a narrow column")
+                else:
+                    print(f"  PASS  landscape override for {sel!r} uses !important")
+            else:
+                failures += fail(f"no landscape override for {sel!r}")
+        if "@media (min-width: 900px)" in fmt:
+            print("  PASS  landscape media query present")
+        else:
+            failures += fail("no @media (min-width: 900px) -- wide screens get "
+                             "the fixed narrow column")
+        # Widget cards must be returned to normal flow, or the container has no
+        # height and the panel collapses to a strip.
+        for prop in ("position: static !important", "top: auto !important"):
+            if prop in fmt:
+                print(f"  PASS  widget cards reflowed ({prop})")
+            else:
+                failures += fail(f"widget cards are not reflowed ({prop} missing)"
+                                 " -- they stay position:absolute with an inline "
+                                 "top, so the card has zero height")
+        # Guard: no rule may set width:100% on md-card. The dashboard sizes each
+        # widget's height for the original ~318px column, so a 100%-width widget
+        # stretches its canvas (measured 2144x221) into an unreadable shape.
+        # Comments are stripped first: the rules above *describe* this bad
+        # pattern in prose, and matching that prose would be a false positive.
+        # The lookbehind is also load-bearing -- without it the pattern matches
+        # `max-width: 100% !important`, which is legitimate.
+        fmt_code = re.sub(r"/\*.*?\*/", "", fmt, flags=re.S)
+        bad = re.findall(
+            r"[^{}]*md-card[^{}]*\{[^}]*(?<![-\w])width:\s*100%\s*!important",
+            fmt_code)
+        if bad:
+            failures += fail("a rule sets `width: 100% !important` on md-card -- "
+                             "that stretches gauge/chart canvases. Let widgets "
+                             "keep their content width and wrap instead.")
+        else:
+            print("  PASS  no width:100% on widget cards (canvases keep aspect)")
+        # A non-auto `right` on a relatively-positioned box shifts it left by its
+        # own width. Guard against re-introducing that.
+        # NOTE: the negative lookbehind is load-bearing -- without it the pattern
+        # also matches `margin-right: 0`, which is legitimate.
+        if re.search(r"ui-card-panel[^{]*\{[^}]*(?<![-\w])right:\s*0\s*!important",
+                     fmt):
+            failures += fail("ui-card-panel sets `right: 0 !important` with "
+                             "position: relative -- that shifts the panel left "
+                             "by its own width")
+        else:
+            print("  PASS  no self-offsetting `right: 0` on the panel")
+
     print()
     if failures:
         print(f"{failures} problem(s): the theme is not correctly wired.")
