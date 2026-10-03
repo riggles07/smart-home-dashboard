@@ -58,6 +58,25 @@ console.log('== UniFi: API-key path ==');
   check('UNIFI_LOGIN_URL override honoured',
         out[0] && out[0].url === 'https://192.168.1.1/api/auth/login', out[0] && out[0].url);
 }
+{
+  // Without the override, a UniFi OS base should auto-derive /api/auth/login
+  // at the console root -- sending /proxy/network/api/login would be wrong.
+  const { out } = run('Build UniFi auth', { UNIFI_URL: 'https://192.168.1.1/proxy/network', UNIFI_USERNAME: 'u', UNIFI_PASSWORD: 'p' }, { payload: 1 });
+  check('UniFi OS login path auto-derived',
+        out[0] && out[0].url === 'https://192.168.1.1/api/auth/login', out[0] && out[0].url);
+}
+{
+  // Self-hosted controller: no prefix, so /api/login is correct.
+  const { out } = run('Build UniFi auth', { UNIFI_URL: 'https://192.168.1.1:8443', UNIFI_USERNAME: 'u', UNIFI_PASSWORD: 'p' }, { payload: 1 });
+  check('self-hosted login path is /api/login',
+        out[0] && out[0].url === 'https://192.168.1.1:8443/api/login', out[0] && out[0].url);
+}
+{
+  // Missing UNIFI_URL must fail loudly, not silently default to unifi.local.
+  const { out, statuses } = run('Build UniFi auth', { UNIFI_USERNAME: 'u', UNIFI_PASSWORD: 'p' }, { payload: 1 });
+  check('missing UNIFI_URL -> actionable error', out[1] && /UNIFI_URL is not set/.test(out[1]._error), out[1] && out[1]._error);
+  check('missing UNIFI_URL -> status red', statuses.some(s => s.fill === 'red'));
+}
 
 console.log('== UniFi: legacy user/pass path ==');
 {
