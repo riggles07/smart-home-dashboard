@@ -164,8 +164,15 @@ if [ -n "${PROXMOX_URL:-}" ]; then
         -H "Authorization: PVEAPIToken=${PROXMOX_TOKEN:-}" \
         "${PROXMOX_URL}/api2/json/nodes/${PROXMOX_NODE:-pve}/status" 2>/dev/null)
     case "$code" in
-        200) echo "  API: 200 OK (authenticated)" ;;
-        401|403) echo "  !! API: $code -- token rejected (check PROXMOX_TOKEN)" ;;
+        200) echo "  API: 200 OK (authenticated + authorised)" ;;
+        401) echo "  !! API: 401 -- token rejected. Check the FORMAT:"
+             echo "     <user>@<realm>!<tokenname>=<secret>   (a bare 'root@pam' always 401s)" ;;
+        403) echo "  !! API: 403 -- token AUTHENTICATED but lacks permission (Sys.Audit)."
+             echo "     Grant it: Datacenter -> Permissions -> Add -> API Token Permission"
+             echo "       Path: /   Role: PVEAuditor   (select the token, not the user)"
+             echo "     Note: if the token has 'Privilege Separation' enabled (the"
+             echo "     default), it inherits NOTHING from its user -- the permission"
+             echo "     must be granted to the TOKEN itself." ;;
         000) echo "  !! API: unreachable" ;;
         *) echo "  ?? API: HTTP $code" ;;
     esac
