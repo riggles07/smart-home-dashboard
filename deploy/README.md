@@ -6,21 +6,22 @@ This guide provides step-by-step instructions for deploying the SmartHome Dashbo
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+## 🚀 Quick Start
 
-For a fast deployment, use this one-command solution:
+The LXC container must exist first. Creating it is a one-off Proxmox-host step;
+this repo no longer ships overlapping container-creation scripts (they used the
+wrong CLI — `qm`, which is for VMs). Create the container on the Proxmox host:
 
 ```bash
-# Run the automated deployment script
-./deploy-lxc.sh --id 101 --ip 192.168.1.100
+# On the Proxmox host. `pct` is the CONTAINER tool; `qm` is only for VMs.
+pct create 101 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --cores 2 --memory 2048 --rootfs local-lvm:20 \
+    --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100/24,gw=192.168.1.1" \
+    --features nesting=1 --unprivileged 0 --start 1
 ```
 
-This will:
-1. Create the LXC container (2GB RAM, 2 cores, 20GB disk)
-2. Start the container
-3. Install Node.js 20.x and Node-RED
-4. Configure systemd service
-5. Start Node-RED automatically
+Then deploy the dashboard into it with `deploy/setup.sh` (see below), which is
+the supported path.
 
 Access the dashboard at: `http://192.168.1.100:1880`
 
@@ -41,45 +42,51 @@ Access the dashboard at: `http://192.168.1.100:1880`
 
 ---
 
-## 📦 Deployment Options
+## 📦 Deployment
 
-### Option 1: Automated Deployment (Recommended)
+### The supported path: `deploy/setup.sh`
+
+Run this inside the container. It installs Node.js and Node-RED, writes the
+systemd unit, and provisions the runtime that is known to work:
 
 ```bash
-# From Proxmox host, copy deploy-lxc.sh to /root
-# Make it executable
-chmod +x deploy-lxc.sh
-
-# Run with defaults (container ID 101, IP 192.168.1.100)
-./deploy-lxc.sh
-
-# Or specify custom values
-./deploy-lxc.sh --id 102 --ip 192.168.1.105 --ram 4096 --cpus 2 --disk 50
+# inside the container
+bash deploy/setup.sh
 ```
 
-### Option 2: Manual Step-by-Step
+It deliberately runs Node-RED **as root** with userDir `/root/.node-red` and
+`MemoryDenyWriteExecute=false`. All three are required: a non-root `node-red`
+account that does not exist produces `217/USER`, `/home/node-red` is never
+created, and `MemoryDenyWriteExecute=true` kills V8's JIT (`SIGSYS`).
+
+### Manual Step-by-Step
+
+The manual path below is the same sequence `deploy/setup.sh` performs, kept for
+reference and troubleshooting.
 
 #### Step 1: Create the LXC Container
 
 ```bash
-# Create container with template (2GB RAM, 2 cores, 20GB disk)
-qm create 101 \
-    --template debian-12-standard-1 \
+# On the Proxmox HOST. `pct` is the container tool (`qm` is for VMs).
+# pct create <vmid> <ostemplate> [OPTIONS]
+pct create 101 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --hostname smarthome-dashboard \
     --cores 2 \
     --memory 2048 \
-    --disk0 "local:20,vmvolume=rootfs,writable=true" \
-    --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100,ipconfig0=none,type=veth" \
-    --name "smarthome-dashboard"
+    --rootfs local-lvm:20 \
+    --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.100/24,gw=192.168.1.1" \
+    --features nesting=1 \
+    --unprivileged 1
 
 # Start the container
-qm start 101
+pct start 101
 ```
 
 #### Step 2: SSH into Container
 
 ```bash
 # Connect to container shell
-qm terminal 101
+pct enter 101
 ```
 
 #### Step 3: Install Dependencies
@@ -185,17 +192,20 @@ chown -R node-red:node-red /home/node-red
 
 ```bash
 # Allow access from your network range
-qm firewall set 101 rule add family=inet protocol=tcp destination=192.168.1.0/24 destination-port=1880
+# Proxmox-level firewall rules are declared in /etc/pve/firewall/101.fw, or
+# enabled per-interface with: pct set 101 --net0 "bridge=vmbr0,firewall=1,..."
+pve-firewall status
 
 # Allow from specific IP
-# qm firewall set 101 rule add family=inet protocol=tcp destination=192.168.1.100 destination-port=1880
+# (Proxmox-level firewall rules are managed via pve-firewall / the web UI,
+#  or per-container with: pct set 101 --net0 "bridge=vmbr0,firewall=1,...")
 ```
 
 ---
 
 ## ⚙️ Custom Resource Allocation
 
-Modify the `--memory`, `--cores`, and `--disk` parameters as needed:
+Modify the `--memory`, `--cores`, and `--rootfs` options as needed:
 
 | Resource | Minimum | Recommended | Maximum |
 |----------|---------|-------------|---------|
@@ -203,10 +213,13 @@ Modify the `--memory`, `--cores`, and `--disk` parameters as needed:
 | CPU      | 1 core  | 2 cores     | 4 cores |
 | Disk     | 10GB    | 20GB        | 50GB    |
 
-Example for larger container:
+Example for a larger container:
 
 ```bash
-./deploy-lxc.sh --id 102 --ip 192.168.1.105 --ram 4096 --cpus 4 --disk 50
+pct create 102 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --hostname smarthome-dashboard --cores 4 --memory 4096 \
+    --rootfs local-lvm:50 \
+    --net0 "bridge=vmbr0,firewall=1,ip=192.168.1.105/24,gw=192.168.1.1"
 ```
 
 ---
@@ -218,7 +231,7 @@ Example for larger container:
 Copy the dashboard flows into the container:
 
 ```bash
-# Inside container (via qm terminal)
+# Inside container (via pct enter)
 scp /path/to/smart-home-dashboard/flows/* root@192.168.1.100:/home/node-red/.node-red/flows/
 ```
 
@@ -291,25 +304,29 @@ EOF
 If your Proxmox uses a different bridge (e.g., `vmbr1`):
 
 ```bash
-./deploy-lxc.sh --id 101 --ip 192.168.1.100 --bridge vmbr1
+pct create 101 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --hostname smarthome-dashboard --cores 2 --memory 2048 --rootfs local-lvm:20 \
+    --net0 "bridge=vmbr1,firewall=1,ip=192.168.1.100/24,gw=192.168.1.1"
 ```
 
 ### Using DHCP
 
 ```bash
-# Create container without static IP
-qm create 101 \
-    --template debian-12-standard-1 \
+pct create 101 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --hostname smarthome-dashboard \
     --cores 2 \
     --memory 2048 \
-    --net0 "bridge=vmbr0,firewall=1,ip=dhcp,type=veth" \
-    --name "smarthome-dashboard"
+    --rootfs local-lvm:20 \
+    --net0 "bridge=vmbr0,firewall=1,ip=dhcp"
 ```
 
 ### Isolated Network
 
 ```bash
-./deploy-lxc.sh --id 101 --ip 192.168.10.100 --bridge vmbr_isolated
+pct create 101 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+    --hostname smarthome-dashboard \
+    --cores 2 --memory 2048 --rootfs local-lvm:20 \
+    --net0 "bridge=vmbr_isolated,firewall=1,ip=192.168.10.100/24"
 ```
 
 ---
@@ -322,8 +339,10 @@ Only allow necessary ports from specific networks:
 
 ```bash
 # Proxmox host
-qm firewall set 101 rule add family=inet protocol=tcp destination=192.168.1.0/24 destination-port=1880
-qm firewall set 101 rule add family=inet protocol=tcp destination=192.168.1.0/24 destination-port=8082
+# Proxmox-level firewall rules are declared in /etc/pve/firewall/101.fw, or
+# enabled per-interface with: pct set 101 --net0 "bridge=vmbr0,firewall=1,..."
+pve-firewall status
+pve-firewall status
 ```
 
 ### 2. Disable SSH (Optional)
@@ -367,10 +386,10 @@ https: {
 
 ```bash
 # List containers
-qm list
+pct list
 
 # Check container status
-qm status 101
+pct status 101
 
 # View container logs
 qm console 101
@@ -394,16 +413,19 @@ tail -f /home/node-red/.node-red/logs/*.log
 
 ```bash
 # Create snapshot
-qm snapshot 101 "smarthome-backup-$(date +%Y%m%d)"
+# Create a snapshot (pct snapshot <vmid> <snapname>)
+pct snapshot 101 "smarthome-backup-$(date +%Y%m%d)"
 
-# Export to file
-qm export 101 /root/smashome-dashboard-backup.tar.gz
+# Back up the container to a file
+vzdump 101 --storage local --mode snapshot
 ```
 
 ### Restore from Snapshot
 
 ```bash
-qm set 101 --snapshot smarthome-backup-20240115
+# List snapshots, then roll back to one
+pct listsnapshot 101
+pct rollback 101 smarthome-backup-20240115
 ```
 
 ---
@@ -417,10 +439,10 @@ qm set 101 --snapshot smarthome-backup-20240115
 qm console 101
 
 # Check status
-qm status 101
+pct status 101
 
 # Try starting manually
-qm start 101
+pct start 101
 ```
 
 ### Node-RED Not Running
@@ -445,15 +467,15 @@ netstat -tlnp | grep 1880
 # Check firewall
 ufw status
 
-# Check Proxmox firewall
-qm firewall list 101
+# Check Proxmox-level firewall status
+pve-firewall status
 ```
 
 ### Network Issues
 
 ```bash
-# Check container IP
-qm set 101 --ip-config
+# Check the container's network config
+pct config 101 | grep net0
 
 # Test connectivity inside container
 ping -c 4 192.168.1.1
@@ -512,7 +534,6 @@ systemctl restart node-red
 - [Proxmox LXC Documentation](https://pve.proxmox.com/wiki/Linux_Virtual_Container_(LXC))
 - [Node-RED Documentation](https://nodered.org/docs/)
 - [SmartHome Dashboard Main README](../README.md)
-- [Container Config Template](../lxc/container.config)
 
 ---
 
