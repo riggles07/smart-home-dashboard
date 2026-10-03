@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Validate generated Node-RED flow JSON before import."""
-import json, sys
+import json, os, sys
 
-path = sys.argv[1] if len(sys.argv) > 1 else \
-    "/root/.hermes/projects/smart-home-dashboard/flows/all-flows.flow.json"
+# Default to the repo's own flows file, resolved relative to this script so the
+# validator works in a fresh clone / CI checkout, not just on the author's box.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT = os.path.join(_HERE, os.pardir, "flows", "all-flows.flow.json")
+
+path = sys.argv[1] if len(sys.argv) > 1 else _DEFAULT
 
 nodes = json.load(open(path))
 ids = {n["id"] for n in nodes}
