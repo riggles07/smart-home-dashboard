@@ -25,11 +25,11 @@ echo "Disk: ${DISK}GB"
 echo ""
 
 # Check if container exists
-if qm list | grep -q "^${CONTAINER_ID}"; then
+if ct list | grep -q "^${CONTAINER_ID}"; then
     echo "⚠️  Container ${CONTAINER_ID} already exists"
     read -p "Do you want to delete it first? (y/N): " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        qm delete ${CONTAINER_ID} --purge
+        ct delete ${CONTAINER_ID} --purge
     else
         echo "Cancelled"
         exit 1
@@ -38,7 +38,7 @@ fi
 
 # Create container
 echo "📦 Creating container..."
-qm create ${CONTAINER_ID} \
+ct create ${CONTAINER_ID} \
     --template debian-12-standard-1 \
     --cores ${CPUS} \
     --memory ${MEMORY} \
@@ -50,7 +50,7 @@ echo "✅ Container created"
 
 # Start container
 echo "▶️  Starting container..."
-qm start ${CONTAINER_ID}
+ct start ${CONTAINER_ID}
 
 echo ""
 echo "✅ Container ${CONTAINER_ID} created and started!"
@@ -58,7 +58,7 @@ echo ""
 echo "📡 Access Node-RED at: http://${CONTAINER_IP}:1880"
 echo ""
 echo "📝 Next steps:"
-echo "   1. SSH into container: qm terminal ${CONTAINER_ID}"
+echo "   1. SSH into container: ct terminal ${CONTAINER_ID}"
 echo "   2. Install Node.js and Node-RED:"
 echo "      apt-get update && apt-get install -y nodejs npm wget curl"
 echo "      npm install -g node-red"
