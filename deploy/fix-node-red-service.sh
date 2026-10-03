@@ -99,37 +99,51 @@ fi
 
 say
 say "== 6. decide the fix =="
+FIX_GROUP=root
 if [ "$USER_MISSING" -eq 1 ]; then
-    have_user=0
-    for c in node-red nodered; do id "$c" >/dev/null 2>&1 && have_user=1; done
-    if [ "$have_user" -eq 1 ]; then
-        say "  a node-red-like user exists now; re-run may be enough"
-    fi
-    say "  Running the service as root, because the data lives in $USER_DIR"
-    say "  (a root-owned, mode-600 .env there would be unreadable to a 'node-red' user)."
+    say "  User='$unit_user' does not exist; running the service as root instead."
+    say "  Rationale: the data lives in $USER_DIR (root-owned, mode 600 .env),"
+    say "  so a non-root user could neither read the env file nor write the flows."
     FIX_USER=root
 else
-    say "  user resolves; keeping it"
-    FIX_USER=${unit_user:-root}
+    say "  User='$unit_user' resolves; keeping it."
+    FIX_USER=$unit_user
 fi
+# Group= is resolved by systemd independently of User=; a dangling Group=
+# fails with 217/GROUP even when User= is fine. Validate it too.
+if [ -n "$unit_group" ] && ! getent group "$unit_group" >/dev/null 2>&1; then
+    say "  Group='$unit_group' does not exist either -- pinning Group=root."
+    FIX_GROUP=root
+elif [ -n "$unit_group" ]; then
+    FIX_GROUP=$unit_group
+fi
+say "  -> will run as User=$FIX_USER Group=$FIX_GROUP"
 
 say
 say "== 7. install drop-in $DROPIN =="
 mkdir -p "$DROPIN_DIR"
 cat > "$DROPIN" <<EOF
 # Written by fix-node-red-service.sh.
+#
 # Causes addressed:
-#  - status=217/USER: the unit's User= account did not exist. Pin a user that does.
-#  - WorkingDirectory=/home/node-red did not exist while the data lives in
+#  - status=217/USER: User=/Group= named an account that does not exist.
+#    BOTH must be fixed -- systemd resolves Group= too, so setting only User=
+#    still fails (217/GROUP).
+#  - WorkingDirectory=/home/node-red did not exist; the data lives in
 #    $USER_DIR.
-#  - ProtectSystem=strict makes / read-only except ReadWritePaths, so the new
-#    data dir must be listed or Node-RED cannot write flows/credentials.
-#  - EnvironmentFile loads the flow credentials/endpoints for the tabs.
+#  - ProtectSystem=strict makes / read-only outside ReadWritePaths, so the data
+#    dir must be listed or Node-RED cannot write flows/credentials.
+#  - MemoryDenyWriteExecute=true breaks V8's JIT. Node.js needs writable AND
+#    executable pages; with this on, node-red aborts or runs crippled.
+#  - EnvironmentFile loads the flow credentials/endpoints for the tabs. The
+#    leading '-' keeps a missing file from being fatal.
 [Service]
 User=$FIX_USER
+Group=$FIX_GROUP
 WorkingDirectory=$USER_DIR
 ReadWritePaths=
 ReadWritePaths=$USER_DIR
+MemoryDenyWriteExecute=false
 EnvironmentFile=-$ENV_FILE
 EOF
 sed 's/^/  /' "$DROPIN"
