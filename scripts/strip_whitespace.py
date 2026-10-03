@@ -9,7 +9,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-targets = sorted(REPO.glob("app/*.py")) + sorted(REPO.glob("tests/*.py"))
+targets = sorted(REPO.glob("flows/*.py")) + sorted(REPO.glob("tests/*.py"))
 for path in targets:
     text = path.read_text(encoding="utf-8")
     cleaned = "\n".join(line.rstrip() for line in text.split("\n"))

@@ -77,39 +77,40 @@ smart-home-dashboard/
 │   ├── unifi-network-monitor.js     # UniFi monitoring
 │   ├── kanban-flow.js               # Task tracking
 │   └── integration-functions.js     # API functions
-├── proxmox/
-│   ├── lxc-config.json              # LXC template
-│   ├── setup-lxc.sh                 # LXC setup script
-│   ├── setup-node-red.sh            # Node-RED install
-│   ├── container.conf               # Container config
-│   └── post-install.sh              # Post-install setup
+├── deploy/                       # THE supported deployment path
+│   ├── setup.sh                  #   provisions the working runtime
+│   ├── .env.example              #   env template (checked vs the flows)
+│   ├── node-red-start.sh
+│   ├── check-connectivity.sh
+│   └── ...
 ├── scripts/
-│   └── deploy.sh                    # Deployment automation
+│   ├── verify-security.sh        # Static checks (files, not the running host)
+│   └── rotate-credentials.sh
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                   # CI/CD pipeline
-│       └── deploy.yml               # Deployment workflow
-├── .env.example                     # Environment template
-├── requirements.txt                 # Node-RED packages
-├── PROJECT_SUMMARY.md               # This file
-└── README.md                        # Project overview
+│       ├── ci.yml                # pytest + flow structure + settings + theme
+│       └── deploy.yml            # inert (CI cannot reach the LAN host)
+├── deploy/.env.example           # Environment template (the ONLY one)
+├── requirements.txt              # Python test dependencies
+├── PROJECT_SUMMARY.md            # This file
+└── README.md                     # Project overview
 ```
 
 ## Deployment Options
 
-### Option 1: Local Installation
+### Option 1: `deploy/setup.sh` (supported)
+
+Run this inside the LXC container. It installs Node.js and Node-RED, writes the
+systemd unit, and provisions the runtime known to work:
+
 ```bash
-cd /root/smart-home-dashboard
-node-red
+bash deploy/setup.sh
 ```
 
-### Option 2: Proxmox LXC Deployment
-```bash
-./proxmox/setup-lxc.sh --container-id 101 --ip 192.168.1.100
-ssh root@192.168.1.100
-./proxmox/setup-node-red.sh
-./proxmox/post-install.sh
-```
+### Option 2: Proxmox LXC
+
+Create the container on the Proxmox host with `pct` (`qm` is for VMs), then run
+`deploy/setup.sh` inside it. See `deploy/README.md`.
 
 ## API Endpoints
 

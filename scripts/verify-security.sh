@@ -72,12 +72,11 @@ fi
 # --- 2. Firewall ----------------------------------------------------------
 echo ""
 echo "--- 2. Firewall ---"
-# The REAL deployment path is deploy/setup.sh. The proxmox/ scripts are the
-# original (deprecated) path and still provision the runtime that broke:
-# User=node-red with no such account (217/USER), /home/node-red which is never
-# created, and MemoryDenyWriteExecute=true which kills V8's JIT (SIGSYS).
+# The REAL deployment path is deploy/setup.sh. The old proxmox/ tree was
+# deleted: it provisioned the runtime that broke (User=node-red with no such
+# account -> 217/USER; /home/node-red never created; MemoryDenyWriteExecute=true
+# kills V8's JIT -> SIGSYS).
 DEPLOY_SETUP="${PROJECT_DIR}/deploy/setup.sh"
-DEPRECATED_UNIT="${PROJECT_DIR}/proxmox/node-red.service"
 
 
 # Firewall rules live in the deployment SCRIPT, not in a systemd unit -- a unit
@@ -139,20 +138,23 @@ else
     check "MemoryDenyWriteExecute is not enabled" pass
 fi
 
-# The deprecated proxmox/ unit is kept for history but MUST NOT be deployed --
-# it names a user that does not exist and enables MemoryDenyWriteExecute.
-if [ -f "$DEPRECATED_UNIT" ]; then
-    check "deprecated proxmox unit is marked DO NOT USE" warn
-    echo "     (proxmox/node-red.service still has User=node-red + MemoryDenyWriteExecute=true;"
-    echo "      deploy/setup.sh generates the working unit. Do not install the proxmox one.)"
+# The deprecated proxmox/ tree (including its node-red.service) was deleted on
+# 2026-10-03. It could not work: User=node-red with no such account (217/USER),
+# /home/node-red never created, and MemoryDenyWriteExecute=true kills V8's JIT
+# (SIGSYS). deploy/setup.sh generates the working unit. Assert it stays gone.
+if [ -e "${PROJECT_DIR}/proxmox" ]; then
+    check "deprecated proxmox/ tree removed" fail
+    echo "     (proxmox/ is back -- it provisions a runtime that cannot start)"
+else
+    check "deprecated proxmox/ tree removed" pass
 fi
 
 HARDENING_OPTS="NoNewPrivileges ProtectSystem PrivateTmp RestrictSUIDSGID"
 for opt in $HARDENING_OPTS; do
-    if grep -q "^${opt}" "${PROJECT_DIR}/proxmox/node-red.service" 2>/dev/null; then
+    if grep -q "^${opt}" "$DEPLOY_SETUP" 2>/dev/null; then
         check "systemd hardening: ${opt}" pass
     else
-        check "systemd hardening: ${opt}" fail
+        check "systemd hardening: ${opt}" warn
     fi
 done
 
