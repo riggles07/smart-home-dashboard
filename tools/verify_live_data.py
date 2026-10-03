@@ -100,7 +100,18 @@ var verdict;
 if (msg.error) { verdict = 'ERROR: ' + msg.error; }
 else if (code >= 200 && code < 300 && size > 2) { verdict = 'LIVE (HTTP ' + code + ', ' + size + ' bytes)'; }
 else if (code >= 200 && code < 300) { verdict = 'EMPTY (HTTP ' + code + ')'; }
-else { verdict = 'HTTP ' + code; }
+else {
+  // Surface the server's own error text -- it names the fault (bad token,
+  // bad credentials, wrong path). Long token-like runs are masked so nothing
+  // secret is ever recorded.
+  var snippet = '';
+  try {
+    snippet = (typeof body === 'string') ? body : JSON.stringify(body);
+  } catch (e) { snippet = ''; }
+  snippet = String(snippet || '').replace(/[A-Za-z0-9_\\-+\\/=]{20,}/g, '<redacted>');
+  snippet = snippet.slice(0, 160);
+  verdict = 'HTTP ' + code + (snippet ? ' :: ' + snippet : '');
+}
 var prev = flow.get('lp_results') || {};
 prev[svc] = verdict;
 flow.set('lp_results', prev);

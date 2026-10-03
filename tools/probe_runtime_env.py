@@ -152,11 +152,17 @@ def main():
     def ok(v):
         if result.get(v) == "SET":
             return True
+        # HUBITAT_ACCESS_TOKEN is satisfied by HUBITAT_API_KEY
         if v == "HUBITAT_ACCESS_TOKEN" and result.get("HUBITAT_API_KEY") == "SET":
             return True
-        if v == "UNIFI_API_KEY" and result.get("UNIFI_USERNAME") == "SET" \
-                and result.get("UNIFI_PASSWORD") == "SET":
-            return True
+        # Either UniFi auth route is sufficient. API key wins, so username and
+        # password being unset is CORRECT when a key is present -- and vice versa.
+        if v in ("UNIFI_API_KEY", "UNIFI_USERNAME", "UNIFI_PASSWORD"):
+            key_set = result.get("UNIFI_API_KEY") == "SET"
+            pw_set = (result.get("UNIFI_USERNAME") == "SET"
+                      and result.get("UNIFI_PASSWORD") == "SET")
+            if key_set or pw_set:
+                return True
         if v in ("PROXMOX_NODE", "UNIFI_SITE", "UNIFI_LOGIN_URL"):
             return True   # optional, has a default
         return False

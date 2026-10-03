@@ -148,6 +148,18 @@ echo "== Proxmox =="
 if [ -n "${PROXMOX_URL:-}" ]; then
     echo "  PROXMOX_URL=${PROXMOX_URL}"
     check_dns "$(host_of "$PROXMOX_URL")"
+    # Proxmox API tokens must be  <user>@<realm>!<tokenname>=<secret>.
+    # The common mistakes are using the login realm form (root@pam) with no
+    # !tokenname, or omitting the secret. Validate the SHAPE only, never print it.
+    if [ -n "${PROXMOX_TOKEN:-}" ]; then
+        if printf '%s' "$PROXMOX_TOKEN" | grep -qE '^[^@!]+@[^!=]+![^=]+=.+$'; then
+            echo "  token format: OK (<user>@<realm>!<name>=<secret>)"
+        else
+            echo "  !! token format looks wrong. Expected <user>@<realm>!<name>=<secret>"
+            echo "     e.g. root@pam!dashboard=xxxxxxxx-xxxx-xxxx"
+            echo "     A bare 'root@pam' or a missing '!name=' will always give HTTP 401."
+        fi
+    fi
     code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 8 \
         -H "Authorization: PVEAPIToken=${PROXMOX_TOKEN:-}" \
         "${PROXMOX_URL}/api2/json/nodes/${PROXMOX_NODE:-pve}/status" 2>/dev/null)
