@@ -278,9 +278,9 @@ HUBITAT_DEVICE_ID=your_device_id
 # (UDM/Cloud Gateway), so the Network app lives under /proxy/network.
 # A self-hosted controller would instead be https://<host>:8443 (no prefix).
 UNIFI_URL=https://192.168.1.1/proxy/network
-# UniFi OS login path differs from legacy; set explicitly when using
-# username/password instead of an API key.
-UNIFI_LOGIN_URL=https://192.168.1.1/api/auth/login
+# UniFi OS login path is auto-derived (/api/auth/login at the console root);
+# leave UNIFI_LOGIN_URL blank unless you need to override it.
+UNIFI_LOGIN_URL=
 UNIFI_SITE=default
 # UniFi Network 8+ API key. If set, the flow uses X-API-KEY and never logs in.
 UNIFI_API_KEY=
