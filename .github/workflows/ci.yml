@@ -42,6 +42,12 @@ jobs:
       # tab/group refs, empty function bodies, duplicate ids.
       - name: Validate flow structure
         run: python3 tools/validate_flows.py flows/all-flows.flow.json
+      - name: Regenerate flows and verify drift
+        run: |
+          echo "=== Regenerating flows ===" 
+          python3 tools/gen_flows.py
+          echo "=== Checking for drift ===" 
+          git diff --exit-code flows/
 
       # Runs the REAL function bodies extracted from the deployed flow JSON,
       # so a broken guard/URL-construction is caught, not just Python.

@@ -1,0 +1,1171 @@
+[
+  {
+    "id": "5bed688b79e24be3",
+    "type": "ui_tab",
+    "z": "7021a0b2d35572fb",
+    "name": "Theme",
+    "icon": "paint-brush",
+    "order": 99,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "e043124f601e4449",
+    "type": "ui_group",
+    "z": "7021a0b2d35572fb",
+    "name": "Theme",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "85facd4bcc49a099",
+    "type": "ui_base",
+    "z": "7021a0b2d35572fb",
+    "name": "",
+    "theme": {
+      "name": "theme-custom",
+      "baseColor": "#667eea",
+      "page": {
+        "name": "Page",
+        "style": "dark",
+        "light": false,
+        "palette": "dark"
+      },
+      "angularTheme": {
+        "primary": "indigo",
+        "accents": "blue",
+        "warn": "red",
+        "background": "grey",
+        "palette": "dark"
+      }
+    },
+    "site": {
+      "title": "Smart Home",
+      "dateFormat": "DD/MM/YYYY",
+      "sizes": {
+        "sx": 48,
+        "sy": 48,
+        "gx": 6,
+        "gy": 6,
+        "cx": 6,
+        "cy": 6,
+        "px": 12,
+        "py": 12
+      },
+      "options": {
+        "showPath": false
+      }
+    },
+    "x": 330,
+    "y": 900,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "7021a0b2d35572fb",
+    "type": "tab",
+    "label": "Home Lab",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "c3e4215d98ac0a8c",
+    "type": "ui_tab",
+    "z": "7021a0b2d35572fb",
+    "name": "Home Lab",
+    "icon": "dashboard",
+    "order": 1,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ac2f99930040b4ff",
+    "type": "ui_group",
+    "z": "7021a0b2d35572fb",
+    "name": "Proxmox Host",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "9d6dc4f8f9d21681",
+    "type": "ui_gauge",
+    "z": "7021a0b2d35572fb",
+    "name": "Proxmox CPU",
+    "group": "ac2f99930040b4ff",
+    "order": 1,
+    "width": "5",
+    "height": "5",
+    "gtype": "gage",
+    "title": "CPU",
+    "label": "%",
+    "format": "{{value}}",
+    "min": 0,
+    "max": "100",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 640,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "6baba86761aa3549",
+    "type": "ui_gauge",
+    "z": "7021a0b2d35572fb",
+    "name": "Proxmox Memory",
+    "group": "ac2f99930040b4ff",
+    "order": 2,
+    "width": "5",
+    "height": "5",
+    "gtype": "gage",
+    "title": "Memory",
+    "label": "%",
+    "format": "{{value}}",
+    "min": 0,
+    "max": "100",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 640,
+    "y": 220,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "229b68830aab92e1",
+    "type": "ui_text",
+    "z": "7021a0b2d35572fb",
+    "name": "Host Status",
+    "group": "ac2f99930040b4ff",
+    "order": 3,
+    "width": "6",
+    "height": "2",
+    "label": "Status",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 320,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "f4bbe0fe3493c083",
+    "type": "ui_chart",
+    "z": "7021a0b2d35572fb",
+    "name": "CPU History",
+    "group": "ac2f99930040b4ff",
+    "order": 4,
+    "width": "7",
+    "height": "6",
+    "label": "CPU %",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm:ss",
+    "interpolate": "linear",
+    "nodata": "",
+    "dot": false,
+    "ymin": "0",
+    "ymax": "100",
+    "removeOlder": "5",
+    "removeOlderPoints": "",
+    "removeOlderUnit": "60",
+    "cutout": 0,
+    "useOneColor": false,
+    "colors": [
+      "#1f77b4",
+      "#aec7e8"
+    ],
+    "x": 650,
+    "y": 420,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "bb7d3f9536634823",
+    "type": "ui_template",
+    "z": "7021a0b2d35572fb",
+    "name": "Host Detail",
+    "group": "ac2f99930040b4ff",
+    "order": 5,
+    "width": "7",
+    "height": "5",
+    "format": "<table class='table' style='width:100%'>\n  <tbody>\n    <tr><td class='shd-muted'>Proxmox</td><td>{{msg.payload.pveversion}}</td></tr>\n    <tr><td class='shd-muted'>Kernel</td><td>{{msg.payload.kversion}}</td></tr>\n    <tr><td class='shd-muted'>CPU model</td><td>{{msg.payload.model}}</td></tr>\n    <tr><td class='shd-muted'>Cores</td><td>{{msg.payload.cores}} @ {{msg.payload.mhz}} MHz</td></tr>\n    <tr><td class='shd-muted'>Load avg</td><td>{{msg.payload.load1}} / {{msg.payload.load5}} / {{msg.payload.load15}}</td></tr>\n    <tr><td class='shd-muted'>Uptime</td><td>{{msg.payload.uptime}}</td></tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 520,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "b20c76b64ec7d1b2",
+    "type": "ui_text",
+    "z": "7021a0b2d35572fb",
+    "name": "Swap",
+    "group": "ac2f99930040b4ff",
+    "order": 6,
+    "width": "4",
+    "height": "2",
+    "label": "Swap",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 620,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "7defb1ff56d3a6f7",
+    "type": "ui_text",
+    "z": "7021a0b2d35572fb",
+    "name": "Disk (rootfs)",
+    "group": "ac2f99930040b4ff",
+    "order": 7,
+    "width": "4",
+    "height": "2",
+    "label": "Disk",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 700,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "cd7f1ca40df9930a",
+    "type": "ui_text",
+    "z": "7021a0b2d35572fb",
+    "name": "Memory Detail",
+    "group": "ac2f99930040b4ff",
+    "order": 8,
+    "width": "4",
+    "height": "2",
+    "label": "Memory",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 780,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "8ab7499975d8ff80",
+    "type": "inject",
+    "z": "7021a0b2d35572fb",
+    "name": "Every 30s",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "30",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "dcb973a98c5d7505",
+    "type": "function",
+    "z": "7021a0b2d35572fb",
+    "name": "Build Proxmox request",
+    "func": "// Credentials come from env vars -- never hardcoded.\nvar base = env.get('PROXMOX_URL');\nvar tok  = env.get('PROXMOX_TOKEN');\nif (!base || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  return null;\n}\nvar node = env.get('PROXMOX_NODE') || 'pve';\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/api2/json/nodes/' + node + '/status';\nmsg.headers = {};\nmsg.headers['Authorization'] = 'PVEAPIToken=' + tok;\nmsg.rejectUnauthorized = false;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "dbe2d8ef5d1e0d5c",
+    "type": "http request",
+    "z": "7021a0b2d35572fb",
+    "name": "Proxmox API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 570,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "c5a69c16dd836bf4",
+    "type": "json",
+    "z": "7021a0b2d35572fb",
+    "name": "Parse",
+    "property": "payload",
+    "action": "obj",
+    "pretty": false,
+    "x": 730,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "bcd20c7f62b43cd7",
+    "type": "function",
+    "z": "7021a0b2d35572fb",
+    "name": "Split metrics",
+    "func": "var d = (msg.payload && msg.payload.data) ? msg.payload.data : null;\nif (!d) { node.status({fill:'red',shape:'ring',text:'no data'}); return null; }\nvar cpu = Math.round((d.cpu || 0) * 1000) / 10;\nvar memUsed = (d.memory && d.memory.used) || 0;\nvar memTot = (d.memory && d.memory.total) || 1;\nvar mem = Math.round(memUsed / memTot * 1000) / 10;\nvar up = d.uptime || 0;\nvar days = Math.floor(up / 86400), hrs = Math.floor((up % 86400) / 3600);\nnode.status({fill:'green',shape:'dot',text:cpu + '% cpu'});\n// Human-readable byte formatting for the disk/swap/memory rows.\nfunction gb(v) { return (Math.round(v / 1073741824 * 10) / 10) + ' GB'; }\nfunction pct(u, t) { return t ? Math.round(u / t * 1000) / 10 + '%' : 'n/a'; }\n// Nested sub-objects are flattened onto the payload so the Host Detail\n// template can reach them with plain dotted paths -- confirmed present in\n// the live response by tools/probe_proxmox_status.py.\nvar rootfs = d.rootfs || {}, swap = d.swap || {};\nvar mem2 = d.memory || {};\nvar ci = d.cpuinfo || {}, kd = d['current-kernel'] || {}, la = d.loadavg || [];\nvar detail = {\n  payload: {\n    pveversion: d.pveversion || 'unknown',\n    kversion: d.kversion || kd.release || 'unknown',\n    model: ci.model || 'unknown',\n    cores: ci.cores || ci.cpus || '?',\n    mhz: ci.mhz || '?',\n    load1: (la[0] != null ? Math.round(la[0] * 100) / 100 : '?'),\n    load5: (la[1] != null ? Math.round(la[1] * 100) / 100 : '?'),\n    load15: (la[2] != null ? Math.round(la[2] * 100) / 100 : '?'),\n    uptime: days + 'd ' + hrs + 'h'\n  }\n};\nvar mSwap = {payload: pct(swap.used, swap.total) + ' of ' + gb(swap.total || 0)};\nvar mDisk = {payload: pct(rootfs.used, rootfs.total) + ' of ' + gb(rootfs.total || 0)\n  + '  (' + gb(rootfs.avail || 0) + ' free)'};\nvar mMem  = {payload: gb(mem2.used || 0) + ' of ' + gb(mem2.total || 0)\n  + '  (' + gb(mem2.available || 0) + ' avail)'};\nvar mCpu = {payload: cpu};\nvar mMemG = {payload: mem};\nvar mStat = {payload: 'Up ' + days + 'd ' + hrs + 'h' + (d.loadavg ? ' | load ' + (Math.round(d.loadavg[0]*100)/100) : '')};\nvar mChart = {payload: cpu, topic: 'cpu'};\nreturn [mCpu, mMemG, mStat, mChart, detail, mSwap, mDisk, mMem];",
+    "outputs": 8,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 900,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "c3a6785cce2c7995",
+    "type": "debug",
+    "z": "7021a0b2d35572fb",
+    "name": "Proxmox raw",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 740,
+    "y": 200,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "b30173dcd6d85862",
+    "type": "tab",
+    "label": "Devices",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "b75f1a13a781d3de",
+    "type": "ui_tab",
+    "z": "b30173dcd6d85862",
+    "name": "Devices",
+    "icon": "lightbulb-o",
+    "order": 2,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "0b3790228c6385f0",
+    "type": "ui_group",
+    "z": "b30173dcd6d85862",
+    "name": "Device Control",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ecb11dbf21c0d18c",
+    "type": "ui_switch",
+    "z": "b30173dcd6d85862",
+    "name": "Power",
+    "label": "Power",
+    "tooltip": "",
+    "group": "0b3790228c6385f0",
+    "order": 1,
+    "width": "4",
+    "height": "3",
+    "passthru": true,
+    "decouple": "false",
+    "topic": "hubitat/power",
+    "topicType": "str",
+    "style": "",
+    "onvalue": "true",
+    "onvalueType": "bool",
+    "onicon": "",
+    "oncolor": "",
+    "offvalue": "false",
+    "offvalueType": "bool",
+    "officon": "",
+    "offcolor": "",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "5a16dc7980d6d961",
+    "type": "ui_slider",
+    "z": "b30173dcd6d85862",
+    "name": "Brightness",
+    "label": "Brightness",
+    "tooltip": "",
+    "group": "0b3790228c6385f0",
+    "order": 2,
+    "width": "4",
+    "height": "3",
+    "passthru": true,
+    "outs": "all",
+    "topic": "hubitat/level",
+    "topicType": "str",
+    "min": 0,
+    "max": "100",
+    "step": 1,
+    "x": 130,
+    "y": 220,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "8ea1dae49ea2f59a",
+    "type": "ui_text",
+    "z": "b30173dcd6d85862",
+    "name": "Last Result",
+    "group": "0b3790228c6385f0",
+    "order": 4,
+    "width": "6",
+    "height": "2",
+    "label": "Result",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 320,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "8824314092076504",
+    "type": "ui_text",
+    "z": "b30173dcd6d85862",
+    "name": "Device Count",
+    "group": "0b3790228c6385f0",
+    "order": 3,
+    "width": "6",
+    "height": "2",
+    "label": "Devices",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 400,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "501357c8c65d74b4",
+    "type": "ui_template",
+    "z": "b30173dcd6d85862",
+    "name": "Device List",
+    "group": "0b3790228c6385f0",
+    "order": 5,
+    "width": "12",
+    "height": "10",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n      <td>{{d.label || d.name}}</td>\n      <td>{{d.type}}</td>\n      <td>{{d.room}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 470,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "79096e91e2e6c3a8",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Build device list call",
+    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = [];\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/,'') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 560,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "61554049c9a117c6",
+    "type": "http request",
+    "z": "b30173dcd6d85862",
+    "name": "Hubitat device list",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 590,
+    "y": 560,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "27a11686ba678c7a",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Format device list",
+    "func": "var body = msg.payload;\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = [];\n  return [msg, msg];\n}\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch (e) { body = []; }\n}\nvar list = Array.isArray(body) ? body : (body && body.devices) || [];\nnode.status({fill:'green',shape:'dot',text:list.length + ' devices'});\nmsg.payload = list;\nvar c = {payload: list.length};\nreturn [msg, c];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 790,
+    "y": 560,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "8f53335844426c61",
+    "type": "inject",
+    "z": "b30173dcd6d85862",
+    "name": "Load devices",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 560,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "8ddcf421c3694424",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Build Maker API call",
+    "func": "// Hubitat Maker API: GET /apps/api/<appId>/devices/<devId>/<cmd>/<value>?access_token=<tok>\nvar base = env.get('HUBITAT_URL') || 'http://hubitat.local';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nvar dev  = env.get('HUBITAT_DEVICE_ID') || '';\nif (!app || !tok || !dev) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = 'Set HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN and HUBITAT_DEVICE_ID in the LXC env';\n  return [null, msg];\n}\nvar cmd, val = null;\nif (msg.topic === 'hubitat/power') { cmd = msg.payload ? 'on' : 'off'; }\nelse if (msg.topic === 'hubitat/level') { cmd = 'setLevel'; val = msg.payload; }\nelse { node.status({fill:'grey',shape:'ring',text:'ignored'}); return null; }\nvar url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices/' + dev + '/' + cmd;\nif (val !== null) { url += '/' + val; }\nurl += '?access_token=' + tok;\nmsg.method = 'GET';\nmsg.url = url;\nnode.status({fill:'blue',shape:'dot',text:cmd});\nreturn [msg, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 170,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "ca0ba149ba035f16",
+    "type": "http request",
+    "z": "b30173dcd6d85862",
+    "name": "Hubitat Maker API",
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 590,
+    "y": 170,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "3955c5258b61b1cc",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Format result",
+    "func": "// http request sets msg.error on a transport failure.\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n  return msg;\n}\nif (msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'http ' + msg.statusCode});\n  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n}\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 790,
+    "y": 170,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "1292414d65358a68",
+    "type": "tab",
+    "label": "Network",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "453b38c70c013c67",
+    "type": "ui_tab",
+    "z": "1292414d65358a68",
+    "name": "Network",
+    "icon": "wifi",
+    "order": 3,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "626e7274ee98c352",
+    "type": "ui_group",
+    "z": "1292414d65358a68",
+    "name": "Network Overview",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "b600ad1c10e3da25",
+    "type": "ui_text",
+    "z": "1292414d65358a68",
+    "name": "Clients Online",
+    "group": "626e7274ee98c352",
+    "order": 1,
+    "width": "6",
+    "height": "2",
+    "label": "Clients",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "dcf1d5cee4fd6ca6",
+    "type": "ui_template",
+    "z": "1292414d65358a68",
+    "name": "Client List",
+    "group": "626e7274ee98c352",
+    "order": 2,
+    "width": "12",
+    "height": "8",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Client</th><th>IP</th><th>MAC</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='c in msg.payload'>\n      <td>{{c.hostname}}</td><td>{{c.ip}}</td><td>{{c.mac}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 220,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "e457487ebf2d80ca",
+    "type": "inject",
+    "z": "1292414d65358a68",
+    "name": "Every 60s",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "5c8c0661415fa783",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Build UniFi auth",
+    "func": "// UniFi controllers need auth. Credentials come from env vars.\n// UNIFI_URL may carry a path prefix: UniFi OS (UDM/Cloud Gateway) serves\n// the Network app under /proxy/network, self-hosted controllers do not.\nvar base = env.get('UNIFI_URL');\nvar site = env.get('UNIFI_SITE') || 'default';\nvar key  = env.get('UNIFI_API_KEY');\nvar user = env.get('UNIFI_USERNAME');\nvar pass = env.get('UNIFI_PASSWORD');\nmsg.rejectUnauthorized = false;\nmsg.headers = {'Accept': 'application/json'};\nif (!base) {\n  node.status({fill:'red',shape:'ring',text:'no UNIFI_URL'});\n  return [null, {payload: [], topic: 'unifi/error', _error: 'UNIFI_URL is not set. Use https://<host>/proxy/network for a UniFi OS console, or https://<host>:8443 for a self-hosted controller'}];\n}\nbase = base.replace(/\\/+$/, '');\nmsg.url_stat = base + '/api/s/' + site + '/stat/sta';\nif (key) {\n  node.status({fill:'green',shape:'dot',text:'api key'});\n  msg.method = 'GET';\n  msg.url = msg.url_stat;\n  msg.headers['X-API-KEY'] = key;\n  // out1 is the API-key path and MUST still go through the HTTP request\n  // node. Returning it on out0 (the login path) sent it straight to the\n  // parser, which then read the inject's Date payload instead of client\n  // data and always rendered 0 clients. Both auth routes converge on the\n  // same HTTP node; out0 only differs in that it needs a login first.\n  return [null, msg];\n}\nif (!user || !pass) {\n  node.status({fill:'red',shape:'ring',text:'no credentials'});\n  return [null, {payload: [], topic: 'unifi/error', _error: 'Set UNIFI_API_KEY, or UNIFI_USERNAME + UNIFI_PASSWORD, in the service environment'}];\n}\n// Pick the login endpoint. A UniFi OS console (base carries\n// /proxy/network) authenticates at the console root via /api/auth/login;\n// self-hosted controllers use /api/login. UNIFI_LOGIN_URL overrides both.\nvar login = env.get('UNIFI_LOGIN_URL');\nif (!login) {\n  login = base + '/api/login';\n  var m = base.match(/^(https?:\\/\\/[^\\/]+)\\/proxy\\/network/);\n  if (m) { login = m[1] + '/api/auth/login'; }\n}\nnode.status({fill:'blue',shape:'dot',text:'logging in'});\nmsg.method = 'POST';\nmsg.url = login;\nmsg.headers['Content-Type'] = 'application/json';\nmsg.payload = JSON.stringify({username: user, password: pass, remember: true});\nreturn [msg, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "84efc45dd60503fb",
+    "type": "http request",
+    "z": "1292414d65358a68",
+    "name": "UniFi login",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 540,
+    "y": 60,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "9f4a7680b3bdb142",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Capture session",
+    "func": "// Carry the UniFi session cookie (or X-CSRF-Token on newer builds)\n// into the stat request.\nvar h = msg.headers || {};\nvar setCookie = h['set-cookie'] || h['Set-Cookie'];\nvar cookie = null;\nif (Array.isArray(setCookie)) { setCookie = setCookie.join('; '); }\nif (setCookie) {\n  var part = String(setCookie).split(';')[0];\n  if (part) { cookie = part; }\n}\nif (!cookie) {\n  node.status({fill:'red',shape:'ring',text:'login failed'});\n  msg.payload = [];\n  msg.topic = 'unifi/error';\n  msg._error = 'UniFi login returned no session cookie (HTTP ' + (msg.statusCode || '?') + ')';\n  return msg;\n}\nnode.status({fill:'green',shape:'dot',text:'session ok'});\nmsg.method = 'GET';\nmsg.url = msg.url_stat;\nmsg.headers = {'Accept': 'application/json'};\nif (msg.csrfToken || (h['x-csrf-token'])) {\n  msg.headers['X-CSRF-Token'] = msg.csrfToken || h['x-csrf-token'];\n}\nmsg.headers['Cookie'] = cookie;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 730,
+    "y": 60,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "41c85a6a5aa569f9",
+    "type": "http request",
+    "z": "1292414d65358a68",
+    "name": "UniFi clients",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 420,
+    "y": 200,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "62f102051af2d959",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Split client data",
+    "func": "// Handles both the success path and the config-error path.\nif (msg.topic === 'unifi/error' || msg._error) {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  var errMsg = msg._error || String(msg.payload || '');\n  return [ {payload: 0}, {payload: 'ERROR: ' + errMsg} ];\n}\nvar data = (msg.payload && msg.payload.data) ? msg.payload.data : [];\nvar rows = [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: (c.ip || (c['ip'] || '')), mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 900,
+    "y": 300,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "9171e542e4309e3f",
+    "type": "tab",
+    "label": "Kanban",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "c171fcfe86f1ab0c",
+    "type": "ui_tab",
+    "z": "9171e542e4309e3f",
+    "name": "Kanban",
+    "icon": "tasks",
+    "order": 4,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "e1f9a25b6ae24226",
+    "type": "ui_group",
+    "z": "9171e542e4309e3f",
+    "name": "Task Board",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "27235caad41afb89",
+    "type": "ui_text_input",
+    "z": "9171e542e4309e3f",
+    "name": "New task",
+    "label": "New task",
+    "tooltip": "",
+    "group": "e1f9a25b6ae24226",
+    "order": 1,
+    "width": "6",
+    "height": "3",
+    "passthru": true,
+    "mode": "text",
+    "delay": 300,
+    "topic": "kanban/new",
+    "sendOnBlur": true,
+    "className": "",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "45d4f806d82a96d5",
+    "type": "ui_button",
+    "z": "9171e542e4309e3f",
+    "name": "Add",
+    "group": "e1f9a25b6ae24226",
+    "order": 2,
+    "width": 0,
+    "height": 0,
+    "passthru": false,
+    "label": "Add",
+    "tooltip": "",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "",
+    "payload": "",
+    "payloadType": "str",
+    "topic": "kanban/render",
+    "topicType": "str",
+    "x": 130,
+    "y": 200,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "e24cd17178a0d001",
+    "type": "ui_template",
+    "z": "9171e542e4309e3f",
+    "name": "Cards",
+    "group": "e1f9a25b6ae24226",
+    "order": 3,
+    "width": "12",
+    "height": "8",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Task</th><th>Status</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='c in msg.payload'>\n      <td>{{c.task}}</td><td>{{c.status}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 220,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "5c6df7c479179e47",
+    "type": "function",
+    "z": "9171e542e4309e3f",
+    "name": "Add card",
+    "func": "var task = (typeof msg.payload === 'string' ? msg.payload : '').trim();\nif (!task) { node.status({fill:'grey',shape:'ring',text:'empty'}); return null; }\nvar cards = flow.get('kanban_cards') || [];\ncards.push({task: task, status: 'todo'});\nflow.set('kanban_cards', cards);\nnode.status({fill:'green',shape:'dot',text:cards.length + ' cards'});\nmsg.payload = cards;\nreturn [msg, msg];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "flow.set('kanban_cards', flow.get('kanban_cards') || []);",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "bd1a48dec02a2883",
+    "type": "function",
+    "z": "9171e542e4309e3f",
+    "name": "Render board",
+    "func": "var cards = flow.get('kanban_cards') || [];\nnode.status({fill:'blue',shape:'dot',text:cards.length + ' cards'});\nmsg.payload = cards;\nreturn [msg, msg];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 200,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "f0a7f7248adade1f",
+    "type": "inject",
+    "z": "9171e542e4309e3f",
+    "name": "Load board",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 280,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "cd9414cf8a93b02c",
+    "type": "debug",
+    "z": "9171e542e4309e3f",
+    "name": "Cards",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 320,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "1743dae8afd71d46",
+    "type": "tab",
+    "label": "Settings",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "6ce99278d5cb3466",
+    "type": "ui_tab",
+    "z": "1743dae8afd71d46",
+    "name": "Settings",
+    "icon": "cog",
+    "order": 5,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ae101a8bec8318ce",
+    "type": "ui_group",
+    "z": "1743dae8afd71d46",
+    "name": "System Info",
+    "tab": "unknown_tab_9999",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "b094712d07a28780",
+    "type": "ui_text",
+    "z": "1743dae8afd71d46",
+    "name": "Deployment Info",
+    "group": "ae101a8bec8318ce",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "label": "Info",
+    "format": "{{msg.payload}}",
+    "layout": "row-left",
+    "className": "",
+    "x": 640,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  },
+  {
+    "id": "a3c65a55543834fe",
+    "type": "inject",
+    "z": "1743dae8afd71d46",
+    "name": "Load info",
+    "props": [
+      {
+        "p": "payload",
+        "v": "Smart Home Dashboard\nNode-RED flows deployed.\n\nSet credentials in the LXC env:\nPROXMOX_URL, PROXMOX_TOKEN, HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN, HUBITAT_DEVICE_ID, UNIFI_URL",
+        "vt": "str"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "unknown_node_9999"
+      ]
+    ]
+  }
+]

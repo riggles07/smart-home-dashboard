@@ -93,7 +93,7 @@ because it 401s.
 
 ```bash
 # on the Node-RED LXC
-sudoedit /home/node-red/.env          # fill in the values
+sudoedit /root/.node-red/.env          # fill in the values
 systemctl restart node-red            # env is only read at start
 ```
 
