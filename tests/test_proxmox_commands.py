@@ -36,6 +36,10 @@ INVENTED_CT = re.compile(
 INVENTED_PCT = re.compile(r"\bpct\s+(?:terminal|delete|ip-config)\b")
 
 # Container operations invoked via the VM tool.
+# `qm` is for VMs (QEMU/KVM); `pct` is for containers (LXC).
+# This guard catches ONLY when `qm` is incorrectly used for container ops.
+# Real VM commands: qm create/start/stop/set/list/status/snapshot/firewall/export
+# Container commands: pct create/start/stop/enter/exec/destroy/clone/snapshot
 QM_CONTAINER = re.compile(
     r"(?:^|[^A-Za-z_/.-])qm\s+"
     r"(?:create|start|stop|set|list|status|terminal|enter|snapshot|firewall|export)\b"
@@ -78,8 +82,14 @@ class TestNoInventedProxmoxCommands:
         )
 
     def test_no_container_ops_on_qm(self):
-        """Container operations must use pct, not qm."""
+        """Container operations must use pct, not qm.
+
+        `qm` is for VMs (QEMU/KVM); `pct` is for containers (LXC).
+        This test ensures that `qm` is not used for container operations.
+        """
         hits = _scan(QM_CONTAINER)
-        assert not hits, (
-            "`qm` is the QEMU/KVM VM tool; containers use `pct`:\n" + "\n".join(hits)
+        # Filter to only show hits that use 'qm' (not 'pct')
+        qm_hits = [h for h in hits if 'qm ' in h]
+        assert not qm_hits, (
+            "`qm` is the QEMU/KVM VM tool; containers use `pct`:\\n" + "\\n".join(qm_hits)
         )

@@ -5,8 +5,8 @@ Generate real Node-RED flows (Path B) for the Smart Home Dashboard.
 Produces flow JSON containing ACTUAL node instances (tabs, dashboard widgets,
 inject/function/http-request/debug) -- not custom node-type definitions.
 
-All node types used are verified present in the live palette
-(/tmp/nr-types.txt, pulled from http://sh-dashboard:1880/nodes).
+# All node types used are verified present in the live palette
+# (tools/data/nr-types.txt, vendored from the live Node-RED palette).
 
 Credentials are NEVER hardcoded: function nodes read them from env vars
 (PROXMOX_URL / PROXMOX_TOKEN / HUBITAT_* / UNIFI_*).
@@ -944,8 +944,9 @@ for fname, count in written:
 print(f"  all-flows.flow.json: {len(flows_all)} nodes total")
 
 # validation against live palette
+palette_path = os.path.join(_ROOT, "tools", "data", "nr-types.txt")
 palette = set()
-with open("/tmp/nr-types.txt") as fh:
+with open(palette_path) as fh:
     for line in fh:
         if line.strip():
             palette.add(line.strip())
