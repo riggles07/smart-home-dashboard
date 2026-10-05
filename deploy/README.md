@@ -122,9 +122,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=node-red
-Group=node-red
-WorkingDirectory=/home/node-red
+User=root
+Group=root
+WorkingDirectory=/root/.node-red
 ExecStart=/usr/bin/node-red
 Restart=always
 RestartSec=10
@@ -161,7 +161,7 @@ ufw --force enable
 
 ```bash
 # Create .env file for Node-RED
-cat > /home/node-red/.env << 'EOF'
+cat > /root/.node-red/.env << 'EOF'
 # Dashboard Configuration
 NODE_RED_USER=admin
 NODE_RED_PASS=admin
@@ -184,8 +184,8 @@ UNIFI_SITE=default
 EOF
 
 # Set secure permissions
-chmod 600 /home/node-red/.env
-chown -R node-red:node-red /home/node-red
+chmod 600 /root/.node-red/.env
+chown -R root:root /root/.node-red
 ```
 
 #### Step 7: Configure Proxmox Firewall (Optional)

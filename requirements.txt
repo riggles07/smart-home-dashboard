@@ -1,12 +1,8 @@
-# Node-RED Dashboard Requirements
+# Python dependencies for Smart Home Dashboard
 
-# Core Node-RED packages
-node-red-dashboard
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
 
-# Integration packages
-node-red-node-hubitat
-node-red-node-unifi
-
-# Optional features
-node-red-contrib-kanbanflow
-node-red-contrib-home-assistant-common
+# Validation and testing tools
+jsonschema>=4.0.0

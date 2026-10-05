@@ -82,12 +82,10 @@ fi
 echo_color "Step 4: Installing Node-RED..."
 npm install -g node-red
 
-# Install additional Node-RED packages
+# Install additional Node-RED packages (only node-red-dashboard is required;
+# the generated flows use plain "http request" nodes, not the Hubitat/UniFi
+# contrib packages)
 npm install -g node-red-dashboard
-npm install -g node-red-node-hubitat
-npm install -g node-red-node-unifi
-npm install -g node-red-contrib-kanbanflow
-npm install -g node-red-contrib-home-assistant-common
 npm install -g bcryptjs   # Required for adminAuth password hashing (Phase 6)
 
 echo_success "Node-RED installed"
@@ -135,10 +133,7 @@ StandardOutput=journal
 StandardError=journal
 Environment="NODE_RED_USER=admin"
 Environment="NODE_RED_PORT=1880"
-# Credentials/endpoints for the flow function nodes (PROXMOX_*, HUBITAT_*,
-# UNIFI_*). Without EnvironmentFile, /root/.node-red/.env is written and
-# chmod 600'd but never loaded -- process.env.* is undefined and adminAuth
-# silently falls back to admin/admin.
+Environment="NODE_PATH=/usr/lib/node_modules"
 EnvironmentFile=-/root/.node-red/.env
 
 # Phase 6 security hardening (root + systemd sandboxing)
@@ -201,14 +196,6 @@ module.exports = {
   httpRateLimit: {
     max: 100,
     windowMs: 60000
-  },
-  // Security headers
-  httpStaticHeaders: {
-    "X-Frame-Options": "DENY",
-    "X-Content-Type-Options": "nosniff",
-    "X-XSS-Protection": "1; mode=block",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
   },
   functionGlobalContext: {
     // Global variables can be set here
@@ -319,13 +306,19 @@ echo_color "Step 12: Importing dashboard flows..."
 FLOWS_SRC="$(cd "$(dirname "$0")/.." && pwd)/flows"
 if [ -f "$FLOWS_SRC/all-flows.flow.json" ]; then
     # Wait for the Admin API to answer before posting.
+    # Probe must hit the real root ("/admin") and confirm JSON is served.
     ready=0
     for _ in $(seq 1 20); do
-        if curl -s -o /dev/null --max-time 2 http://localhost:1880/settings; then
+        # Test /admin endpoint returns JSON (not 404)
+        if curl -s http://localhost:1880/admin | grep -q '"admin"'; then
             ready=1; break
         fi
         sleep 1
     done
+    if [ "$ready" != "1" ]; then
+        echo_error "Admin API did not become ready after 20s -- check that /etc/node-red/settings.js has httpAdminRoot: \"admin\""
+        exit 1
+    fi
     if [ "$ready" = "1" ]; then
         # Full deploy. HTTP 204 == accepted.
         code=$(curl -s -o /dev/null -w "%{http_code}" \
