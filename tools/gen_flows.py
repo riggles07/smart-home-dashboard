@@ -881,11 +881,247 @@ add({"id": nid("dbg-k"), "type": "debug", "z": T, "name": "Cards",
      "complete": "payload", "targetType": "msg", "statusVal": "", "statusType": "auto",
      "x": 570, "y": 320, "wires": []})
 
-# ---------------------------------------------------------------- Tab 5: Settings
+# ---------------------------------------------------------------- Tab 5: System Health
+# REQUIREMENTS_V2 §2: a "System Health" tab acting as a portal to Grafana.
+# Two data paths, deliberately different:
+#   1. NATIVE summary (Prometheus instant query -> gauges/text). Renders in
+#      milliseconds with zero iframe cost, so the tab is never blank while the
+#      Grafana panels stream in. This is the "or API" half of the requirement.
+#   2. GRAFANA PANEL EMBEDS (one ui_template per panel; each format's own
+#      <script> block registers a scope.$watch on msg.p.<key> and sets the
+#      iframe src imperatively -- ng-src does NOT work here, see the comment
+#      above GRAFANA_EMBED). loading="lazy" keeps
+#      off-screen panels from loading on the A7 Lite (6 panels x a full SPA
+#      instance each is real RAM on a 3GB tablet).
+# Panel ids map 1:1 to the provisioned Grafana dashboard shd-system-health
+# (homelab-monitoring repo, stack/grafana/dashboards/shd-system-health.json):
+#   1 CPU / 2 Memory / 3 Disk IO / 4 Service Health / 6 ICMP latency / 7 loss.
+# Panels 5 (uptime) and 8 (targets) are stat tiles duplicated by the native
+# summary widgets, so they are not embedded (one less SPA instance each).
+T = nid("tab-syshealth")
+add({"id": T, "type": "tab", "label": "System Health", "disabled": False, "info": ""})
+add({"id": nid("uitab-sh"), "type": "ui_tab", "z": T, "name": "System Health",
+     "icon": "heartbeat", "order": 5, "disabled": False, "hidden": False})
+
+# ---- Group 1: Health Summary (native widgets, no iframes) ----------------
+G = nid("grp-sh-sum")
+add({"id": G, "type": "ui_group", "z": T, "name": "Health Summary",
+     "tab": nid("uitab-sh"), "order": 1, "disp": True, "width": "12", "collapse": False})
+add({"id": nid("gg-sh-cpu"), "type": "ui_gauge", "z": T, "name": "PVE CPU",
+     "group": G, "order": 1, "width": "6", "height": "5", "gtype": "gage",
+     "title": "PVE CPU", "label": "%", "format": "{{value}}", "min": 0, "max": "100",
+     "colors": ["#00b500", "#e6e600", "#ca3838"], "seg1": "", "seg2": "",
+     "x": 990, "y": 120, "wires": []})
+add({"id": nid("gg-sh-mem"), "type": "ui_gauge", "z": T, "name": "PVE Memory",
+     "group": G, "order": 2, "width": "6", "height": "5", "gtype": "gage",
+     "title": "PVE Memory", "label": "%", "format": "{{value}}", "min": 0, "max": "100",
+     "colors": ["#00b500", "#e6e600", "#ca3838"], "seg1": "", "seg2": "",
+     "x": 990, "y": 180, "wires": []})
+add({"id": nid("txt-sh-targets"), "type": "ui_text", "z": T, "name": "Targets Up",
+     "group": G, "order": 3, "width": "6", "height": "2",
+     "label": "Prometheus Targets", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 990, "y": 240, "wires": []})
+add({"id": nid("txt-sh-probes"), "type": "ui_text", "z": T, "name": "Probes OK",
+     "group": G, "order": 4, "width": "6", "height": "2",
+     "label": "Blackbox Probes", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 990, "y": 300, "wires": []})
+add({"id": nid("txt-sh-uptime"), "type": "ui_text", "z": T, "name": "PVE Uptime",
+     "group": G, "order": 5, "width": "12", "height": "2",
+     "label": "Uptime", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 990, "y": 360, "wires": []})
+
+add({"id": nid("inj-sh-sum"), "type": "inject", "z": T, "name": "Every 30s",
+     "props": [{"p": "payload"}], "repeat": "30", "crontab": "", "once": True,
+     "onceDelay": 1.0, "topic": "", "payload": "", "payloadType": "date",
+     "x": 150, "y": 120, "wires": [[nid("fn-sh-pq")]]})
+add({"id": nid("fn-sh-pq"), "type": "function", "z": T, "name": "Build health query",
+     "func": (
+        "// One instant query returns every summary stat, tagged with a `stat`\n"
+        "// label so a single HTTP round trip feeds all five widgets. Every\n"
+        "// expression was verified live against the co-located stack.\n"
+        "var base = (env.get('PROMETHEUS_URL') || 'http://192.168.4.145:9090').replace(/\\/+$/, '');\n"
+        "var q = 'label_replace(count(up == 1), \"stat\", \"targets_up\", \"\", \"\")'\n"
+        "  + ' or label_replace(count(up), \"stat\", \"targets_total\", \"\", \"\")'\n"
+        "  + ' or label_replace(100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100), \"stat\", \"pve_cpu\", \"\", \"\")'\n"
+        "  + ' or label_replace(100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)), \"stat\", \"pve_mem\", \"\", \"\")'\n"
+        "  + ' or label_replace(count(probe_success == 1), \"stat\", \"probes_ok\", \"\", \"\")'\n"
+        "  + ' or label_replace(count(probe_success), \"stat\", \"probes_total\", \"\", \"\")'\n"
+        "  + ' or label_replace((time() - node_boot_time_seconds) / 86400, \"stat\", \"pve_uptime_days\", \"\", \"\")';\n"
+        "msg.method = 'GET';\n"
+        "msg.url = base + '/api/v1/query?query=' + encodeURIComponent(q);\n"
+        "return msg;"
+     ),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 350, "y": 120, "wires": [[nid("http-sh")]]})
+add({"id": nid("http-sh"), "type": "http request", "z": T, "name": "Prometheus API",
+     "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
+     "persist": False, "proxy": "", "authType": "",
+     "x": 560, "y": 120, "wires": [[nid("fn-sh-parse")]]})
+add({"id": nid("fn-sh-parse"), "type": "function", "z": T, "name": "Parse health summary",
+     "func": (
+        "// Map the stat-labelled instant query onto one message per widget.\n"
+        "// Missing stats degrade to 0 rather than 'undefined' text.\n"
+        "var r = msg.payload;\n"
+        "if (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n"
+        "  node.status({fill:'red',shape:'ring',text:'no data'});\n"
+        "  return null;\n"
+        "}\n"
+        "var m = {};\n"
+        "r.data.result.forEach(function (s) {\n"
+        "  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n"
+        "});\n"
+        "function pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\n"
+        "var mCpu = { payload: pct(m.pve_cpu) };\n"
+        "var mMem = { payload: pct(m.pve_mem) };\n"
+        "var mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\n"
+        "var mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\n"
+        "var mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\n"
+        "node.status({fill:'green',shape:'dot',text:'ok'});\n"
+        "return [mCpu, mMem, mTgt, mPrb, mUp];"
+     ),
+     "outputs": 5, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 770, "y": 120, "wires": [[nid("gg-sh-cpu")], [nid("gg-sh-mem")],
+                                   [nid("txt-sh-targets")], [nid("txt-sh-probes")],
+                                   [nid("txt-sh-uptime")]]})
+
+# ---- Group 2: Proxmox Node Resources (Grafana embeds) ---------------------
+G = nid("grp-sh-pve")
+add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Node Resources",
+     "tab": nid("uitab-sh"), "order": 2, "disp": True, "width": "12", "collapse": False})
+
+# WHY THE IFRAME src IS SET FROM THE <script> BLOCK, NOT ng-src (live-verified):
+# In Angular 1.8 (bundled in node-red-dashboard 3.6.6) an <iframe> src is a
+# $sce RESOURCE_URL context. The uiTemplate directive compiles the format
+# BEFORE any message has arrived (scope.$watch(attrs.uiTemplate) fires on
+# link, when innerScope.msg is still undefined), so {{msg.p.cpu}} evaluates
+# to undefined; the ngSrc directive then strips the src/ng-src attributes
+# from the DOM entirely and the interpolation never re-runs. Measured live:
+# all six iframes rendered with NO src and NO ng-src attribute. $sce would
+# also reject the interpolated string as an untrusted RESOURCE_URL anyway.
+#
+# The dashboard-1.x fix (the pattern documented in ui_template's own help):
+# the directive sets window.scope = innerScope around `element.html(value)`
+# (bundled dist, uiTemplate directive), and jQuery's .html() (v3.7.1 ships
+# with the dashboard; verified live) executes inline <script> blocks
+# synchronously inside that call. So `(function(scope){...})(scope)` (bare
+# `scope` resolves to window.scope at script time) receives the live scope.
+# NOTE: the script runs via jQuery's DOMEval -- a TEMP script appended to
+# <head> -- so document.currentScript/previousElementSibling CANNOT be used
+# to find the iframe. Instead each iframe gets a STATIC, per-panel id
+# (`shd-frame-<key>`; the key is unique across the six templates) and the
+# watcher callback looks it up lazily with getElementById -- by the time a
+# message arrives the card is fully linked and interpolated, so the lookup
+# cannot miss. The watcher only assigns src when the URL string actually
+# changes, so the repeating 60s inject re-pushing the same URL never
+# reloads the frame -- Grafana's own refresh=30s keeps the data moving.
+GRAFANA_EMBED = (
+    '<div class="shd-embed">\n'
+    '<iframe class="shd-grafana-frame" id="shd-frame-__KEY__" title="__TITLE__" '
+    'loading="lazy"></iframe>\n'
+    '</div>\n'
+    '<script>\n'
+    '(function(scope) {\n'
+    '  var key = \'__KEY__\';\n'
+    '  var frame = null;\n'
+    '  scope.$watch(\n'
+    '    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n'
+    '    function(url) {\n'
+    '      if (!url || typeof url !== \'string\') { return; }\n'
+    '      if (!frame) { frame = document.getElementById(\'shd-frame-__KEY__\'); }\n'
+    '      if (!frame) { return; }\n'
+    '      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n'
+    '      // string, so only the first assignment hits the DOM and the Grafana\n'
+    '      // SPA is never torn down. getAttribute returns the exact assigned\n'
+    '      // string, so browser URL-normalisation cannot re-trigger it.\n'
+    '      if (frame.getAttribute(\'src\') !== url) { frame.src = url; }\n'
+    '    });\n'
+    '})(scope);\n'
+    '</script>'
+)
+
+def grafana_embed(key, title):
+    return GRAFANA_EMBED.replace("__KEY__", key).replace("__TITLE__", title)
+
+add({"id": nid("tpl-sh-cpu"), "type": "ui_template", "z": T, "name": "Grafana: PVE CPU",
+     "group": G, "order": 1, "width": "12", "height": "8",
+     "format": grafana_embed("cpu", "Proxmox Node CPU"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 480, "wires": [[]]})
+add({"id": nid("tpl-sh-mem"), "type": "ui_template", "z": T, "name": "Grafana: PVE Memory",
+     "group": G, "order": 2, "width": "12", "height": "8",
+     "format": grafana_embed("mem", "Proxmox Node Memory"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 540, "wires": [[]]})
+add({"id": nid("tpl-sh-io"), "type": "ui_template", "z": T, "name": "Grafana: PVE Disk IO",
+     "group": G, "order": 3, "width": "12", "height": "8",
+     "format": grafana_embed("io", "Proxmox Disk I/O Utilization"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 600, "wires": [[]]})
+
+# ---- Group 3: LXC / VM Health (Grafana embed) ------------------------------
+G = nid("grp-sh-lxc")
+add({"id": G, "type": "ui_group", "z": T, "name": "LXC / VM Health",
+     "tab": nid("uitab-sh"), "order": 3, "disp": True, "width": "12", "collapse": False})
+add({"id": nid("tpl-sh-health"), "type": "ui_template", "z": T, "name": "Grafana: Service Health",
+     "group": G, "order": 1, "width": "12", "height": "8",
+     "format": grafana_embed("health", "Service Health (LXC / VM / hosts)"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 660, "wires": [[]]})
+
+# ---- Group 4: Network Latency (Grafana embeds) ----------------------------
+G = nid("grp-sh-net")
+add({"id": G, "type": "ui_group", "z": T, "name": "Network Latency",
+     "tab": nid("uitab-sh"), "order": 4, "disp": True, "width": "12", "collapse": False})
+add({"id": nid("tpl-sh-latency"), "type": "ui_template", "z": T, "name": "Grafana: ICMP Latency",
+     "group": G, "order": 1, "width": "12", "height": "8",
+     "format": grafana_embed("latency", "Network Latency (blackbox ICMP)"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 720, "wires": [[]]})
+add({"id": nid("tpl-sh-loss"), "type": "ui_template", "z": T, "name": "Grafana: Packet Loss",
+     "group": G, "order": 2, "width": "12", "height": "8",
+     "format": grafana_embed("loss", "Packet Loss (blackbox ICMP)"),
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 620, "y": 780, "wires": [[]]})
+
+# ---- Embed URL builder: ONE function, one output wired to every template ----
+add({"id": nid("inj-sh-embed"), "type": "inject", "z": T, "name": "Every 60s",
+     "props": [{"p": "payload"}], "repeat": "60", "crontab": "", "once": True,
+     "onceDelay": 0.5, "topic": "", "payload": "", "payloadType": "date",
+     "x": 150, "y": 480, "wires": [[nid("fn-sh-embeds")]]})
+add({"id": nid("fn-sh-embeds"), "type": "function", "z": T, "name": "Build Grafana embeds",
+     "func": (
+        "// d-solo renders ONE panel without the Grafana chrome -- the correct\n"
+        "// route for iframes. kiosk strips the remaining nav, theme=dark avoids\n"
+        "// a light flash against the dashboard's dark theme, and refresh=30s\n"
+        "// lets the panel refresh itself WITHOUT the iframe being reloaded\n"
+        "// (each template's <script> only touches src when the URL changes,\n"
+        "// so the repeating inject re-pushes the SAME string and the SPA is\n"
+        "// never torn down).\n"
+        "// The Grafana server must run with allow_embedding=true and anonymous\n"
+        "// Viewer access -- see docs/GRAFANA_INTEGRATION.md.\n"
+        "var base = (env.get('GRAFANA_URL') || 'http://192.168.4.145:3001').replace(/\\/+$/, '');\n"
+        "var uid  = env.get('GRAFANA_DASH_UID') || 'shd-system-health';\n"
+        "function solo(panelId) {\n"
+        "  return base + '/d-solo/' + uid + '/system-health?orgId=1&panelId=' + panelId\n"
+        "       + '&kiosk&theme=dark&from=now-3h&to=now&refresh=30s';\n"
+        "}\n"
+        "msg.p = {\n"
+        "  cpu: solo(1), mem: solo(2), io: solo(3),\n"
+        "  health: solo(4), latency: solo(6), loss: solo(7)\n"
+        "};\n"
+        "node.status({fill:'green',shape:'dot',text:'embeds ready'});\n"
+        "return msg;"
+     ),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 370, "y": 480, "wires": [[nid("tpl-sh-cpu"), nid("tpl-sh-mem"), nid("tpl-sh-io"),
+                                   nid("tpl-sh-health"), nid("tpl-sh-latency"),
+                                   nid("tpl-sh-loss")]]})
+
+# ---------------------------------------------------------------- Tab 6: Settings
 T = nid("tab-settings")
 add({"id": T, "type": "tab", "label": "Settings", "disabled": False, "info": ""})
 add({"id": nid("uitab-s"), "type": "ui_tab", "z": T, "name": "Settings",
-     "icon": "cog", "order": 5, "disabled": False, "hidden": False})
+     "icon": "cog", "order": 6, "disabled": False, "hidden": False})
 G = nid("grp-set")
 add({"id": G, "type": "ui_group", "z": T, "name": "System Info",
      "tab": nid("uitab-s"), "order": 1, "disp": True, "width": "6", "collapse": False})
@@ -925,7 +1161,8 @@ labels = {
     nid("tab-devices"): "02-hubitat-devices.flow.json",
     nid("tab-network"): "03-unifi-network.flow.json",
     nid("tab-kanban"):  "04-kanban-board.flow.json",
-    nid("tab-settings"):"05-settings.flow.json",
+    nid("tab-syshealth"): "05-system-health.flow.json",
+    nid("tab-settings"):"06-settings.flow.json",
 }
 written = []
 for tab_id, nodes in by_tab.items():
