@@ -655,6 +655,110 @@ add({"id": nid("fn-d-result"), "type": "function", "z": T, "name": "Format resul
      "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 790, "y": 170, "wires": [[nid("txt-dev")]]})
 
+
+# ---------------------------------------------------------------- Tab 7: Home Assistant
+T = nid("tab-ha")
+add({"id": T, "type": "tab", "label": "Home Assistant", "disabled": False, "info": "Integration with Home Assistant"})
+add({"id": nid("uitab-ha"), "type": "ui_tab", "z": T, "name": "Home Assistant",
+     "icon": "home-assistant", "order": 7, "disabled": False, "hidden": False})
+G = nid("grp-ha")
+add({"id": G, "type": "ui_group", "z": T, "name": "Home Assistant Control",
+     "tab": nid("uitab-ha"), "order": 1, "disp": True, "width": "12", "collapse": False})
+
+# -- HA WebSocket client (state path) ---------------------------------------
+add({"id": nid("fn-ha-ws"), "type": "function", "z": T, "name": "HA WebSocket Client",
+     "func": (
+        "// WebSocket client for Home Assistant state sync.\\n"
+        "const ws = require('ws');\\n"
+        "let socket = null;\\n"
+        "let states = {};\\n"
+        "const WS_PATH = '/api/websocket';\\n"
+        "const READ_ONLY = ['sensor', 'binary_sensor', 'input_datetime', 'weather', 'zone', 'device_tracker'];\\n"
+        "\\n"
+        "on('input', async (msg) => {\\n"
+        "  if (!socket) { await startWS(); }\\n"
+        "  const entity = msg.entityId || env.get('HA_ENTITY_ID');\\n"
+        "  if (!entity) { node.status({fill:'red',text:'no entity'}); return null; }\\n"
+        "  if (READ_ONLY.includes(msg.domain || 'light')) { node.status({fill:'red',text:'read-only'}); return null; }\\n"
+        "  const url = \`${env.get('HA_URL').replace(/\\\\/+$/, '')}/api/services/${msg.domain || 'homeassistant'}/${msg.service}\`;\\n"
+        "  node.send({payload: {url, method: 'POST', body: {entity_id: entity, ...msg.serviceData}}, topic: 'ha/control'});\\n"
+        "  return msg;\\n"
+        "})\\n"
+        "\\n"
+        "async function startWS() {\\n"
+        "  const baseUrl = env.get('HA_URL') || 'http://homeassistant.local:8123';\\n"
+        "  const token = env.get('HA_TOKEN');\\n"
+        "  if (!token) { node.status({fill:'red',text:'no token'}); return; }\\n"
+        "  const wsUrl = baseUrl.replace(/^http/, 'ws') + WS_PATH;\\n"
+        "  socket = new ws(wsUrl);\\n"
+        "  socket.on('open', () => { socket.send(JSON.stringify({type: 'auth', access_token: token})); });\\n"
+        "  socket.on('message', (data) => {\\n"
+        "    const m = JSON.parse(data);\\n"
+        "    if (m.type === 'auth_required') { socket.send(JSON.stringify({type: 'auth', access_token: token})); }\\n"
+        "    else if (m.type === 'auth_ok') {\\n"
+        "      socket.send(JSON.stringify({type: 'get_states'}));\\n"
+        "      socket.send(JSON.stringify({type: 'subscribe_events', event_type: 'state_changed'}));\\n"
+        "    } else if (m.type === 'result' && m.success && Array.isArray(m.result)) {\\n"
+        "      m.result.forEach(s => { if (s.entity_id) states[s.entity_id] = s; });\\n"
+        "      node.send({payload: Object.keys(states).length, topic: 'ha/state_count'});\\n"
+        "    } else if (m.type === 'event' && m.event && m.event.data) {\\n"
+        "      const eid = m.event.data.entity_id;\\n"
+        "      const ns = m.event.data.new_state;\\n"
+        "      if (ns) {\\n"
+        "        states[eid] = ns;\\n"
+        "        const norm = {entityId: eid, domain: eid.split('.')[0], state: ns.state, friendlyName: ns.attributes.friendly_name || eid, isOn: ns.state === 'on', brightnessPct: ns.attributes.brightness_pct || null};\\n"
+        "        node.send({payload: norm, topic: `ha/entity/${eid}/state`});\\n"
+        "      }\\n"
+        "    }\\n"
+        "  });\\n"
+        "  socket.on('close', () => { socket = null; });\\n"
+        "  socket.on('error', (err) => { node.status({fill:'red',text:'WS error'}); });\\n"
+        "}\\n"
+     ),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [{"var": "ws", "module": "ws"}],
+     "x": 150, "y": 120, "wires": [[nid("fn-ha-rest")]]})
+
+# -- HA REST controller (control path) -------------------------------------
+add({"id": nid("fn-ha-rest"), "type": "function", "z": T, "name": "HA REST Controller",
+     "func": (
+        "// REST controller for Home Assistant service calls\\n"
+        "on('input', async (msg) => {\\n"
+        "  msg.headers = {'Authorization': 'Bearer ' + env.get('HA_TOKEN'), 'Content-Type': 'application/json'};\\n"
+        "  msg.method = msg.method || 'POST';\\n"
+        "  msg.url = msg.url.replace(/\\\\/+$/, '');\\n"
+        "  msg.payload = msg.body || {};\\n"
+        "  msg.rejectUnauthorized = false;\\n"
+        "  node.status({fill:'green',text:'sending to HA'});\\n"
+        "  return msg;\\n"
+        "})\\n"
+     ),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 350, "y": 120, "wires": [[nid("http-ha")]]})
+
+# -- HTTP request node -----------------------------------------------------
+add({"id": nid("http-ha"), "type": "http request", "z": T, "name": "HA REST API",
+     "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
+     "persist": False, "proxy": "", "authType": "", "x": 550, "y": 120,
+     "wires": [[nid("debug-ha")]]})
+
+# -- Debug node -----------------------------------------------------------
+add({"id": nid("debug-ha"), "type": "debug", "z": T, "name": "HA Response",
+     "active": True, "tosidebar": True, "console": True, "tostatus": False,
+     "complete": "payload", "targetType": "msg", "statusVal": "", "statusType": "auto",
+     "x": 750, "y": 120, "wires": []})
+
+# -- State sync trigger ---------------------------------------------------
+add({"id": nid("inj-ha"), "type": "inject", "z": T, "name": "Sync States",
+     "props": [{"p": "payload"}], "repeat": "60", "crontab": "", "once": False,
+     "onceDelay": 1, "topic": "", "payload": "", "payloadType": "date",
+     "x": 100, "y": 220, "wires": [[nid("fn-ha-ws")]]})
+
+# -- HA entity control widget ----------------------------------------------
+add({"id": nid("sw-ha"), "type": "ui_switch", "z": T, "name": "Light Control",
+     "group": G, "order": 1, "width": "6", "height": "4",
+     "label": "Kitchen Light", "tooltip": "",
+     "x": 150, "y": 320, "wires": [[nid("fn-ha-ws")]]})
+
 # ---------------------------------------------------------------- Tab 3: UniFi Network
 T = nid("tab-network")
 add({"id": T, "type": "tab", "label": "Network", "disabled": False, "info": ""})
