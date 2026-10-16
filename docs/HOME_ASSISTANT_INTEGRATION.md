@@ -1,173 +1,207 @@
 # Home Assistant Integration
 
-This document describes the Home Assistant integration for the Smart Home Dashboard.
+The **Home Assistant** tab (tab 7) syncs entity state over the HA WebSocket API
+and controls one configurable entity over the REST API.
 
-## Overview
+## Credentials
 
-The Smart Home Dashboard integrates with Home Assistant via WebSocket for real-time state synchronization and REST API for device control.
+The dashboard needs a **Long-Lived Access Token (LLAT)**. Create it in the HA UI:
 
-## Features
+1. Open Home Assistant: **`<HA_URL>/`** (see the port warning below)
+2. Click your **username** at the bottom of the left sidebar → **Profile**
+3. Scroll to **Long-lived access tokens** → **Create token**
+4. Name it something recognisable, e.g. `smart-home-dashboard node-red`
+5. **Copy it immediately** — HA shows it once, then only the last 4 characters
 
-### WebSocket State Sync
+Verify it before wiring it in:
 
-- **Real-time updates**: Entity states sync every 60 seconds
-- **Event-driven updates**: State changes trigger immediate dashboard updates
-- **Read-only entities**: Sensors, binary sensors, and other read-only entities are monitored but not controlled
+```bash
+curl -i -H "Authorization: Bearer ***" "$HA_URL/api/"
+# want: 200 OK  {"message":"API running."}
+```
 
-### REST Control
+## ⚠️ `HA_URL` is not always port 8123
 
-- **Service calls**: POST requests to `/api/services/<domain>/<service>` endpoints
-- **Authentication**: Bearer token authentication via `HA_TOKEN`
-- **Light Control**: Turn on/off with brightness control
-- **Error handling**: Structured error responses on service call failures
+This is the failure that costs an hour. HA's native port is 8123, but a reverse
+proxy — **Tailscale Serve included** — commonly fronts it on **80** or **443**.
+Measured on this deployment: the tailnet address answers on **port 80** while
+`:8123` returns `ECONNREFUSED`.
+
+Because the flow derives the WebSocket URL from `HA_URL` by swapping
+`http`→`ws`, a wrong port breaks the **handshake**, not the HTTP call — you get a
+silently dead node.
+
+Diagnose the three cases, which look similar but mean different things:
+
+| symptom | meaning |
+|---------|---------|
+| `ECONNREFUSED` | host reachable, nothing listening on that port — wrong port, or the service is down |
+| timeout | no route: peer offline, tailnet/ACL drop, firewall |
+| `401` | **correct port, HA healthy**, token simply missing |
+
+```bash
+curl -i "$HA_URL/api/"          # 401 Unauthorized  == good port, HA up
+curl -i "$HA_URL/manifest.json" # 200 application/manifest+json
+```
+
+## Configuration
+
+Add to `/root/.node-red/.env` on the container (see `deploy/.env.example`):
+
+```bash
+HA_URL=http://homeassistant.local:8123   # as reachable FROM the container
+HA_TOKEN=<the long-lived access token>
+HA_ENTITY_ID=light.kitchen               # the entity the dashboard switch drives
+```
+
+`HA_URL` needs **no trailing slash** — the flow appends `/api/websocket` itself.
+Environment variables are read at process start, so **restart Node-RED** after
+changing them.
+
+Pick a real entity id from the API:
+
+```bash
+curl -s -H "Authorization: Bearer ***" "$HA_URL/api/states" | \
+  python3 -c "import sys,json; [print(s['entity_id'],'|',s['attributes'].get('friendly_name')) \
+              for s in json.load(sys.stdin) if s['entity_id'].startswith(('light.','switch.'))]"
+```
 
 ## Architecture
 
-### Components
+All of this is **generated** by `tools/gen_flows.py` into the Home Assistant tab
+of `flows/99-other.flow.json` (and `all-flows.flow.json`). Editing
+`flows/home-assistant-integration.js` does **not** change the dashboard — those
+`.js`/`.py` files are custom node-type definitions kept as reference
+implementations.
 
-1. **HA WebSocket Client** (`fn-ha-ws`)
-   - WebSocket connection to `ws://<host>/api/websocket`
-   - Auth frame: `{"type": "auth", "access_token": "<token>"}`
-   - Subscribes to `state_changed` events
-   - Publishes entity state to `ha/entity/<entity_id>/state` topic
+| Node | Type | Role |
+|------|------|------|
+| `HA WebSocket Client` | function | connects, authenticates, emits state; **out0 = control → REST, out1 = state → debug** |
+| `HA REST Controller` | function | formats the service call, adds the bearer token |
+| `HA REST API` | http request | performs the `POST` |
+| `HA Response` | debug | REST replies |
+| `Sync States` | inject | every 60 s: reconnects if the socket dropped. **Never actuates.** |
+| `Light Control` | ui_switch | the dashboard switch → `turn_on` / `turn_off` |
 
-2. **HA REST Controller** (`fn-ha-rest`)
-   - Formats service call requests
-   - Adds Bearer token to Authorization header
-   - Sets Content-Type to `application/json`
+### Authentication flow
 
-3. **HTTP Request Node** (`http-ha`)
-   - Sends POST requests to HA API
-   - Returns structured response
+HA sends `auth_required` **before** any credential is supplied, which is why the
+path can be tested without a token:
 
-## Environment Variables
-
-```bash
-# Home Assistant Configuration
-HA_URL=http://homeassistant.local:8123
-HA_TOKEN=<your-access-token>
-HA_ENTITY_ID=light.kitchen
 ```
+connect  ws(s)://<HA_URL>/api/websocket
+recv     {"type":"auth_required","ha_version":"2026.10.1"}
+send     {"type":"auth","access_token":"<HA_TOKEN>"}
+recv     {"type":"auth_ok"}
+send     {"type":"get_states"}                                  -> out1 counts entities
+send     {"type":"subscribe_events","event_type":"state_changed"} -> out1 per change
+```
+
+Verify the whole path with no credentials at all — a successful open plus
+`auth_required` proves tailnet → proxy → HA → WebSocket upgrade:
+
+```javascript
+// temporary probe function node, libs: [{"var":"ws","module":"ws"}]
+var s = new ws('ws://<host>/api/websocket', { handshakeTimeout: 6000 });
+s.on('message', function (d) { node.warn(String(d)); s.close(); });
+```
+
+### Message contract
+
+| topic | output | payload |
+|-------|--------|---------|
+| `ha/state_count` | 1 | number of entities loaded |
+| `ha/entity/<entity_id>/state` | 1 | `{entityId, domain, state, friendlyName, isOn, brightnessPct}` |
+| `ha/control` | 0 | `{url, method, body}` for the REST controller |
+
+### Control path
+
+The `ui_switch` sends a bare boolean. The client maps it to
+`POST <HA_URL>/api/services/light/turn_on|turn_off` with
+`{"entity_id": HA_ENTITY_ID}`. Read-only domains (`sensor`, `binary_sensor`,
+`input_datetime`, `weather`, `zone`, `device_tracker`) are refused with a
+`read-only` status.
+
+> **Caveat:** `ui_switch` may emit its initial value when the dashboard page
+> loads, which actuates once. Harmless for an already-off light; revisit if the
+> controlled entity matters.
+
+## Node-RED function-node constraints (measured, node-red 5.0.7)
+
+Both nodes use the **classic** function-node style: the body runs once per
+message, its **return value** is what gets emitted, async sends use
+`node.send()`, and persistent state lives in `context`. These were measured on
+the live runtime — do not "simplify" them away:
+
+| expression | result |
+|------------|--------|
+| `typeof on` | `"undefined"` → `on('input', …)` throws `ReferenceError: on is not defined` |
+| `node.on('input', …)` | throws `Cannot add listener to 'input' event within Function` |
+| `send` / `done` | `"undefined"` — the async-callback signature is not provided |
+| vars declared in the `initialize` tab | **not** in scope in the body |
+| `context` | **does** persist across messages — the socket handle lives there |
+| `require('ws')` | `undefined` unless the node declares `libs`; with `libs` the module arrives as an injected parameter, so **do not also** write `const ws = require('ws')` (redeclaration error) |
 
 ## Deployment
 
-### 1. Configure Environment
-
-Set the following variables in `/root/.node-red/.env`:
-
 ```bash
-HA_URL=http://homeassistant.local:8123
-HA_TOKEN=<your-actual-token>
-HA_ENTITY_ID=light.kitchen
-```
-
-### 2. Import Flows
-
-The HA tab and nodes are included in `flows/99-other.flow.json`. The flows are automatically imported when `deploy/setup.sh` runs.
-
-### 3. Verify Connection
-
-1. Navigate to the Home Assistant tab in the dashboard
-2. Check the WebSocket connection status (green = connected)
-3. Verify state sync is working (entities should appear)
-
-## Authentication
-
-### Obtaining Access Token
-
-1. Open Home Assistant Settings
-2. Go to Settings → Users → Your User → Access Tokens
-3. Create a new token with `homeassistant` scope
-4. Copy the token and set it in `HA_TOKEN`
-
-### Auth Flow
-
-```
-1. WebSocket connects to ws://<host>/api/websocket
-2. Server sends: {"type": "auth_required"}
-3. Client responds: {"type": "auth", "access_token": "<token>"}
-4. Server sends: {"type": "auth_ok"}
-5. Client sends: {"type": "get_states"}
-6. Server sends: list of all states
-7. Client subscribes to: {"type": "subscribe_events", "event_type": "state_changed"}
-```
-
-## Service Calls
-
-### Turn On Light
-
-```bash
-curl -X POST "http://homeassistant.local:8123/api/services/light/turn_on" \
-  -H "Authorization: Bearer <token>" \
+# from the dev machine
+curl -s -X POST http://<container-ip>:1880/flows \
   -H "Content-Type: application/json" \
-  -d '{"entity_id": "light.kitchen", "brightness_pct": 80}'
+  -H "Node-RED-Deployment-Type: full" \
+  --data-binary @flows/all-flows.flow.json     # -> HTTP 204
 ```
 
-### Turn Off Light
+`deploy/setup.sh` performs this automatically. There is **no restart needed for
+flows** — only for environment variables. An editor **Import** that is not
+followed by **Deploy** never reaches the runtime.
+
+## Verifying
 
 ```bash
-curl -X POST "http://homeassistant.local:8123/api/services/light/turn_off" \
-  -H "Authorization: Bearer <token>" \
-  -d '{"entity_id": "light.bedroom"}'
+python3 -m pytest tests/test_ha_integration.py -q     # 22 tests
+node tools/test_ha_functions.js                       # 41 assertions
 ```
+
+`tools/nodered_env_probe3.py` deploys a temporary probe node, reads the runtime's
+own view of `HA_URL` / `HA_TOKEN` / `HA_ENTITY_ID` back through the Admin API, and
+restores your flows. It reports presence and length only, never values.
+
+On the canvas the node status tells you exactly where it stands:
+
+| status | meaning |
+|--------|---------|
+| *(empty)* | the body never ran — check the wiring |
+| `no HA_TOKEN` / `no HA_URL` / `no HA_ENTITY_ID` | env vars missing → restart needed |
+| `connecting` → `connected` → `N entities` | working |
+| `auth failed` | token rejected |
+| `WS error` / `closed` | host reachable but the socket dropped — check the port |
 
 ## Troubleshooting
 
-### WebSocket Not Connecting
+- **Tab is inert, no status anywhere.** The env vars are missing; restart
+  Node-RED after setting them.
+- **`no HA_TOKEN` persists after setting it.** The var is not in the *process*
+  environment. Confirm against the running process, not the file:
+  `tr '\0' '\n' < /proc/$(systemctl show node-red -p MainPID --value)/environ | grep ^HA_`
+- **`auth failed`.** Re-create the token; check for a trailing newline when
+  pasting into `.env`.
+- **`read-only`.** `HA_ENTITY_ID` points at a read-only domain; the switch only
+  drives controllable ones.
+- **Nothing happens when toggling.** Check `HA_ENTITY_ID` is set and that the
+  entity exists and is controllable.
 
-- Check `HA_URL` format (must be `http://`, will be converted to `ws://`)
-- Verify Home Assistant is running on the specified host
-- Check firewall allows WebSocket connections on port 8123
-- Review Node-RED logs: `tail -f /root/.node-red/start.log`
+## Security
 
-### Authentication Failed
-
-- Verify `HA_TOKEN` is correct
-- Check token has `homeassistant` scope
-- Ensure token hasn't expired
-
-### State Sync Not Working
-
-- Check WebSocket is connected (green status indicator)
-- Verify entity IDs match HA entity names
-- Check `ha/state_count` debug output
-
-### Service Calls Failing
-
-- Verify `HA_URL` and `HA_TOKEN` are set
-- Check service name is correct (e.g., `light/turn_on`, not `light.turn_on`)
-- Review error messages in debug node
-
-## Entity Mapping
-
-The dashboard uses the following entity domains:
-
-| Domain | Read-Only | Controllable |
-|--------|-----------|--------------|
-| light | ✗ | ✓ |
-| switch | ✗ | ✓ |
-| sensor | ✓ | ✗ |
-| binary_sensor | ✓ | ✗ |
-| weather | ✓ | ✗ |
-
-## Testing
-
-Run the HA integration tests:
-
-```bash
-cd /root/.hermes/projects/smart-home-dashboard
-python3 -m pytest tests/test_ha_integration.py -v
-```
-
-## Security Considerations
-
-- `HA_TOKEN` should be stored in `/root/.node-red/.env` (not committed to git)
-- Dashboard is accessible via LAN only (no TLS by default)
-- Consider enabling Node-RED adminAuth for additional security
-- For production, enable TLS via `https` setting in `config/settings.js`
+- `HA_TOKEN` is a **full-access** credential for your HA instance. Keep it only
+  in `/root/.node-red/.env` (`chmod 600`), never in the flows or the repo.
+- The dashboard's Admin API is **unauthenticated**, and anyone who can reach
+  port 1880 can read the flows and therefore the environment they use — see
+  [`SECURITY.md`](SECURITY.md).
+- Revoke a leaked token from the same HA Profile page that created it.
 
 ## References
 
-- [Home Assistant WebSocket API](https://www.home-assistant.io/integrations/websocket/)
-- [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/)
-- [Node-RED WebSocket Node](https://nodered.org/docs/user-guide/modules/node-red-node-websocket/)
+- [HA WebSocket API](https://developers.home-assistant.io/docs/api/websocket/)
+- [HA REST API](https://developers.home-assistant.io/docs/api/rest/)
+- [Long-lived access tokens](https://www.home-assistant.io/docs/authentication/)
