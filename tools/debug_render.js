@@ -1,6 +1,10 @@
 // Debug script for Render board function
 const fs = require('fs');
-const flowPath = '/root/.hermes/projects/smart-home-dashboard/flows/all-flows.flow.json';
+const path = require('path');
+// Resolve relative to this file -- a hardcoded dev path passes on the author's
+// machine and fails everywhere else.
+const flowPath = process.argv[2] ||
+  path.join(__dirname, '..', 'flows', 'all-flows.flow.json');
 const nodes = JSON.parse(fs.readFileSync(flowPath, 'utf8'));
 const byName = {};
 for (const n of nodes) if (n.type === 'function') byName[n.name] = n.func;
