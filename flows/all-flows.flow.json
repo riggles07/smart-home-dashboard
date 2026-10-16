@@ -714,6 +714,159 @@
     ]
   },
   {
+    "id": "bf9fe1880d154acf",
+    "type": "tab",
+    "label": "Home Assistant",
+    "disabled": false,
+    "info": "Integration with Home Assistant"
+  },
+  {
+    "id": "5276ad7e61bef68f",
+    "type": "ui_tab",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant",
+    "icon": "home-assistant",
+    "order": 7,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "0c6e41af6623b945",
+    "type": "ui_group",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant Control",
+    "tab": "5276ad7e61bef68f",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "f21d1eb7bd642318",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA WebSocket Client",
+    "func": "// WebSocket client for Home Assistant state sync.\\nconst ws = require('ws');\\nlet socket = null;\\nlet states = {};\\nconst WS_PATH = '/api/websocket';\\nconst READ_ONLY = ['sensor', 'binary_sensor', 'input_datetime', 'weather', 'zone', 'device_tracker'];\\n\\non('input', async (msg) => {\\n  if (!socket) { await startWS(); }\\n  const entity = msg.entityId || env.get('HA_ENTITY_ID');\\n  if (!entity) { node.status({fill:'red',text:'no entity'}); return null; }\\n  if (READ_ONLY.includes(msg.domain || 'light')) { node.status({fill:'red',text:'read-only'}); return null; }\\n  const url = \\`${env.get('HA_URL').replace(/\\\\/+$/, '')}/api/services/${msg.domain || 'homeassistant'}/${msg.service}\\`;\\n  node.send({payload: {url, method: 'POST', body: {entity_id: entity, ...msg.serviceData}}, topic: 'ha/control'});\\n  return msg;\\n})\\n\\nasync function startWS() {\\n  const baseUrl = env.get('HA_URL') || 'http://homeassistant.local:8123';\\n  const token = env.get('HA_TOKEN');\\n  if (!token) { node.status({fill:'red',text:'no token'}); return; }\\n  const wsUrl = baseUrl.replace(/^http/, 'ws') + WS_PATH;\\n  socket = new ws(wsUrl);\\n  socket.on('open', () => { socket.send(JSON.stringify({type: 'auth', access_token: token})); });\\n  socket.on('message', (data) => {\\n    const m = JSON.parse(data);\\n    if (m.type === 'auth_required') { socket.send(JSON.stringify({type: 'auth', access_token: token})); }\\n    else if (m.type === 'auth_ok') {\\n      socket.send(JSON.stringify({type: 'get_states'}));\\n      socket.send(JSON.stringify({type: 'subscribe_events', event_type: 'state_changed'}));\\n    } else if (m.type === 'result' && m.success && Array.isArray(m.result)) {\\n      m.result.forEach(s => { if (s.entity_id) states[s.entity_id] = s; });\\n      node.send({payload: Object.keys(states).length, topic: 'ha/state_count'});\\n    } else if (m.type === 'event' && m.event && m.event.data) {\\n      const eid = m.event.data.entity_id;\\n      const ns = m.event.data.new_state;\\n      if (ns) {\\n        states[eid] = ns;\\n        const norm = {entityId: eid, domain: eid.split('.')[0], state: ns.state, friendlyName: ns.attributes.friendly_name || eid, isOn: ns.state === 'on', brightnessPct: ns.attributes.brightness_pct || null};\\n        node.send({payload: norm, topic: `ha/entity/${eid}/state`});\\n      }\\n    }\\n  });\\n  socket.on('close', () => { socket = null; });\\n  socket.on('error', (err) => { node.status({fill:'red',text:'WS error'}); });\\n}\\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "ws",
+        "module": "ws"
+      }
+    ],
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "1ff5870c922f75a4"
+      ]
+    ]
+  },
+  {
+    "id": "1ff5870c922f75a4",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST Controller",
+    "func": "// REST controller for Home Assistant service calls\\non('input', async (msg) => {\\n  msg.headers = {'Authorization': 'Bearer ' + env.get('HA_TOKEN'), 'Content-Type': 'application/json'};\\n  msg.method = msg.method || 'POST';\\n  msg.url = msg.url.replace(/\\\\/+$/, '');\\n  msg.payload = msg.body || {};\\n  msg.rejectUnauthorized = false;\\n  node.status({fill:'green',text:'sending to HA'});\\n  return msg;\\n})\\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "a7e1fa99a10c9083"
+      ]
+    ]
+  },
+  {
+    "id": "a7e1fa99a10c9083",
+    "type": "http request",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 550,
+    "y": 120,
+    "wires": [
+      [
+        "7006b040bbdff398"
+      ]
+    ]
+  },
+  {
+    "id": "7006b040bbdff398",
+    "type": "debug",
+    "z": "bf9fe1880d154acf",
+    "name": "HA Response",
+    "active": true,
+    "tosidebar": true,
+    "console": true,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 750,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "e05e4075ffedef13",
+    "type": "inject",
+    "z": "bf9fe1880d154acf",
+    "name": "Sync States",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 100,
+    "y": 220,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
+    "id": "d049401ca53b943b",
+    "type": "ui_switch",
+    "z": "bf9fe1880d154acf",
+    "name": "Light Control",
+    "group": "0c6e41af6623b945",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "label": "Kitchen Light",
+    "tooltip": "",
+    "x": 150,
+    "y": 320,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
     "id": "1292414d65358a68",
     "type": "tab",
     "label": "Network",
