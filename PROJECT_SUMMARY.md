@@ -6,11 +6,11 @@ This project implements a comprehensive smart home monitoring dashboard with the
 
 ### Core Modules
 
-1. **Dashboard UI** - Main visualization interface
-2. **Hubitat Integration** - Smart home device controls
-3. **UniFi Integration** - Network monitoring
-4. **Home Lab Monitor** - Proxmox & Docker status
-5. **Kanban Board** - Project task tracking
+- **Home Assistant Integration**: Track smart home devices and automations
+- **UniFi Integration**: Track network status, connected clients, and security events
+- **Grafana Integration**: Visualize home lab metrics
+- **Home Lab Monitor**: Proxmox & Docker status
+- **Kanban Board**: Project task tracking
 
 ## Implementation Status
 
@@ -88,7 +88,7 @@ smart-home-dashboard/
 │   └── rotate-credentials.sh
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                # pytest + flow structure + settings + theme
+│       ├── ci.yml                # pytest suite + flow structure + settings + theme
 │       └── deploy.yml            # inert (CI cannot reach the LAN host)
 ├── deploy/.env.example           # Environment template (the ONLY one)
 ├── requirements.txt              # Python test dependencies
@@ -130,11 +130,11 @@ Create the container on the Proxmox host with `pct` (`qm` is for VMs), then run
 
 ```bash
 # Test Hubitat API
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H \"Authorization: Bearer ***\" \\\
   https://hubitat.local/api/v1/status
 
 # Test UniFi API
-curl -u username:password \
+curl -u username:password \\\
   https://unifi.local:8443/api/login
 
 # Test Node-RED
@@ -152,17 +152,25 @@ curl http://localhost:1880/api/
 
 ## Next Steps
 
-1. ~~Complete Hubitat integration (Phase 3)~~ ✅ Done — Devices tab is live against the Maker API
-2. ~~Implement UniFi monitoring (Phase 4)~~ ✅ Done — Network tab renders 63 clients
-3. ~~Build mobile-responsive UI (Phase 5)~~ ✅ Done — theme inlined into a hidden
-   `ui_template`; verified in-browser. See `css/dashboard.css`,
-   `docs/MOBILE_DEPLOYMENT.md`, `tests/test_theme_wiring.py`
-4. Security hardening — **partially done, and partly NOT DONE on purpose.**
-   HTTPS and firewall are NOT deployed (verified: nothing listens on 1881).
-   Non-root Node-RED is deliberately NOT used: running as root with userDir
-   `/root/.node-red` is what fixed the deployment. Tooling exists
-   (`scripts/verify-security.sh`, `scripts/rotate-credentials.sh`); the
-   non-root/SSL assertions inside `verify-security.sh` check FILES, not the
-   running host, so they can pass while asserting an architecture this project
-   does not have. Reconcile before trusting that script's exit code.
-5. Integration validation + production deployment (Phase 6 remainder)
+### Phase 7: Home Assistant Migration (In Progress)
+- [ ] Replace Hubitat integration with HA WebSocket API
+- [ ] Map entities and update dashboard controls
+- [ ] Verify bidirectional state sync
+
+### Phase 8: Grafana Dashboard Integration (Pending)
+- [ ] Enable Grafana embedding
+- [ ] Create and embed Proxmox/LXC health panels
+- [ ] Optimize UI for mobile (A7 Lite)
+
+### Phase 9: UI/UX Modernization (Pending)
+- [ ] Implement themable CSS system using Custom Properties
+- [ ] Build dynamic background engine (time/state based)
+- [ ] Redesign visual hierarchy for readability and workflow
+- [ ] Verify performance on Galaxy A7 Lite
+
+### Phase 10: Magic Mirror Display (Pending)
+- [ ] Sideload and configure WallPanel PRO on A7 Lite
+- [ ] Implement MQTT wake/brightness control in Node-RED
+- [ ] Wire HA motion sensors to tablet wake triggers
+- [ ] Implement time-of-day view switching via `eval` commands
+- [ ] Verify <1s motion-to-wake latency
