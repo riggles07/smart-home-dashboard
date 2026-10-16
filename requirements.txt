@@ -6,3 +6,6 @@ pytest-cov>=4.0.0
 
 # Validation and testing tools
 jsonschema>=4.0.0
+
+# WebSocket client for Home Assistant integration
+ws>=7.0.0

@@ -54,11 +54,26 @@ jobs:
       - name: Test flow function logic
         run: node tools/test_flow_functions.js
 
+      # Drives the Home Assistant state + control handlers against stubbed
+      # Node-RED globals and a fake websocket. These two nodes once shipped as
+      # dead code -- a literal backslash-n turned each body into a single //
+      # comment, so it parsed, deployed and reported flows.state=start while
+      # doing nothing. Structural checks stayed green throughout.
+      - name: Test Home Assistant flow functions
+        run: node tools/test_ha_functions.js
+
       # Asserts the mobile theme is actually WIRED IN (carried by a ui_template,
       # re-asserts the specificity override, hidden tab). A theme file that
       # exists but is referenced by nothing passes a file-existence check.
       - name: Verify theme is wired into the flows
         run: python3 tests/test_theme_wiring.py
+
+      # System Health tab (REQUIREMENTS_V2 §2): asserts the Grafana embed
+      # chain end-to-end offline -- tab/groups, ng-src iframes, d-solo+kiosk
+      # URLs, the native Prometheus summary path, env docs, iframe CSS, and
+      # the Grafana-side prerequisite documentation.
+      - name: Verify System Health Grafana wiring
+        run: python3 tests/test_system_health.py
 
       - name: Run test suite
         run: python -m pytest -v

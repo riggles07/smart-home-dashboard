@@ -431,5 +431,92 @@ check('handles 10 cards', Array.isArray(out4) && (Array.isArray(out4[0]?.payload
 check('status shows 10 cards', statuses4.length > 0 && statuses4[0].text === '10 cards',
   statuses4.length > 0 ? statuses4[0].text : 'no status');
 
+console.log('== System Health: embed URL building ==');
+{
+  const { out } = run('Build Grafana embeds', { GRAFANA_URL: 'http://g.local:3001/', GRAFANA_DASH_UID: 'my-dash' }, {});
+  check('cpu embed hits d-solo route',
+        out && /\/d-solo\/my-dash\/system-health\?orgId=1&panelId=1&/.test(out.p.cpu), out && out.p.cpu);
+  check('health embed is panelId 4',
+        out && out.p.health.indexOf('panelId=4') !== -1, out && out.p.health);
+  check('latency embed is panelId 6',
+        out && out.p.latency.indexOf('panelId=6') !== -1);
+  check('loss embed is panelId 7',
+        out && out.p.loss.indexOf('panelId=7') !== -1);
+  check('kiosk mode set', out && out.p.cpu.indexOf('&kiosk&') !== -1);
+  check('dark theme pinned', out && out.p.cpu.indexOf('theme=dark') !== -1);
+  check('3h window with self-refresh',
+        out && out.p.cpu.indexOf('from=now-3h') !== -1 && out.p.cpu.indexOf('refresh=30s') !== -1);
+  check('trailing slash on GRAFANA_URL trimmed',
+        out && out.p.cpu.indexOf('3001//d-solo') === -1, out && out.p.cpu);
+  check('all six panels present',
+        out && ['cpu','mem','io','health','latency','loss'].every(k => out.p[k]));
+}
+{
+  // Defaults must work with no env at all (fresh LXC before .env is filled).
+  const { out } = run('Build Grafana embeds', {}, {});
+  check('default GRAFANA_URL used', out && /^http:\/\/192\.168\.4\.145:3001\/d-solo\/shd-system-health/.test(out.p.cpu), out && out.p.cpu);
+}
+
+console.log('== System Health: summary query building ==');
+{
+  const { out } = run('Build health query', { PROMETHEUS_URL: 'http://p.local:9090' }, {});
+  check('targets the instant-query API',
+        out && out.url.indexOf('http://p.local:9090/api/v1/query?query=') === 0, out && out.url);
+  check('query is URL-encoded', out && out.url.indexOf('%20') !== -1, out && out.url.slice(0, 120));
+  check('query labels targets_up',
+        out && decodeURIComponent(out.url).indexOf('"targets_up"') !== -1);
+  check('query labels pve_cpu/pve_mem',
+        out && /"pve_cpu"/.test(decodeURIComponent(out.url)) && /"pve_mem"/.test(decodeURIComponent(out.url)));
+  check('query labels probes_ok/probes_total',
+        out && /"probes_ok"/.test(decodeURIComponent(out.url)) && /"probes_total"/.test(decodeURIComponent(out.url)));
+  check('query labels pve_uptime_days',
+        out && decodeURIComponent(out.url).indexOf('"pve_uptime_days"') !== -1);
+  check('method is GET', out && out.method === 'GET');
+}
+{
+  // Bad / missing Prometheus URL falls back to the co-located stack address.
+  const { out } = run('Build health query', {}, {});
+  check('default PROMETHEUS_URL used', out && out.url.indexOf('http://192.168.4.145:9090/') === 0, out && out.url);
+}
+
+console.log('== System Health: summary parsing ==');
+{
+  // Shape mirrors a real Prometheus instant-query response (verified live
+  // against the co-located stack on 2026-10-11).
+  const msg = { payload: { status: 'success', data: { result: [
+    { metric: { stat: 'targets_up' },        value: [1790431325, '13'] },
+    { metric: { stat: 'targets_total' },     value: [1790431325, '13'] },
+    { metric: { stat: 'pve_cpu' },           value: [1790431325, '9.780701754385973'] },
+    { metric: { stat: 'pve_mem' },           value: [1790431325, '46.46053399966448'] },
+    { metric: { stat: 'probes_ok' },         value: [1790431325, '5'] },
+    { metric: { stat: 'probes_total' },      value: [1790431325, '5'] },
+    { metric: { stat: 'pve_uptime_days' },  value: [1790431325, '15.354118333331964'] }
+  ] } } };
+  const { out } = run('Parse health summary', {}, msg);
+  check('five outputs', Array.isArray(out) && out.length === 5, String(out && out.length));
+  check('cpu gauge value 9.8', out[0].payload === 9.8, String(out[0] && out[0].payload));
+  check('mem gauge value 46.5', out[1].payload === 46.5, String(out[1] && out[1].payload));
+  check('targets text "13 / 13 up"', out[2].payload === '13 / 13 up', out[2] && out[2].payload);
+  check('probes text "5 / 5 ok"', out[3].payload === '5 / 5 ok', out[3] && out[3].payload);
+  check('uptime text "15.4 days"', out[4].payload === '15.4 days', out[4] && out[4].payload);
+}
+{
+  // Missing stats must degrade to zeros, never "undefined" text.
+  const msg = { payload: { status: 'success', data: { result: [
+    { metric: { stat: 'pve_cpu' }, value: [1, '5'] }
+  ] } } };
+  const { out } = run('Parse health summary', {}, msg);
+  check('missing stats -> 0 / 0 up', out[2].payload === '0 / 0 up', out[2] && out[2].payload);
+  check('no undefined leaks', out.every(m => m && !/undefined/.test(String(m.payload))),
+        out.map(m => m && m.payload).join(' | '));
+}
+{
+  // Error payloads (Grafana/Prometheus down, non-JSON body) -> null, no crash.
+  const { out } = run('Parse health summary', {}, { payload: { status: 'error' } });
+  check('error response -> null (no crash)', out === null || out === undefined, JSON.stringify(out));
+  const { out: out2 } = run('Parse health summary', {}, { payload: 'not json' });
+  check('non-JSON body -> null (no crash)', out2 === null || out2 === undefined);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

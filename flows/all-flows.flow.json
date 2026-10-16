@@ -29,7 +29,7 @@
     "order": 1,
     "width": "0",
     "height": "0",
-    "format": "<style>\n\n\n\n* { margin: 0; padding: 0; box-sizing: border-box; }\n\n:root {\n  --shd-bg: #1a1a2e;\n  --shd-surface: #16213e;\n  --shd-card: #1f2b47;\n  --shd-accent: #667eea;\n  --shd-accent-2: #764ba2;\n  --shd-text: #eee;\n  \n  --shd-muted: #b8c4de;\n  --shd-text-dim: #aab;\n  --shd-ok: #2ecc71;\n  --shd-warn: #f1c40f;\n  --shd-err: #e74c3c;\n  --shd-touch-target: 44px;   \n  --shd-radius: 10px;\n\n  \n  --nr-dashboard-pageBackgroundColor:         var(--shd-bg);\n  --nr-dashboard-pageSidebarBackgroundColor:  var(--shd-surface);\n  --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);\n  --nr-dashboard-groupBackgroundColor:        var(--shd-card);\n  --nr-dashboard-groupBorderColor:            var(--shd-card);\n  --nr-dashboard-groupTextColor:              var(--shd-accent);\n  --nr-dashboard-widgetBackgroundColor:       var(--shd-card);\n  --nr-dashboard-widgetBgndColor:             var(--shd-card);\n  --nr-dashboard-widgetBorderColor:           var(--shd-card);\n  --nr-dashboard-widgetColor:                 var(--shd-accent);\n  --nr-dashboard-widgetTextColor:             var(--shd-text);\n}\n\nhtml { font-size: 16px; }\n\nbody {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n  font-family: -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;   \n  -webkit-text-size-adjust: 100%;            \n  overflow-x: hidden;                         \n}\n\n\n.status-bar {\n  background: linear-gradient(135deg, var(--shd-accent), var(--shd-accent-2));\n  color: #fff;\n  padding: 12px 16px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: 8px;\n  position: sticky;\n  top: 0;\n  z-index: 100;\n}\n\n.status-bar .status-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  display: inline-block;\n  animation: pulse 2s ease-in-out infinite;\n}\n.status-dot.ok      { background: var(--shd-ok); }\n.status-dot.warning { background: var(--shd-warn); }\n.status-dot.error   { background: var(--shd-err); }\n\n\n.ui_tab {\n  border-bottom: 2px solid var(--shd-accent);\n  display: flex;\n  gap: 4px;\n  overflow-x: auto;             \n  -webkit-overflow-scrolling: touch;\n  scrollbar-width: none;\n}\n.ui_tab::-webkit-scrollbar { display: none; }\n\n.ui_tab .tab-link {\n  padding: 12px 16px;\n  white-space: nowrap;\n  color: var(--shd-text-dim);\n  text-decoration: none;\n  font-size: 14px;\n  border-bottom: 2px solid transparent;\n  min-height: var(--shd-touch-target);   \n  display: inline-flex;\n  align-items: center;\n  touch-action: manipulation;\n}\n.ui_tab .tab-link.active {\n  color: var(--shd-text);\n  border-bottom-color: var(--shd-accent);\n}\n\n\n.ui_card, .ui_group {\n  background: var(--shd-card);\n  border-radius: var(--shd-radius);\n  padding: 16px;\n  margin: 12px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n}\n\n.ui_row {\n  display: flex;\n  flex-direction: row;          \n  gap: 12px;\n  flex-wrap: wrap;\n}\n.ui_row > * { flex: 1 1 auto; }\n\n\n\n.mdc-button,\n.ui_button,\n.ui_toggle,\nbutton {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  padding: 10px 18px;\n  font-size: 15px;\n  border-radius: 8px;\n  cursor: pointer;\n  touch-action: manipulation;  \n}\n\n.ui_switch .mdc-switch,\n.ui_toggle {\n  transform-origin: left center;\n}\n\n.ui_slider input[type=\"range\"] {\n  height: 44px;                 \n  width: 100%;\n  accent-color: var(--shd-accent);\n}\n\n\n.status-ok      { color: var(--shd-ok); }\n.status-warning { color: var(--shd-warn); }\n.status-error   { color: var(--shd-err); }\n\n\n.ui_table { width: 100%; border-collapse: collapse; font-size: 14px; }\n.ui_table th, .ui_table td {\n  padding: 10px 8px;\n  text-align: left;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  overflow-wrap: break-word;\n}\n\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50%      { opacity: 0.7; }\n}\n.pulse { animation: pulse 2s ease-in-out infinite; }\n\n\n\n\n@media (min-width: 1280px) {\n  .ui_row { flex-direction: row; }\n  .ui_card, .ui_group { max-width: 480px; }\n}\n\n\n@media (max-width: 1024px) {\n  .ui_row { flex-direction: column; }\n  .ui_card, .ui_group { width: 100%; margin: 8px 0; }\n}\n\n\n@media (max-width: 900px) {\n  html { font-size: 15px; }\n  .ui_table th, .ui_table td { padding: 8px 6px; font-size: 13px; }\n  .status-bar { padding: 10px 12px; }\n}\n\n\n@media (max-width: 600px) {\n  html { font-size: 14px; }\n  .ui_row { flex-direction: column; }\n  .ui_table th, .ui_table td { padding: 6px 4px; font-size: 12px; }\n  .ui_card, .ui_group { padding: 12px; margin: 8px; }\n  .ui_tab .tab-link { padding: 10px 12px; font-size: 13px; }\n  .status-bar { flex-direction: column; align-items: flex-start; }\n}\n\n\n@media (max-width: 380px) {\n  html { font-size: 13px; }\n  .ui_tab .tab-link { padding: 10px 10px; }\n}\n\n\n@media (max-height: 480px) and (orientation: landscape) {\n  .status-bar { position: static; padding: 6px 12px; }\n  .ui_card, .ui_group { margin: 6px; padding: 10px; }\n}\n\n\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n  .pulse { animation: none; }\n}\n\n\n@media print {\n  body { background: #fff; color: #000; }\n  .status-bar, .ui_tab { display: none; }\n}\n\nbody.nr-dashboard-theme {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n}\n\n/* ------------------------------------------------------------------\n   The dashboard's own theme block defines the --nr-dashboard-* variables\n   but then PAINTS its primary surfaces with hardcoded colours that ignore\n   them. Measured in dashboard 3.6.6 (selector -> colour):\n     body.nr-dashboard-theme md-content md-card   -> #fff\n     .nr-dashboard-theme ui-card-panel            -> #fff\n     body.nr-dashboard-theme md-toolbar           -> #0094CE\n     body.nr-dashboard-theme md-sidenav           -> #eee\n   Overriding only the variables therefore darkens :root while the page\n   still renders light. These rules match or exceed each original's\n   specificity, and this block is injected last, so ties resolve here.\n   Deliberately not !important: nothing here is inline, and !important\n   would also defeat the dashboard's later runtime theming.\n   ------------------------------------------------------------------ */\nbody.nr-dashboard-theme md-content md-card {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme ui-card-panel {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\n\n/* The dashboard paints ui_template content on its OWN white panel:\n     .nr-dashboard-theme .nr-dashboard-template { background-color: #fff }\n   That selector is specificity (0,2,0) and therefore BEATS the (0,1,3)\n   `body.nr-dashboard-theme md-content md-card` rule above -- so templated\n   widgets (the device and client tables) stayed white while the theme's\n   `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.\n   invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY\n   white surfaces left; every other widget card was already #1f2b47. */\nbody.nr-dashboard-theme .nr-dashboard-template {\n  background: transparent;\n  color: var(--shd-text);\n}\n/* The dashboard's legacy `.table` class is written for a light background.\n   Its own rules only set borders/padding, so rows need explicit dark-theme\n   separation or the list reads as one undifferentiated block. */\nbody.nr-dashboard-theme table.table {\n  color: var(--shd-text);\n  border-collapse: collapse;\n}\nbody.nr-dashboard-theme table.table th {\n  color: var(--shd-text);\n  background: transparent;\n  border-bottom: 2px solid var(--shd-accent);\n}\nbody.nr-dashboard-theme table.table td {\n  color: var(--shd-text);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\nbody.nr-dashboard-theme table.table tbody tr:nth-child(even) {\n  background: rgba(255, 255, 255, 0.045);   /* zebra striping for scanability */\n}\n/* `--shd-muted` is deliberately lighter than the 4.5:1 floor against\n   --shd-card, so secondary text stays legible rather than decorative. */\nbody.nr-dashboard-theme .nr-dashboard-template .shd-muted,\nbody.nr-dashboard-theme .shd-muted {\n  color: var(--shd-muted);\n}\n/* The slider's floating value bubble paints TEXT on the dashboard's hardcoded\n   accent (--nr-dashboard-widgetBackgroundColor / #4FBAE4), which the theme's\n   light text sat on at ~2.2:1 -- the number was barely legible. Give the\n   bubble a dark surface. The track FILL keeps the accent: it is decorative\n   and carries no text, so it is not a contrast problem. */\nbody.nr-dashboard-theme .nr-dashboard-slider .md-sign,\nbody.nr-dashboard-theme md-slider .md-sign {\n  background-color: var(--shd-card);\n  color: var(--shd-text);\n}\n/* GAUGE TEXT -- this is the rule that actually works in dashboard 3.6.6.\n   justgage renders its labels as SVG <text fill=\"#111111\"> (near-black).\n   A presentation attribute sits at the BOTTOM of the cascade, so any CSS rule\n   beats it -- no !important needed. Setting the node's `valueFontColor` does\n   NOT work here: the 3.6.6 ui_gauge controller never forwards it to justgage\n   (verified -- the attribute stayed #111111 with the property set). Measured\n   before: values 0/4.7/100 at ~1.4:1, effectively invisible on the dark card. */\nbody.nr-dashboard-theme .nr-dashboard-gauge svg text {\n  fill: var(--shd-text);\n}\nbody.nr-dashboard-theme md-toolbar {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-sidenav {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\n\n/* Tab drawer entries and the toolbar button are Angular Material elements,\n   not `.ui_tab .tab-link` (which matches nothing in this version). The\n   toolbar button measured 40px -- under the 44px touch target. */\nbody.nr-dashboard-theme md-sidenav md-list-item,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  min-height: var(--shd-touch-target);\n  touch-action: manipulation;\n}\nbody.nr-dashboard-theme md-sidenav md-list-item p,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme button.md-icon-button,\nbody.nr-dashboard-theme .md-icon-button {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  touch-action: manipulation;\n  color: var(--shd-text);\n}\n\n/* Charts/gauge/template content the dashboard paints on its own light panel. */\nbody.nr-dashboard-theme md-card .nr-dashboard-text,\nbody.nr-dashboard-theme md-card table,\nbody.nr-dashboard-theme md-card th,\nbody.nr-dashboard-theme md-card td {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-card th {\n  border-bottom-color: var(--shd-accent);\n}\n\n/* ==================================================================\n   LANDSCAPE / WIDE-SCREEN LAYOUT\n   ------------------------------------------------------------------\n   The dashboard's masonry JS writes INLINE pixel widths onto\n   `.nr-dashboard-cardcontainer` (measured: width 318px for a width-12\n   group -> ~53.3px per grid unit) and INLINE `left`/`top` onto\n   `ui-card-panel`. It derives those from the group's `width` in grid\n   units and ignores the viewport, so on a 2166px screen every tab is a\n   ~320px column pinned near the centre and the rest of the screen is\n   empty.\n\n   Because the widths are INLINE they outrank any normal CSS rule, so\n   `!important` is required here \u2014 this is the case it exists for. We\n   then reflow the cards ourselves.\n\n   `!important` cannot beat inline styles for `left` on the same\n   element, so a group that sits right-of-centre would still be offset;\n   `margin-left: auto` is therefore applied with `!important` too, and\n   the panel is pinned with left/right as well. Measured before/after\n   below in tests/test_theme_wiring.py. */\n\n/* Any reasonably wide viewport: stop the dashboard pinning a fixed\n   narrow column. */\n@media (min-width: 900px) {\n  body.nr-dashboard-theme ui-card-panel {\n    width: auto !important;\n    max-width: none !important;\n    /* The panel carries inline left/top from the masonry layout. `auto` with\n       !important neutralises them without introducing an offset of its own\n       (`right` must NOT be set here: on a relatively-positioned box a non-auto\n       `right` shifts the element left by its own width). */\n    position: relative !important;\n    left: auto !important;\n    top: auto !important;\n    margin-left: 0 !important;\n    margin-right: 0 !important;\n  }\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    width: 100% !important;\n    height: auto !important;\n  }\n  /* The title bar carries an inline width matching the old fixed column. */\n  body.nr-dashboard-theme .nr-dashboard-cardtitle {\n    width: auto !important;\n  }\n  /* Let the masonry container span the content area. */\n  body.nr-dashboard-theme .masonry-container {\n    width: 100% !important;\n  }\n  /* The widgets inside a card are `position: absolute` with an inline `top`\n     (measured: top 0/54/108/216/324px), so the card had no height of its own\n     and collapsed to 0 -- the panel then shrank to a 56px strip and the\n     widgets, though still painted, were clipped out of the layout. Returning\n     them to normal flow makes the container grow to fit.\n\n     They are then laid out as a wrapping row rather than stretched to the full\n     width: the dashboard sizes each widget's inline height for the ORIGINAL\n     ~318px column, so stretching a widget to 2166px stretched its canvas to\n     2144x221 (measured) -- a badly distorted, unreadable gauge. Content-sized\n     cards that wrap into columns keep every widget at a sane aspect ratio and\n     still fill the screen.\n\n     `height` is deliberately left alone: gauges and charts depend on their\n     dashboard-computed inline height to size the canvas. */\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer md-card,\n  body.nr-dashboard-theme .nr-dashboard-card {\n    position: static !important;\n    left: auto !important;\n    top: auto !important;\n    display: inline-block;\n    vertical-align: top;\n    width: auto !important;\n    max-width: 100% !important;\n    min-width: 180px;\n    margin: 8px 12px 12px 0;\n  }\n}\n\n/* Genuinely wide screens (tablet landscape, desktop, wall panel). Every tab\n   currently carries ONE group, so the panel fills the content width.\n   NOTE: this block must NOT set a width on `md-card` -- the 900px block above\n   already sizes widgets for their own aspect ratio, and an equal-specificity\n   `width: 100% !important` here would win on source order and stretch every\n   canvas again (measured: a gauge canvas blown out to 2144x221). */\n@media (min-width: 1280px) {\n  body.nr-dashboard-theme ui-card-panel {\n    display: block;\n    width: 100% !important;\n  }\n  body.nr-dashboard-theme .masonry-container {\n    text-align: left;\n  }\n}\n\n/* Short-and-wide (tablet held in landscape): trim vertical padding so\n   more fits above the fold. */\n@media (max-height: 600px) and (orientation: landscape) {\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    padding-top: 0;\n  }\n  body.nr-dashboard-theme ui-card-panel {\n    margin-top: 0;\n  }\n}\n\n</style>",
+    "format": "<style>\n\n\n\n* { margin: 0; padding: 0; box-sizing: border-box; }\n\n:root {\n  --shd-bg: #1a1a2e;\n  --shd-surface: #16213e;\n  --shd-card: #1f2b47;\n  --shd-accent: #667eea;\n  --shd-accent-2: #764ba2;\n  --shd-text: #eee;\n  \n  --shd-muted: #b8c4de;\n  --shd-text-dim: #aab;\n  --shd-ok: #2ecc71;\n  --shd-warn: #f1c40f;\n  --shd-err: #e74c3c;\n  --shd-touch-target: 44px;   \n  --shd-radius: 10px;\n\n  \n  --nr-dashboard-pageBackgroundColor:         var(--shd-bg);\n  --nr-dashboard-pageSidebarBackgroundColor:  var(--shd-surface);\n  --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);\n  --nr-dashboard-groupBackgroundColor:        var(--shd-card);\n  --nr-dashboard-groupBorderColor:            var(--shd-card);\n  --nr-dashboard-groupTextColor:              var(--shd-accent);\n  --nr-dashboard-widgetBackgroundColor:       var(--shd-card);\n  --nr-dashboard-widgetBgndColor:             var(--shd-card);\n  --nr-dashboard-widgetBorderColor:           var(--shd-card);\n  --nr-dashboard-widgetColor:                 var(--shd-accent);\n  --nr-dashboard-widgetTextColor:             var(--shd-text);\n}\n\nhtml { font-size: 16px; }\n\nbody {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n  font-family: -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;   \n  -webkit-text-size-adjust: 100%;            \n  overflow-x: hidden;                         \n}\n\n\n.status-bar {\n  background: linear-gradient(135deg, var(--shd-accent), var(--shd-accent-2));\n  color: #fff;\n  padding: 12px 16px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: 8px;\n  position: sticky;\n  top: 0;\n  z-index: 100;\n}\n\n.status-bar .status-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  display: inline-block;\n  animation: pulse 2s ease-in-out infinite;\n}\n.status-dot.ok      { background: var(--shd-ok); }\n.status-dot.warning { background: var(--shd-warn); }\n.status-dot.error   { background: var(--shd-err); }\n\n\n.ui_tab {\n  border-bottom: 2px solid var(--shd-accent);\n  display: flex;\n  gap: 4px;\n  overflow-x: auto;             \n  -webkit-overflow-scrolling: touch;\n  scrollbar-width: none;\n}\n.ui_tab::-webkit-scrollbar { display: none; }\n\n.ui_tab .tab-link {\n  padding: 12px 16px;\n  white-space: nowrap;\n  color: var(--shd-text-dim);\n  text-decoration: none;\n  font-size: 14px;\n  border-bottom: 2px solid transparent;\n  min-height: var(--shd-touch-target);   \n  display: inline-flex;\n  align-items: center;\n  touch-action: manipulation;\n}\n.ui_tab .tab-link.active {\n  color: var(--shd-text);\n  border-bottom-color: var(--shd-accent);\n}\n\n\n.ui_card, .ui_group {\n  background: var(--shd-card);\n  border-radius: var(--shd-radius);\n  padding: 16px;\n  margin: 12px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n}\n\n.ui_row {\n  display: flex;\n  flex-direction: row;          \n  gap: 12px;\n  flex-wrap: wrap;\n}\n.ui_row > * { flex: 1 1 auto; }\n\n\n\n.mdc-button,\n.ui_button,\n.ui_toggle,\nbutton {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  padding: 10px 18px;\n  font-size: 15px;\n  border-radius: 8px;\n  cursor: pointer;\n  touch-action: manipulation;  \n}\n\n.ui_switch .mdc-switch,\n.ui_toggle {\n  transform-origin: left center;\n}\n\n.ui_slider input[type=\"range\"] {\n  height: 44px;                 \n  width: 100%;\n  accent-color: var(--shd-accent);\n}\n\n\n.status-ok      { color: var(--shd-ok); }\n.status-warning { color: var(--shd-warn); }\n.status-error   { color: var(--shd-err); }\n\n\n.ui_table { width: 100%; border-collapse: collapse; font-size: 14px; }\n.ui_table th, .ui_table td {\n  padding: 10px 8px;\n  text-align: left;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  overflow-wrap: break-word;\n}\n\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50%      { opacity: 0.7; }\n}\n.pulse { animation: pulse 2s ease-in-out infinite; }\n\n\n\n\n@media (min-width: 1280px) {\n  .ui_row { flex-direction: row; }\n  .ui_card, .ui_group { max-width: 480px; }\n}\n\n\n@media (max-width: 1024px) {\n  .ui_row { flex-direction: column; }\n  .ui_card, .ui_group { width: 100%; margin: 8px 0; }\n}\n\n\n@media (max-width: 900px) {\n  html { font-size: 15px; }\n  .ui_table th, .ui_table td { padding: 8px 6px; font-size: 13px; }\n  .status-bar { padding: 10px 12px; }\n}\n\n\n@media (max-width: 600px) {\n  html { font-size: 14px; }\n  .ui_row { flex-direction: column; }\n  .ui_table th, .ui_table td { padding: 6px 4px; font-size: 12px; }\n  .ui_card, .ui_group { padding: 12px; margin: 8px; }\n  .ui_tab .tab-link { padding: 10px 12px; font-size: 13px; }\n  .status-bar { flex-direction: column; align-items: flex-start; }\n}\n\n\n@media (max-width: 380px) {\n  html { font-size: 13px; }\n  .ui_tab .tab-link { padding: 10px 10px; }\n}\n\n\n\n.shd-embed {\n  position: relative;\n  width: 100%;\n  min-height: 240px;\n  border-radius: var(--shd-radius);\n  overflow: hidden;              \n  background: var(--shd-card);\n}\n.shd-grafana-frame {\n  display: block;\n  width: 100%;\n  height: 100%;\n  min-height: 240px;\n  border: 0;                     \n  background: transparent;\n  overscroll-behavior: contain;\n}\n\n\n@media (max-height: 480px) and (orientation: landscape) {\n  .status-bar { position: static; padding: 6px 12px; }\n  .ui_card, .ui_group { margin: 6px; padding: 10px; }\n}\n\n\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n  .pulse { animation: none; }\n}\n\n\n@media print {\n  body { background: #fff; color: #000; }\n  .status-bar, .ui_tab { display: none; }\n}\n\nbody.nr-dashboard-theme {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n}\n\n/* ------------------------------------------------------------------\n   The dashboard's own theme block defines the --nr-dashboard-* variables\n   but then PAINTS its primary surfaces with hardcoded colours that ignore\n   them. Measured in dashboard 3.6.6 (selector -> colour):\n     body.nr-dashboard-theme md-content md-card   -> #fff\n     .nr-dashboard-theme ui-card-panel            -> #fff\n     body.nr-dashboard-theme md-toolbar           -> #0094CE\n     body.nr-dashboard-theme md-sidenav           -> #eee\n   Overriding only the variables therefore darkens :root while the page\n   still renders light. These rules match or exceed each original's\n   specificity, and this block is injected last, so ties resolve here.\n   Deliberately not !important: nothing here is inline, and !important\n   would also defeat the dashboard's later runtime theming.\n   ------------------------------------------------------------------ */\nbody.nr-dashboard-theme md-content md-card {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme ui-card-panel {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\n\n/* The dashboard paints ui_template content on its OWN white panel:\n     .nr-dashboard-theme .nr-dashboard-template { background-color: #fff }\n   That selector is specificity (0,2,0) and therefore BEATS the (0,1,3)\n   `body.nr-dashboard-theme md-content md-card` rule above -- so templated\n   widgets (the device and client tables) stayed white while the theme's\n   `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.\n   invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY\n   white surfaces left; every other widget card was already #1f2b47. */\nbody.nr-dashboard-theme .nr-dashboard-template {\n  background: transparent;\n  color: var(--shd-text);\n}\n/* The dashboard's legacy `.table` class is written for a light background.\n   Its own rules only set borders/padding, so rows need explicit dark-theme\n   separation or the list reads as one undifferentiated block. */\nbody.nr-dashboard-theme table.table {\n  color: var(--shd-text);\n  border-collapse: collapse;\n}\nbody.nr-dashboard-theme table.table th {\n  color: var(--shd-text);\n  background: transparent;\n  border-bottom: 2px solid var(--shd-accent);\n}\nbody.nr-dashboard-theme table.table td {\n  color: var(--shd-text);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\nbody.nr-dashboard-theme table.table tbody tr:nth-child(even) {\n  background: rgba(255, 255, 255, 0.045);   /* zebra striping for scanability */\n}\n/* `--shd-muted` is deliberately lighter than the 4.5:1 floor against\n   --shd-card, so secondary text stays legible rather than decorative. */\nbody.nr-dashboard-theme .nr-dashboard-template .shd-muted,\nbody.nr-dashboard-theme .shd-muted {\n  color: var(--shd-muted);\n}\n/* The slider's floating value bubble paints TEXT on the dashboard's hardcoded\n   accent (--nr-dashboard-widgetBackgroundColor / #4FBAE4), which the theme's\n   light text sat on at ~2.2:1 -- the number was barely legible. Give the\n   bubble a dark surface. The track FILL keeps the accent: it is decorative\n   and carries no text, so it is not a contrast problem. */\nbody.nr-dashboard-theme .nr-dashboard-slider .md-sign,\nbody.nr-dashboard-theme md-slider .md-sign {\n  background-color: var(--shd-card);\n  color: var(--shd-text);\n}\n/* GAUGE TEXT -- this is the rule that actually works in dashboard 3.6.6.\n   justgage renders its labels as SVG <text fill=\"#111111\"> (near-black).\n   A presentation attribute sits at the BOTTOM of the cascade, so any CSS rule\n   beats it -- no !important needed. Setting the node's `valueFontColor` does\n   NOT work here: the 3.6.6 ui_gauge controller never forwards it to justgage\n   (verified -- the attribute stayed #111111 with the property set). Measured\n   before: values 0/4.7/100 at ~1.4:1, effectively invisible on the dark card. */\nbody.nr-dashboard-theme .nr-dashboard-gauge svg text {\n  fill: var(--shd-text);\n}\nbody.nr-dashboard-theme md-toolbar {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-sidenav {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\n\n/* Tab drawer entries and the toolbar button are Angular Material elements,\n   not `.ui_tab .tab-link` (which matches nothing in this version). The\n   toolbar button measured 40px -- under the 44px touch target. */\nbody.nr-dashboard-theme md-sidenav md-list-item,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  min-height: var(--shd-touch-target);\n  touch-action: manipulation;\n}\nbody.nr-dashboard-theme md-sidenav md-list-item p,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme button.md-icon-button,\nbody.nr-dashboard-theme .md-icon-button {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  touch-action: manipulation;\n  color: var(--shd-text);\n}\n\n/* Charts/gauge/template content the dashboard paints on its own light panel. */\nbody.nr-dashboard-theme md-card .nr-dashboard-text,\nbody.nr-dashboard-theme md-card table,\nbody.nr-dashboard-theme md-card th,\nbody.nr-dashboard-theme md-card td {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-card th {\n  border-bottom-color: var(--shd-accent);\n}\n\n/* ==================================================================\n   LANDSCAPE / WIDE-SCREEN LAYOUT\n   ------------------------------------------------------------------\n   The dashboard's masonry JS writes INLINE pixel widths onto\n   `.nr-dashboard-cardcontainer` (measured: width 318px for a width-12\n   group -> ~53.3px per grid unit) and INLINE `left`/`top` onto\n   `ui-card-panel`. It derives those from the group's `width` in grid\n   units and ignores the viewport, so on a 2166px screen every tab is a\n   ~320px column pinned near the centre and the rest of the screen is\n   empty.\n\n   Because the widths are INLINE they outrank any normal CSS rule, so\n   `!important` is required here \u2014 this is the case it exists for. We\n   then reflow the cards ourselves.\n\n   `!important` cannot beat inline styles for `left` on the same\n   element, so a group that sits right-of-centre would still be offset;\n   `margin-left: auto` is therefore applied with `!important` too, and\n   the panel is pinned with left/right as well. Measured before/after\n   below in tests/test_theme_wiring.py. */\n\n/* Any reasonably wide viewport: stop the dashboard pinning a fixed\n   narrow column. */\n@media (min-width: 900px) {\n  body.nr-dashboard-theme ui-card-panel {\n    width: auto !important;\n    max-width: none !important;\n    /* The panel carries inline left/top from the masonry layout. `auto` with\n       !important neutralises them without introducing an offset of its own\n       (`right` must NOT be set here: on a relatively-positioned box a non-auto\n       `right` shifts the element left by its own width). */\n    position: relative !important;\n    left: auto !important;\n    top: auto !important;\n    margin-left: 0 !important;\n    margin-right: 0 !important;\n  }\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    width: 100% !important;\n    height: auto !important;\n  }\n  /* The title bar carries an inline width matching the old fixed column. */\n  body.nr-dashboard-theme .nr-dashboard-cardtitle {\n    width: auto !important;\n  }\n  /* Let the masonry container span the content area. */\n  body.nr-dashboard-theme .masonry-container {\n    width: 100% !important;\n  }\n  /* The widgets inside a card are `position: absolute` with an inline `top`\n     (measured: top 0/54/108/216/324px), so the card had no height of its own\n     and collapsed to 0 -- the panel then shrank to a 56px strip and the\n     widgets, though still painted, were clipped out of the layout. Returning\n     them to normal flow makes the container grow to fit.\n\n     They are then laid out as a wrapping row rather than stretched to the full\n     width: the dashboard sizes each widget's inline height for the ORIGINAL\n     ~318px column, so stretching a widget to 2166px stretched its canvas to\n     2144x221 (measured) -- a badly distorted, unreadable gauge. Content-sized\n     cards that wrap into columns keep every widget at a sane aspect ratio and\n     still fill the screen.\n\n     `height` is deliberately left alone: gauges and charts depend on their\n     dashboard-computed inline height to size the canvas. */\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer md-card,\n  body.nr-dashboard-theme .nr-dashboard-card {\n    position: static !important;\n    left: auto !important;\n    top: auto !important;\n    display: inline-block;\n    vertical-align: top;\n    width: auto !important;\n    max-width: 100% !important;\n    min-width: 180px;\n    margin: 8px 12px 12px 0;\n  }\n}\n\n/* Genuinely wide screens (tablet landscape, desktop, wall panel). Every tab\n   currently carries ONE group, so the panel fills the content width.\n   NOTE: this block must NOT set a width on `md-card` -- the 900px block above\n   already sizes widgets for their own aspect ratio, and an equal-specificity\n   `width: 100% !important` here would win on source order and stretch every\n   canvas again (measured: a gauge canvas blown out to 2144x221). */\n@media (min-width: 1280px) {\n  body.nr-dashboard-theme ui-card-panel {\n    display: block;\n    width: 100% !important;\n  }\n  body.nr-dashboard-theme .masonry-container {\n    text-align: left;\n  }\n}\n\n/* Short-and-wide (tablet held in landscape): trim vertical padding so\n   more fits above the fold. */\n@media (max-height: 600px) and (orientation: landscape) {\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    padding-top: 0;\n  }\n  body.nr-dashboard-theme ui-card-panel {\n    margin-top: 0;\n  }\n}\n\n</style>",
     "storeOutMessages": false,
     "fwdInMessages": false,
     "resendOnRefresh": true,
@@ -714,6 +714,162 @@
     ]
   },
   {
+    "id": "bf9fe1880d154acf",
+    "type": "tab",
+    "label": "Home Assistant",
+    "disabled": false,
+    "info": "Integration with Home Assistant"
+  },
+  {
+    "id": "5276ad7e61bef68f",
+    "type": "ui_tab",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant",
+    "icon": "home-assistant",
+    "order": 7,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "0c6e41af6623b945",
+    "type": "ui_group",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant Control",
+    "tab": "5276ad7e61bef68f",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "f21d1eb7bd642318",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA WebSocket Client",
+    "func": "// Home Assistant WebSocket client.\n// STATE PATH  : connect once, authenticate, pull all states, then re-emit\n//               state_changed events as {entityId, domain, state, friendlyName, isOn}.\n// CONTROL PATH: a boolean from the dashboard switch, or an explicit\n//               {domain, service, entityId} on topic 'ha/control', becomes a\n//               REST service call.\nvar WS_PATH = '/api/websocket';\nvar READ_ONLY = ['sensor', 'binary_sensor', 'input_datetime', 'weather', 'zone', 'device_tracker'];\n\nfunction normalise(eid, st) {\n  var a = st.attributes || {};\n  return {\n    entityId: eid,\n    domain: eid.split('.')[0],\n    state: st.state,\n    friendlyName: a.friendly_name || eid,\n    isOn: st.state === 'on',\n    brightnessPct: (a.brightness_pct === undefined ? null : a.brightness_pct)\n  };\n}\n\nfunction startWS() {\n  var baseUrl = env.get('HA_URL') || 'http://homeassistant.local:8123';\n  var token = env.get('HA_TOKEN');\n  if (!token) { node.status({fill:'red', shape:'ring', text:'no HA_TOKEN'}); return; }\n  var wsUrl = baseUrl.replace(/^http/, 'ws').replace(/\\/+$/, '') + WS_PATH;\n  var states = {};\n  var s = new ws(wsUrl);\n  context.set('ha_socket', s);\n  node.status({fill:'yellow', shape:'ring', text:'connecting'});\n  s.on('open', function () {\n    s.send(JSON.stringify({type: 'auth', access_token: token}));\n  });\n  s.on('message', function (data) {\n    var m;\n    try { m = JSON.parse(data); } catch (e) { return; }\n    if (m.type === 'auth_required') {\n      s.send(JSON.stringify({type: 'auth', access_token: token}));\n    } else if (m.type === 'auth_ok') {\n      node.status({fill:'green', shape:'dot', text:'connected'});\n      s.send(JSON.stringify({type: 'get_states'}));\n      s.send(JSON.stringify({type: 'subscribe_events', event_type: 'state_changed'}));\n    } else if (m.type === 'auth_invalid') {\n      node.status({fill:'red', shape:'ring', text:'auth failed'});\n      context.set('ha_socket', null);\n      try { s.close(); } catch (e) {}\n    } else if (m.type === 'result' && m.success && Array.isArray(m.result)) {\n      var n = 0;\n      m.result.forEach(function (x) { if (x.entity_id) { states[x.entity_id] = x; n++; } });\n      node.status({fill:'green', shape:'dot', text:n + ' entities'});\n      node.send([null, {payload: n, topic: 'ha/state_count'}]);\n    } else if (m.type === 'event' && m.event && m.event.data) {\n      var eid = m.event.data.entity_id;\n      var ns = m.event.data.new_state;\n      if (eid && ns) {\n        states[eid] = ns;\n        node.send([null, {payload: normalise(eid, ns), topic: 'ha/entity/' + eid + '/state'}]);\n      }\n    }\n  });\n  s.on('close', function () { context.set('ha_socket', null); node.status({fill:'grey', shape:'ring', text:'closed'}); });\n  s.on('error', function () { node.status({fill:'red', shape:'ring', text:'WS error'}); });\n}\n\n// --- per message ------------------------------------------------------------\n// Any input -- including the 60s Sync States tick -- makes sure we are connected.\nif (!context.get('ha_socket')) { startWS(); }\n\nvar req = null;\nif (msg.topic === 'ha/control' && msg.payload && typeof msg.payload === 'object') {\n  req = msg.payload;                                    // explicit request\n} else if (typeof msg.payload === 'boolean') {         // dashboard ui_switch\n  // CAVEAT: ui_switch may emit its initial value when the page loads, which\n  // actuates once. Harmless for an already-off light; revisit if it matters.\n  req = { entityId: env.get('HA_ENTITY_ID'), domain: 'light',\n          service: msg.payload ? 'turn_on' : 'turn_off' };\n}\nif (!req) { return null; }                             // tick only: connect, never actuate\nif (!req.entityId) { node.status({fill:'red', shape:'ring', text:'no HA_ENTITY_ID'}); return null; }\nif (!req.service)  { node.status({fill:'red', shape:'ring', text:'no service'}); return null; }\nif (READ_ONLY.indexOf(req.domain) >= 0) {\n  node.status({fill:'red', shape:'ring', text:'read-only'}); return null;\n}\nvar base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\nif (!base) { node.status({fill:'red', shape:'ring', text:'no HA_URL'}); return null; }\nvar body = {entity_id: req.entityId};\nif (req.serviceData) { for (var k in req.serviceData) { body[k] = req.serviceData[k]; } }\nnode.status({fill:'blue', shape:'dot', text:req.service});\nreturn [{payload: {url: base + '/api/services/' + req.domain + '/' + req.service,\n                   method: 'POST', body: body},\n         topic: 'ha/control'}, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "ws",
+        "module": "ws"
+      }
+    ],
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "1ff5870c922f75a4"
+      ],
+      [
+        "7006b040bbdff398"
+      ]
+    ]
+  },
+  {
+    "id": "1ff5870c922f75a4",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST Controller",
+    "func": "// Format a Home Assistant service call for the HTTP request node.\n// Classic function node: the body runs per message and returns what to emit.\n// Guard the url so a stray state message cannot throw on msg.url.replace().\nif (!msg.url) { node.status({fill:'grey', shape:'ring', text:'no url'}); return null; }\nmsg.headers = {\n  'Authorization': 'Bearer ' + (env.get('HA_TOKEN') || ''),\n  'Content-Type': 'application/json'\n};\nmsg.method = msg.method || 'POST';\nmsg.url = String(msg.url).replace(/\\/+$/, '');\nmsg.payload = msg.body || {};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'green', shape:'dot', text:'sending to HA'});\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 120,
+    "wires": [
+      [
+        "a7e1fa99a10c9083"
+      ]
+    ]
+  },
+  {
+    "id": "a7e1fa99a10c9083",
+    "type": "http request",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 620,
+    "y": 120,
+    "wires": [
+      [
+        "7006b040bbdff398"
+      ]
+    ]
+  },
+  {
+    "id": "7006b040bbdff398",
+    "type": "debug",
+    "z": "bf9fe1880d154acf",
+    "name": "HA Response",
+    "active": true,
+    "tosidebar": true,
+    "console": true,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 820,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "e05e4075ffedef13",
+    "type": "inject",
+    "z": "bf9fe1880d154acf",
+    "name": "Sync States",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 130,
+    "y": 260,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
+    "id": "d049401ca53b943b",
+    "type": "ui_switch",
+    "z": "bf9fe1880d154acf",
+    "name": "Light Control",
+    "group": "0c6e41af6623b945",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "label": "Kitchen Light",
+    "tooltip": "",
+    "x": 130,
+    "y": 340,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
     "id": "1292414d65358a68",
     "type": "tab",
     "label": "Network",
@@ -1096,6 +1252,435 @@
     "wires": []
   },
   {
+    "id": "61550c749f923be9",
+    "type": "tab",
+    "label": "System Health",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "13c088e1b9d32a25",
+    "type": "ui_tab",
+    "z": "61550c749f923be9",
+    "name": "System Health",
+    "icon": "heartbeat",
+    "order": 5,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "eacc0c2392940f6e",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "Health Summary",
+    "tab": "13c088e1b9d32a25",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "95a2bda9c84d2505",
+    "type": "ui_gauge",
+    "z": "61550c749f923be9",
+    "name": "PVE CPU",
+    "group": "eacc0c2392940f6e",
+    "order": 1,
+    "width": "6",
+    "height": "5",
+    "gtype": "gage",
+    "title": "PVE CPU",
+    "label": "%",
+    "format": "{{value}}",
+    "min": 0,
+    "max": "100",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 990,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "2859742989b0ae98",
+    "type": "ui_gauge",
+    "z": "61550c749f923be9",
+    "name": "PVE Memory",
+    "group": "eacc0c2392940f6e",
+    "order": 2,
+    "width": "6",
+    "height": "5",
+    "gtype": "gage",
+    "title": "PVE Memory",
+    "label": "%",
+    "format": "{{value}}",
+    "min": 0,
+    "max": "100",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 990,
+    "y": 180,
+    "wires": []
+  },
+  {
+    "id": "2282170ae5153cb1",
+    "type": "ui_text",
+    "z": "61550c749f923be9",
+    "name": "Targets Up",
+    "group": "eacc0c2392940f6e",
+    "order": 3,
+    "width": "6",
+    "height": "2",
+    "label": "Prometheus Targets",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 990,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "9277324405fcf113",
+    "type": "ui_text",
+    "z": "61550c749f923be9",
+    "name": "Probes OK",
+    "group": "eacc0c2392940f6e",
+    "order": 4,
+    "width": "6",
+    "height": "2",
+    "label": "Blackbox Probes",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 990,
+    "y": 300,
+    "wires": []
+  },
+  {
+    "id": "4b959d6292d0bb48",
+    "type": "ui_text",
+    "z": "61550c749f923be9",
+    "name": "PVE Uptime",
+    "group": "eacc0c2392940f6e",
+    "order": 5,
+    "width": "12",
+    "height": "2",
+    "label": "Uptime",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 990,
+    "y": 360,
+    "wires": []
+  },
+  {
+    "id": "aa0fb118dbf8c448",
+    "type": "inject",
+    "z": "61550c749f923be9",
+    "name": "Every 30s",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "30",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "025dac0d1c93aa91"
+      ]
+    ]
+  },
+  {
+    "id": "025dac0d1c93aa91",
+    "type": "function",
+    "z": "61550c749f923be9",
+    "name": "Build health query",
+    "func": "// One instant query returns every summary stat, tagged with a `stat`\n// label so a single HTTP round trip feeds all five widgets. Every\n// expression was verified live against the co-located stack.\nvar base = (env.get('PROMETHEUS_URL') || 'http://192.168.4.145:9090').replace(/\\/+$/, '');\nvar q = 'label_replace(count(up == 1), \"stat\", \"targets_up\", \"\", \"\")'\n  + ' or label_replace(count(up), \"stat\", \"targets_total\", \"\", \"\")'\n  + ' or label_replace(100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100), \"stat\", \"pve_cpu\", \"\", \"\")'\n  + ' or label_replace(100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)), \"stat\", \"pve_mem\", \"\", \"\")'\n  + ' or label_replace(count(probe_success == 1), \"stat\", \"probes_ok\", \"\", \"\")'\n  + ' or label_replace(count(probe_success), \"stat\", \"probes_total\", \"\", \"\")'\n  + ' or label_replace((time() - node_boot_time_seconds) / 86400, \"stat\", \"pve_uptime_days\", \"\", \"\")';\nmsg.method = 'GET';\nmsg.url = base + '/api/v1/query?query=' + encodeURIComponent(q);\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "39e86171498a2ca6"
+      ]
+    ]
+  },
+  {
+    "id": "39e86171498a2ca6",
+    "type": "http request",
+    "z": "61550c749f923be9",
+    "name": "Prometheus API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 560,
+    "y": 120,
+    "wires": [
+      [
+        "3a60013f3e07f4a7"
+      ]
+    ]
+  },
+  {
+    "id": "3a60013f3e07f4a7",
+    "type": "function",
+    "z": "61550c749f923be9",
+    "name": "Parse health summary",
+    "func": "// Map the stat-labelled instant query onto one message per widget.\n// Missing stats degrade to 0 rather than 'undefined' text.\nvar r = msg.payload;\nif (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  return null;\n}\nvar m = {};\nr.data.result.forEach(function (s) {\n  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n});\nfunction pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\nvar mCpu = { payload: pct(m.pve_cpu) };\nvar mMem = { payload: pct(m.pve_mem) };\nvar mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\nvar mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\nvar mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\nnode.status({fill:'green',shape:'dot',text:'ok'});\nreturn [mCpu, mMem, mTgt, mPrb, mUp];",
+    "outputs": 5,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 770,
+    "y": 120,
+    "wires": [
+      [
+        "95a2bda9c84d2505"
+      ],
+      [
+        "2859742989b0ae98"
+      ],
+      [
+        "2282170ae5153cb1"
+      ],
+      [
+        "9277324405fcf113"
+      ],
+      [
+        "4b959d6292d0bb48"
+      ]
+    ]
+  },
+  {
+    "id": "0792acaebf00ac56",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "Proxmox Node Resources",
+    "tab": "13c088e1b9d32a25",
+    "order": 2,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "8712b582b49ce0e3",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: PVE CPU",
+    "group": "0792acaebf00ac56",
+    "order": 1,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-cpu\" title=\"Proxmox Node CPU\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'cpu';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-cpu'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 480,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "6488335fd12a74fd",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: PVE Memory",
+    "group": "0792acaebf00ac56",
+    "order": 2,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-mem\" title=\"Proxmox Node Memory\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'mem';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-mem'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 540,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "404dfe90aa0e5d6e",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: PVE Disk IO",
+    "group": "0792acaebf00ac56",
+    "order": 3,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-io\" title=\"Proxmox Disk I/O Utilization\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'io';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-io'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 600,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "0f70a58e508501e6",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "LXC / VM Health",
+    "tab": "13c088e1b9d32a25",
+    "order": 3,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "fd87f23f3740f893",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: Service Health",
+    "group": "0f70a58e508501e6",
+    "order": 1,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-health\" title=\"Service Health (LXC / VM / hosts)\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'health';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-health'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 660,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "e1d25d783632920a",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "Network Latency",
+    "tab": "13c088e1b9d32a25",
+    "order": 4,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "3c929f158f2fee8d",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: ICMP Latency",
+    "group": "e1d25d783632920a",
+    "order": 1,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-latency\" title=\"Network Latency (blackbox ICMP)\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'latency';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-latency'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 720,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "4939e8cdbe55ac1f",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Grafana: Packet Loss",
+    "group": "e1d25d783632920a",
+    "order": 2,
+    "width": "12",
+    "height": "8",
+    "format": "<div class=\"shd-embed\">\n<iframe class=\"shd-grafana-frame\" id=\"shd-frame-loss\" title=\"Packet Loss (blackbox ICMP)\" loading=\"lazy\"></iframe>\n</div>\n<script>\n(function(scope) {\n  var key = 'loss';\n  var frame = null;\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p[key]; },\n    function(url) {\n      if (!url || typeof url !== 'string') { return; }\n      if (!frame) { frame = document.getElementById('shd-frame-loss'); }\n      if (!frame) { return; }\n      // Reload-storm guard: the repeating inject re-pushes the SAME URL\n      // string, so only the first assignment hits the DOM and the Grafana\n      // SPA is never torn down. getAttribute returns the exact assigned\n      // string, so browser URL-normalisation cannot re-trigger it.\n      if (frame.getAttribute('src') !== url) { frame.src = url; }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 620,
+    "y": 780,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "732a011f2c0a2f1b",
+    "type": "inject",
+    "z": "61550c749f923be9",
+    "name": "Every 60s",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 480,
+    "wires": [
+      [
+        "0920bfc12f1795af"
+      ]
+    ]
+  },
+  {
+    "id": "0920bfc12f1795af",
+    "type": "function",
+    "z": "61550c749f923be9",
+    "name": "Build Grafana embeds",
+    "func": "// d-solo renders ONE panel without the Grafana chrome -- the correct\n// route for iframes. kiosk strips the remaining nav, theme=dark avoids\n// a light flash against the dashboard's dark theme, and refresh=30s\n// lets the panel refresh itself WITHOUT the iframe being reloaded\n// (each template's <script> only touches src when the URL changes,\n// so the repeating inject re-pushes the SAME string and the SPA is\n// never torn down).\n// The Grafana server must run with allow_embedding=true and anonymous\n// Viewer access -- see docs/GRAFANA_INTEGRATION.md.\nvar base = (env.get('GRAFANA_URL') || 'http://192.168.4.145:3001').replace(/\\/+$/, '');\nvar uid  = env.get('GRAFANA_DASH_UID') || 'shd-system-health';\nfunction solo(panelId) {\n  return base + '/d-solo/' + uid + '/system-health?orgId=1&panelId=' + panelId\n       + '&kiosk&theme=dark&from=now-3h&to=now&refresh=30s';\n}\nmsg.p = {\n  cpu: solo(1), mem: solo(2), io: solo(3),\n  health: solo(4), latency: solo(6), loss: solo(7)\n};\nnode.status({fill:'green',shape:'dot',text:'embeds ready'});\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 370,
+    "y": 480,
+    "wires": [
+      [
+        "8712b582b49ce0e3",
+        "6488335fd12a74fd",
+        "404dfe90aa0e5d6e",
+        "fd87f23f3740f893",
+        "3c929f158f2fee8d",
+        "4939e8cdbe55ac1f"
+      ]
+    ]
+  },
+  {
     "id": "1743dae8afd71d46",
     "type": "tab",
     "label": "Settings",
@@ -1108,7 +1693,7 @@
     "z": "1743dae8afd71d46",
     "name": "Settings",
     "icon": "cog",
-    "order": 5,
+    "order": 6,
     "disabled": false,
     "hidden": false
   },

@@ -1,6 +1,6 @@
 # Smart Home Dashboard
 
-A unified smart home dashboard built on Node-RED to monitor Hubitat smart home devices and UniFi network status.
+A unified smart home dashboard built on Node-RED to monitor Home Assistant smart home devices and UniFi network status, with advanced home lab observability via Grafana.
 
 ## 📦 Deployment Options
 
@@ -43,8 +43,10 @@ Install directly on your host system (for local development or single-instance d
 
 ## Overview
 
-- **Hubitat Integration**: Monitor smart home devices and automations
-- **UniFi Integration**: Track network status, connected clients, and security events
+- **Home Assistant Integration**: Monitor smart home devices and automations (Migrated from Hubitat)
+- **Grafana Integration**: Advanced home lab metrics and visualization
+- **Home Assistant WebSocket Sync**: Real-time state updates every 60 seconds
+- **REST Control**: Service calls for lights, switches, and other entities
 
 ## Quick Start
 
@@ -114,16 +116,9 @@ chmod 600 .env
 
 ## Features
 
-### Hubitat Monitoring
-- Real-time device status
-- Automation triggers
-- Scene management
+### Home Assistant Monitoring\n- Real-time device status\n- Automation triggers\n- Scene management
 
-### UniFi Monitoring
-- Network topology visualization
-- Connected client list
-- AP and switch status
-- Security event alerts
+### Grafana Observability\n- Proxmox cluster health\n- LXC/VM resource metrics\n- Network reachability stats
 
 ## Security
 
