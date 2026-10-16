@@ -40,7 +40,7 @@ root_of() { echo "$1" | sed -E 's#^([a-z]+://[^/]+).*$#\1#'; }
 # Candidate locations, most-specific first: the unit's userDir home (what
 # systemd would use) then $HOME (what a hand-started process would use).
 env_file=""
-for cand in "${NODE_RED_ENV_FILE:-}" /home/node-red/.env /root/.node-red/.env "$HOME/.node-red/.env"; do
+for cand in "${NODE_RED_ENV_FILE:-}" /root/.node-red/.env "$HOME/.node-red/.env"; do
     [ -n "$cand" ] && [ -f "$cand" ] && { env_file="$cand"; break; }
 done
 if [ -n "$env_file" ]; then
@@ -51,7 +51,7 @@ if [ -n "$env_file" ]; then
         || echo "  ?? could not load $env_file -- check quoting/spaces in values"
     set +a
 else
-    echo "note: no env file found in /home/node-red/.env, /root/.node-red/.env or \$HOME/.node-red/.env"
+    echo "note: no env file found in /root/.node-red/.env or \$HOME/.node-red/.env"
     echo "      (set NODE_RED_ENV_FILE to point elsewhere)"
 fi
 
@@ -297,4 +297,4 @@ else
 fi
 
 echo
-echo "Done. Any '!!' line is a config item to fix in /home/node-red/.env"
+echo "Done. Any '!!' line is a config item to fix in /root/.node-red/.env"

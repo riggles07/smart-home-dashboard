@@ -159,34 +159,57 @@ ufw --force enable
 
 #### Step 6: Create Environment File
 
+`deploy/.env.example` is the single source of truth for this file — it is
+checked against the flows by `tests/test_env_template.py`, which fails if a flow
+reads a name the template does not document. **Copy it and fill it in** rather
+than writing one from memory:
+
 ```bash
-# Create .env file for Node-RED
-cat > /root/.node-red/.env << 'EOF'
-# Dashboard Configuration
-NODE_RED_USER=admin
-NODE_RED_PASS=admin
-NODE_RED_HOST=localhost
-NODE_RED_PORT=1880
-NODE_RED_SECURE=false
-
-# Hubitat Settings (update with your credentials)
-HUBITAT_URL=http://hubitat.local:80
-HUBITAT_USERNAME=your_username
-HUBITAT_PASSWORD=your_password
-HUBITAT_API_KEY=your_api_key
-
-# UniFi Settings (update with your credentials)
-UNIFI_HOST=unifi.local
-UNIFI_PORT=8443
-UNIFI_USERNAME=your_username
-UNIFI_PASSWORD=your_password
-UNIFI_SITE=default
-EOF
-
-# Set secure permissions
+cp deploy/.env.example /root/.node-red/.env
 chmod 600 /root/.node-red/.env
-chown -R root:root /root/.node-red
+chown root:root /root/.node-red/.env
 ```
+
+The variables the flows actually read (grouped by tab):
+
+```bash
+# Home Assistant  (Home Assistant tab; inert until HA_TOKEN is set)
+HA_URL=http://homeassistant.local:8123   # as reachable FROM this container
+HA_TOKEN=<long-lived access token>       # HA → Profile → Long-lived access tokens
+HA_ENTITY_ID=light.kitchen
+
+# Hubitat  (Devices tab) — Maker API. There is no username/password path:
+# HUBITAT_USERNAME / HUBITAT_PASSWORD are read by NO flow and were removed.
+HUBITAT_URL=http://hubitat.local
+HUBITAT_API_KEY=<maker api token>
+HUBITAT_APP_ID=<app id from the Maker API URL>
+HUBITAT_ACCESS_TOKEN=<same page>
+HUBITAT_DEVICE_ID=<device the switch controls>
+
+# UniFi  (Network tab). One variable, not host+port.
+#   UniFi OS console  -> https://<host>/proxy/network
+#   self-hosted       -> https://<host>:8443
+UNIFI_URL=https://hubitat.local/proxy/network
+UNIFI_API_KEY=                 # preferred; skips the login step entirely
+UNIFI_USERNAME=
+UNIFI_PASSWORD=
+UNIFI_SITE=default
+
+# Grafana / Prometheus  (System Health tab)
+PROMETHEUS_URL=http://<monitoring-host>:9090
+GRAFANA_URL=http://<monitoring-host>:3001
+GRAFANA_DASH_UID=shd-system-health
+
+# Proxmox  (Home Lab tab)
+PROXMOX_URL=https://proxmox.local:8006
+PROXMOX_NODE=pve
+PROXMOX_TOKEN=<user>@pam!<tokenid>=<secret>
+```
+
+> A variable that no flow reads is not harmless — it is a false sense of
+> configuration. Only the names above reach `env.get()`.
+
+---
 
 #### Step 7: Configure Proxmox Firewall (Optional)
 
@@ -228,71 +251,45 @@ pct create 102 local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
 
 ### Import Dashboard Flows
 
-Copy the dashboard flows into the container:
+Deploy the current flow set over the **Admin API** — no UI, no restart:
 
 ```bash
-# Inside container (via pct enter)
-scp /path/to/smart-home-dashboard/flows/* root@192.168.1.100:/home/node-red/.node-red/flows/
+# from the dev machine, against the container
+curl -s -X POST http://<container-ip>:1880/flows \
+  -H "Content-Type: application/json" \
+  -H "Node-RED-Deployment-Type: full" \
+  --data-binary @flows/all-flows.flow.json     # -> HTTP 204
 ```
 
-Or manually on the container:
+> **Do not send a `Node-RED-API-Version` header.** v2 expects an object payload,
+> not a bare array, and fails with
+> `Cannot read properties of undefined (reading 'forEach')`.
+
+`deploy/setup.sh` does this for you and verifies the result. The editor route is
+**Import → select a file → Deploy**; note that an import which is not followed by
+**Deploy** never reaches the runtime, which is easy to mistake for a broken flow.
+
+Copying the generated JSON into `/root/.node-red/flows/` also works — but the
+flows are **generated** by `tools/gen_flows.py`, so prefer regenerating and
+deploying over hand-editing anything under `flows/`.
+
+### Node-RED settings
+
+**Do not write a `settings.js` from scratch.** The repo ships the real one at
+[`config/settings.js`](../config/settings.js) (with a
+[`config/settings.js.example`](../config/settings.js.example) template).
+`deploy/setup.sh` installs it. Overwriting it on the container is how the
+admin/node roots drifted in the past — the live server reports
+`httpAdminRoot: "/"` and `httpNodeRoot: "/"`, and a settings file claiming
+`"admin"` / `"api"` moves both and breaks every documented URL.
+
+If you do need to change it, edit the tracked file, then:
 
 ```bash
-# Create flows directory
-mkdir -p /home/node-red/.node-red/flows
-
-# Copy flow files
-cp -r /path/to/smart-home-dashboard/flows/* /home/node-red/.node-red/flows/
-```
-
-### Configure Node-RED Options
-
-```bash
-# Create Node-RED configuration options
-cat > /home/node-red/.node-red/settings.js << 'EOF'
-// Node-RED configuration
-module.exports = {
-  userDir: "/home/node-red/.node-red",
-  httpAdminRoot: "admin",
-  httpNodeRoot: "api",
-  httpStaticRoot: "public",
-  httpStaticRootUserDir: "user-lib",
-  httpStaticDepthLimit: 20,
-  httpStaticMaxBodySize: 500000,
-  httpRateLimit: {
-    max: 100,
-    windowMs: 60000
-  },
-  functionGlobalContext: {
-    // Add global variables here
-  },
-  ui: {
-    theme: "dashboard"
-  },
-  // Enable SSL (uncomment for production)
-  // https: {
-  //   key: "/etc/ssl/private/nodered.pem",
-  //   cert: "/etc/ssl/certs/nodered.pem"
-  // },
-  // Enable authentication (uncomment for production)
-  // users: [
-  //   {
-  //     username: "admin",
-  //     password: "admin",
-  //     roles: ["admin"]
-  //   }
-  // ],
-  logging: {
-    console: {
-      level: "info"
-    },
-    file: {
-      level: "warn",
-      logsDir: "/home/node-red/.node-red/logs"
-    }
-  }
-};
-EOF
+node --check config/settings.js          # must parse
+node -e "require('./config/settings.js'); console.log('loads OK')"
+cp config/settings.js /root/.node-red/settings.js
+systemctl restart node-red
 ```
 
 ---
@@ -355,7 +352,7 @@ systemctl stop ssh
 
 ### 3. Enable Node-RED Authentication
 
-Edit `/home/node-red/.node-red/settings.js`:
+Edit `/root/.node-red/settings.js`:
 
 ```javascript
 users: [
@@ -391,8 +388,8 @@ pct list
 # Check container status
 pct status 101
 
-# View container logs
-qm console 101
+# Get a shell inside it (`pct` is the CONTAINER tool; `qm` is for VMs only)
+pct enter 101
 ```
 
 ### Monitor Node-RED
@@ -402,11 +399,13 @@ qm console 101
 systemctl status node-red
 journalctl -u node-red -f
 
-# Check Node-RED is running
-curl http://localhost:1880/api/
+# Check Node-RED is running (the Admin API root is "/", not "/api/")
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:1880/flows   # want 200
 
-# View Node-RED logs
-tail -f /home/node-red/.node-red/logs/*.log
+# Node-RED logs -- the launcher writes its own log here:
+tail -f /root/.node-red/start.log
+# ...and under systemd:
+journalctl -u node-red -f
 ```
 
 ### Backup Container
@@ -492,7 +491,7 @@ ip addr show eth0
 
 ```bash
 # Inside container
-cp -r /new/path/to/flows/* /home/node-red/.node-red/flows/
+cp -r /new/path/to/flows/* /root/.node-red/flows/
 systemctl restart node-red
 ```
 
@@ -510,22 +509,30 @@ systemctl restart node-red
 
 ## 📝 Environment Variables Reference
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| NODE_RED_USER | Default admin username | admin | No |
-| NODE_RED_PASS | Default admin password | admin | No |
-| NODE_RED_HOST | Hostname | localhost | No |
-| NODE_RED_PORT | Node-RED port | 1880 | No |
-| NODE_RED_SECURE | Enable HTTPS | false | No |
-| HUBITAT_URL | Hubitat API URL | http://hubitat.local:80 | Yes |
-| HUBITAT_USERNAME | Hubitat username | - | Yes |
-| HUBITAT_PASSWORD | Hubitat password | - | Yes |
-| HUBITAT_API_KEY | Hubitat API key | - | Yes |
-| UNIFI_HOST | UniFi controller hostname | unifi.local | Yes |
-| UNIFI_PORT | UniFi controller port | 8443 | Yes |
-| UNIFI_USERNAME | UniFi username | - | Yes |
-| UNIFI_PASSWORD | UniFi password | - | Yes |
-| UNIFI_SITE | UniFi site name | default | Yes |
+**`deploy/.env.example` is the authoritative reference** — it is the copy you
+install to `/root/.node-red/.env`, and `tests/test_env_template.py` fails if a
+flow reads a variable it does not document. Do not maintain a second list here.
+
+The variables that actually reach `env.get()`, by tab:
+
+| Variable | Tab | Notes |
+|----------|-----|-------|
+| `PROXMOX_URL`, `PROXMOX_NODE`, `PROXMOX_TOKEN` | Home Lab | `PROXMOX_NODE` defaults to `pve` |
+| `HUBITAT_URL`, `HUBITAT_API_KEY`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices | Maker API. **No username/password path exists.** |
+| `UNIFI_URL`, `UNIFI_SITE`, `UNIFI_API_KEY`, `UNIFI_USERNAME`, `UNIFI_PASSWORD`, `UNIFI_LOGIN_URL` | Network | `UNIFI_URL` embeds host *and* port; see the UniFi section above |
+| `PROMETHEUS_URL`, `GRAFANA_URL`, `GRAFANA_DASH_UID` | System Health | all three have working defaults |
+| `HA_URL`, `HA_TOKEN`, `HA_ENTITY_ID` | Home Assistant | tab is inert until `HA_TOKEN` is set |
+
+Three categories of "looks configured but isn't", worth keeping distinct:
+
+| Names | Status |
+|-------|--------|
+| `HUBITAT_USERNAME`, `HUBITAT_PASSWORD`, `UNIFI_HOST`, `UNIFI_PORT` | read by **no flow** — the Maker API has no username/password path and `UNIFI_URL` carries host *and* port. Do not add these back; `deploy/setup.sh` used to emit them. |
+| `NODE_RED_PORT`, `NODE_RED_USERDIR` | **not** flow variables, but genuinely read by `config/settings.js` (`uiPort`, `userDir`). Keep them. |
+| `NODE_RED_USER`, `NODE_RED_PASS`, `NODE_RED_HOST`, `NODE_RED_SECURE` | read by nothing — `NODE_RED_USER`/`PASS` appear only inside a commented-out `adminAuth` example. |
+
+> A variable nothing reads is worse than an absent one: it looks configured.
+> Check with `grep -rn "env.get(" tools/gen_flows.py` before trusting any name.
 
 ---
 
@@ -539,11 +546,13 @@ systemctl restart node-red
 
 ## 🆘 Getting Help
 
-1. Check the troubleshooting section above
-2. Review Proxmox documentation
-3. Check Node-RED logs
-4. Create an issue on the project repository
+1. Run `python3 tools/validate_flows.py flows/all-flows.flow.json` — catches
+   dangling wires and empty function bodies before you blame the environment.
+2. Confirm the env vars reached the **process**, not just the file (see above).
+3. `bash deploy/check-connectivity.sh`, then work every `!!` line.
+4. Check `journalctl -u node-red` / `/root/.node-red/start.log`.
 
 ---
 
-**Last Updated:** January 2024
+**Last reviewed:** 2026-10-16 — verified against the running container
+(node-red 5.0.7, Node 24, userDir `/root/.node-red`, `httpAdminRoot: "/"`).

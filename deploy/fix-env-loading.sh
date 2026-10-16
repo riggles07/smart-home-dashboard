@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Make node-red.service actually load /home/node-red/.env.
+# Make node-red.service actually load /root/.node-red/.env.
 #
 # Symptom this fixes:
 #   systemctl show node-red -p Environment --value | tr ' ' '\n' | grep -E 'HUBITAT|UNIFI'
@@ -16,7 +16,7 @@
 # unit file, so a later `setup.sh` regeneration won't clobber it.
 set -euo pipefail
 
-ENV_FILE=/home/node-red/.env
+ENV_FILE=/root/.node-red/.env
 DROPIN_DIR=/etc/systemd/system/node-red.service.d
 DROPIN=${DROPIN_DIR}/10-env-file.conf
 UNIT=node-red
@@ -62,7 +62,7 @@ cat > "$DROPIN" <<'EOF'
 # the Home Lab, Devices and Network tabs. systemd does not expand variables in
 # this file and a missing file makes the unit fail to start.
 [Service]
-EnvironmentFile=/home/node-red/.env
+EnvironmentFile=/root/.node-red/.env
 EOF
 echo "   written:"
 sed 's/^/     /' "$DROPIN"
