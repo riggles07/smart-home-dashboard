@@ -249,9 +249,9 @@ NODE_RED_PORT=1880
 NODE_RED_SECURE=false
 
 # Hubitat Settings
+# Maker API only -- there is no username/password path. HUBITAT_USERNAME and
+# HUBITAT_PASSWORD are read by NO flow; do not add them back.
 HUBITAT_URL=http://192.168.4.86
-HUBITAT_USERNAME=your_username
-HUBITAT_PASSWORD=your_password
 HUBITAT_API_KEY=your_api_key
 
 # Hubitat Maker API (read by the Devices-tab flow)
@@ -275,6 +275,20 @@ UNIFI_SITE=default
 UNIFI_API_KEY=
 UNIFI_USERNAME=your_username
 UNIFI_PASSWORD=your_password
+
+# Home Assistant (read by the Home Assistant tab flow)
+# HA_URL must be reachable FROM this container. A reverse proxy (Tailscale
+# Serve included) often fronts HA on 80/443, NOT 8123. Verify before trusting it:
+#   curl -i "$HA_URL/api/"     -> must be 401 Unauthorized, never ECONNREFUSED
+HA_URL=http://homeassistant.local:8123
+# Profile -> Long-lived access tokens. This grants full access to your HA.
+HA_TOKEN=your_home_assistant_long_lived_token
+HA_ENTITY_ID=light.kitchen
+
+# Grafana / Prometheus (read by the System Health tab flow)
+PROMETHEUS_URL=http://192.168.4.145:9090
+GRAFANA_URL=http://192.168.4.145:3001
+GRAFANA_DASH_UID=shd-system-health
 
 # Proxmox API (read by the Home Lab tab flow)
 # Token: Datacenter -> Permissions -> API Tokens -> Add
