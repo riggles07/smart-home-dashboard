@@ -5,8 +5,11 @@ import re
 import os
 from pathlib import Path
 
-# Project paths
-PROJECT_ROOT = Path("/root/.hermes/projects/smart-home-dashboard")
+# Project paths, resolved relative to THIS FILE.
+# Never hardcode an absolute dev path: it resolves on the author's machine and
+# nowhere else, so the suite passes locally and fails in CI. That mistake has now
+# been made twice in this repo -- also in tools/test_flow_functions.js.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FLOWS_FILE = PROJECT_ROOT / "flows" / "all-flows.flow.json"
 ENV_EXAMPLE = PROJECT_ROOT / "deploy" / ".env.example"
 
