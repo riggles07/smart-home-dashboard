@@ -1,176 +1,177 @@
-# Smart Home Dashboard - Implementation Details
+# Smart Home Dashboard — Implementation Details
 
-## Project Architecture
+A single Node-RED instance serving a 7-tab dashboard for a homelab, deployed as
+an LXC container on Proxmox.
 
-This project implements a comprehensive smart home monitoring dashboard with the following components:
+## Project architecture
 
-### Core Modules
+Everything the dashboard renders comes from **generated** flows.
+`tools/gen_flows.py` is the source of truth: it emits one
+`flows/<NN>-<name>.flow.json` per tab plus a combined `flows/all-flows.flow.json`.
+Nothing under `flows/` should be hand-edited.
 
-- **Home Assistant Integration**: Track smart home devices and automations
-- **UniFi Integration**: Track network status, connected clients, and security events
-- **Grafana Integration**: Visualize home lab metrics
-- **Home Lab Monitor**: Proxmox & Docker status
-- **Kanban Board**: Project task tracking
+| Component | Where | Notes |
+|-----------|-------|-------|
+| Home Lab monitor | `flows/01-home-lab-monitor.flow.json` | Proxmox API → gauges, status table, CPU chart |
+| Devices (Hubitat) | `flows/02-hubitat-devices.flow.json` | Maker API → power switch + brightness slider |
+| Network (UniFi) | `flows/03-unifi-network.flow.json` | client poll → count + table |
+| Kanban board | `flows/04-kanban-board.flow.json` | local task board |
+| System Health | `flows/05-system-health.flow.json` | 6 Grafana `d-solo` iframes + Prometheus summary |
+| Settings | `flows/06-settings.flow.json` | deployment info panel |
+| Home Assistant | `flows/99-other.flow.json` | WebSocket state sync + REST light control |
+| Theme | inside `01-…` | hidden `ui_tab` (order 99) carrying `css/dashboard.css` |
 
-## Implementation Status
+The `flows/*.js` files and their `*.py` mirrors are **custom node-type
+definitions** (`RED.nodes.registerType(...)`) retained as reference
+implementations — they contain no node graph and are not what runs. See
+`flows/README.md`.
 
-### Phase 1: Project Setup & Architecture ✅
-- [x] Node-RED installation
-- [x] Project structure created
-- [x] Environment configuration
-- [x] Basic dashboard layout
+## Implementation status
 
-### Phase 2: Home Lab Monitoring ✅
-- [x] Proxmox cluster health
-- [x] Docker container monitoring
-- [x] VM/Container status
-- [x] Node resource monitoring
+### Phase 1 — Setup & architecture ✅
+Node-RED installed in an LXC, project structure, env handling, base dashboard.
 
-### Phase 3: Hubitat Integration (Pending)
-- [ ] Smart device controls
-- [ ] Automation triggers
-- [ ] Device state monitoring
+### Phase 2 — Home Lab monitoring ✅
+Proxmox host CPU/memory gauges, kernel/CPU detail, swap, disk, uptime, CPU
+history chart.
 
-### Phase 4: UniFi Network Monitoring ✅
-- [x] WiFi client list
-- [x] Network traffic monitoring
-- [x] Access point status
+### Phase 3 — Hubitat integration ✅
+Implemented, not pending. Power switch and brightness slider drive the Maker
+API; URL construction and error surfacing are covered by
+`tests/test_hubitat_device_control.py` and `tools/test_flow_functions.js`.
 
-### Phase 5: Dashboard UI & Display ✅
-- [x] Mobile responsive design (`css/dashboard.css`, auto layout)
-- [x] Local deployment on Galaxy A7 Lite (`docs/MOBILE_DEPLOYMENT.md`)
-- [x] Touch-friendly controls (44px targets, `touch-action: manipulation`)
+### Phase 4 — UniFi network monitoring ✅
+Client list poll → online count and hostname/IP/MAC table. Both auth paths
+implemented (API key, or cookie login with an auto-derived login endpoint).
 
-### Phase 6: Testing & Deployment (In Progress)
-- [x] CI: pytest suite + flow-structure + settings-syntax + theme-wiring gates
-      (`.github/workflows/ci.yml`, green on every push)
+### Phase 5 — Dashboard UI & display ✅
+Mobile-responsive theme in `css/dashboard.css` via `--shd-*` custom properties,
+44px touch targets, deployed for the Galaxy A7 Lite (`docs/MOBILE_DEPLOYMENT.md`).
+
+### Phase 6 — Testing & deployment ✅ / ⚠️
+- [x] CI: pytest + flow-structure + settings-syntax + theme-wiring gates
+      (`.github/workflows/ci.yml`, green on push)
+- [x] Flow-function harnesses that run the **real** `func` bodies
+      (`tools/test_flow_functions.js`, `tools/test_ha_functions.js`)
+- [x] Credential rotation (`scripts/rotate-credentials.sh`)
 - [x] Security verification tooling (`scripts/verify-security.sh`)
-      — see the caveat below: it checks files, not the running host
-- [x] Credential rotation tooling (`scripts/rotate-credentials.sh`)
-- [ ] HTTPS/TLS — NOT deployed. The service serves plain HTTP on 1880; nothing
-      listens on 1881. `config/settings.js` is not read by the runtime (Node-RED
-      only reads settings from its userDir), so setting `server.ssl` there would
-      have no effect even if the key existed.
-- [ ] Firewall (ufw) — NOT verified on the container; no ufw rules are known to
-      be applied there.
-- [ ] Non-root Node-RED — NOT deployed, and deliberately so: the service runs as
-      root with userDir `/root/.node-red`. A non-root `node-red` account was the
-      original cause of the deployment failure (`217/USER`, `/home/node-red`
-      missing). See `deploy/README.md`.
-- [ ] Integration validation
-- [ ] Production deployment
+      — **checks files, not the running host**; a pass does not prove the
+      properties in `docs/SECURITY.md`
+- [ ] HTTPS/TLS — **not deployed.** Plain HTTP on 1880. `config/settings.js` is
+      not read by the runtime (Node-RED reads settings from its userDir), so
+      setting `server.ssl` there has no effect even if a key existed.
+- [ ] Firewall — **not verified.** No ufw rules are known to be applied on the
+      container.
+- [ ] Non-root Node-RED — **not deployed, deliberately.** Runs as root with
+      userDir `/root/.node-red`; a non-root `node-red` account was the original
+      cause of the deployment failure (`217/USER`).
+- [ ] HA credentials in the runtime env — the Home Assistant nodes are correct
+      but inert until `HA_URL`/`HA_TOKEN`/`HA_ENTITY_ID` are set and Node-RED is
+      restarted.
 
-## File Structure
+### Phase 7 — Home Assistant migration ⚠️ partial
+- [x] WebSocket client: auth handshake, `get_states`, `subscribe_events
+      state_changed`, normalised entity events
+- [x] REST control: dashboard switch → `light.turn_on` / `light.turn_off`
+- [x] Env handling via LLAT in `.env`
+- [ ] **Hubitat has not been replaced.** HA shipped as an additional tab; the
+      Devices tab still speaks Maker API.
+- [ ] Entity mapping is a single configured entity (`HA_ENTITY_ID`), not a
+      migrated device set.
+
+### Phase 8 — Grafana integration ✅
+Six `d-solo` panels embedded with `kiosk` + `theme(dark)` + self-refresh, plus a
+native Prometheus summary query feeding the header stats. Requires
+`allow_embedding=true` and anonymous Viewer on the Grafana side
+(`docs/GRAFANA_INTEGRATION.md`).
+
+### Phase 9 — UI/UX modernization ⚠️ partial
+- [x] CSS custom-property theming, contrast guard, 44px targets
+- [ ] Dynamic backgrounds (time-of-day / weather / state)
+- [ ] Multiple selectable palettes — one dark theme only
+- [ ] Motion / haptic-style command feedback
+
+### Phase 10 — WallPanel / Magic Mirror ❌ not started
+Tracked as kanban cards (WallPanel PRO kiosk, MQTT remote control), not built.
+
+## Repository layout
 
 ```
 smart-home-dashboard/
-├── config/
-│   └── settings.js              # Node-RED configuration
-├── css/
-│   └── dashboard.css             # Mobile-responsive theme (Phase 5)
-├── docs/
-│   └── MOBILE_DEPLOYMENT.md      # Galaxy A7 Lite deployment guide (Phase 5)
-├── flows/
-│   ├── dashboard-configuration.js    # Main dashboard UI
-│   ├── home-lab-monitor.js          # Home Lab monitoring
-│   ├── hubitat-integration.js       # Hubitat controls
-│   ├── unifi-network-monitor.js     # UniFi monitoring
-│   ├── kanban-flow.js               # Task tracking
-│   └── integration-functions.js     # API functions
-├── deploy/                       # THE supported deployment path
-│   ├── setup.sh                  #   provisions the working runtime
-│   ├── .env.example              #   env template (checked vs the flows)
-│   ├── node-red-start.sh
-│   ├── check-connectivity.sh
-│   └── ...
-├── scripts/
-│   ├── verify-security.sh        # Static checks (files, not the running host)
-│   └── rotate-credentials.sh
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                # pytest suite + flow structure + settings + theme
-│       └── deploy.yml            # inert (CI cannot reach the LAN host)
-├── deploy/.env.example           # Environment template (the ONLY one)
-├── requirements.txt              # Python test dependencies
-├── PROJECT_SUMMARY.md            # This file
-└── README.md                     # Project overview
+├── config/            settings.js (+ .example) — the real Node-RED settings
+├── css/               dashboard.css — themed, responsive
+├── deploy/            THE supported deployment path
+│   ├── setup.sh         provisions the working runtime
+│   ├── .env.example     the ONLY env template (checked against the flows)
+│   ├── node-red-start.sh, check-connectivity.sh, repair-settings.sh, …
+│   └── README.md        authoritative deployment guide
+├── docs/              HOME_ASSISTANT_INTEGRATION, GRAFANA_INTEGRATION,
+│                      MOBILE_DEPLOYMENT, SECURITY, REQUIREMENTS_V2
+├── flows/             generated *.flow.json + *.js/*.py node-type definitions
+├── scripts/           verify-security.sh, rotate-credentials.sh, JS checkers
+├── tests/             pytest suite (382 tests)
+├── tools/             gen_flows.py (generator) + validators + JS harnesses
+└── .github/workflows/ ci.yml (active); deploy.yml (inert, by design)
 ```
 
-## Deployment Options
+## Integrations — real endpoints
 
-### Option 1: `deploy/setup.sh` (supported)
+| Service | Call | Auth |
+|---------|------|------|
+| Proxmox | `GET <PROXMOX_URL>/api2/json/nodes/<PROXMOX_NODE>/status` | `Authorization: PVEAPIToken=<token>` |
+| Hubitat | `GET <HUBITAT_URL>/apps/api/<APP_ID>/devices?access_token=<tok>` | query token (**no** Bearer, no `/api/v1/…`) |
+| Hubitat command | `GET …/devices/<DEVICE_ID>/<cmd>/<value>?access_token=<tok>` | query token |
+| UniFi (API key) | `GET <UNIFI_URL>/api/s/<site>/stat/sta` | `X-API-KEY: <key>` |
+| UniFi (login) | self-hosted `<UNIFI_URL>/api/login`; UniFi OS `https://<host>/api/auth/login` | session cookie |
+| Home Assistant | WS `<HA_URL>/api/websocket`; REST `POST <HA_URL>/api/services/<domain>/<service>` | `Authorization: Bearer <HA_TOKEN>` |
+| Prometheus | `GET <PROMETHEUS_URL>/api/v1/query?query=…` | none (LAN) |
+| Grafana embed | `<GRAFANA_URL>/d-solo/<uid>/<slug>?orgId=1&panelId=N&kiosk&theme=dark` | anonymous viewer |
 
-Run this inside the LXC container. It installs Node.js and Node-RED, writes the
-systemd unit, and provisions the runtime known to work:
-
-```bash
-bash deploy/setup.sh
-```
-
-### Option 2: Proxmox LXC
-
-Create the container on the Proxmox host with `pct` (`qm` is for VMs), then run
-`deploy/setup.sh` inside it. See `deploy/README.md`.
-
-## API Endpoints
-
-### Hubitat API
-- Base URL: `http://hubitat.local:8080`
-- Authentication: API Key header
-- Status: `/api/v1/status`
-- Devices: `/api/v1/devices`
-
-### UniFi Network API
-- Base URL: `https://unifi.local:8443`
-- Authentication: Basic auth
-- Clients: `/rest/smartapi/apis/smart/v2/ubnt/network/clients`
-- APs: `/rest/proprietory/rest/cap/wlan`
+`UNIFI_URL` embeds host **and** port (UniFi OS: `/proxy/network` on 443;
+self-hosted: `:8443`). Get it wrong and the stat call 404s.
 
 ## Testing
 
 ```bash
-# Test Hubitat API
-curl -H \"Authorization: Bearer ***\" \\\
-  https://hubitat.local/api/v1/status
-
-# Test UniFi API
-curl -u username:password \\\
-  https://unifi.local:8443/api/login
-
-# Test Node-RED
-curl http://localhost:1880/api/
+python3 -m pytest -q                                       # 382 tests
+node tools/test_flow_functions.js                          # 108 assertions
+node tools/test_ha_functions.js                            # 41 assertions
+python3 tools/validate_flows.py flows/all-flows.flow.json  # structure/wires
+python3 tools/gen_flows.py && git diff --exit-code flows/  # generated-file drift
 ```
 
-## Security Checklist
+The two Node harnesses extract `func` bodies from the flow JSON and execute them
+against stubbed globals, so they test what is actually deployed. That matters
+here: both Home Assistant nodes once shipped as dead code — a literal `\n` turned
+each body into a single `//` comment — while the whole Python suite stayed green.
+`tests/test_flow_newline_guard.py` now guards that class of defect.
 
-- [x] Environment variables in `.env` file
-- [x] `.env` in `.gitignore`
-- [x] HTTPS enabled in production (`config/settings.js` + self-signed cert at `/etc/node-red/`)
-- [x] Firewall rules configured (ufw, LAN-only allow on 1880/1881, default deny)
-- [x] Non-root user for Node-RED (`node-red` user + systemd sandboxing)
-- [x] Regular credential rotation (`scripts/rotate-credentials.sh`)
+## Security
 
-## Next Steps
+The honest statement is in [`docs/SECURITY.md`](docs/SECURITY.md). Summary:
 
-### Phase 7: Home Assistant Migration (In Progress)
-- [ ] Replace Hubitat integration with HA WebSocket API
-- [ ] Map entities and update dashboard controls
-- [ ] Verify bidirectional state sync
+- [x] Secrets in `/root/.node-red/.env`, `chmod 600`, never in the flows
+- [x] `.env` git-ignored
+- [ ] **HTTPS — not enabled.** Plain HTTP on 1880.
+- [ ] **Firewall — not verified** on the container.
+- [ ] **Non-root — not in use.** Node-RED runs as root, by design.
+- [ ] **`adminAuth` — not enabled.** Anyone reaching 1880 can read/edit flows
+      and therefore the credentials they use. This is also why the Admin API
+      accepts unauthenticated flow deploys.
+- [x] Credential rotation tooling available
 
-### Phase 8: Grafana Dashboard Integration (Pending)
-- [ ] Enable Grafana embedding
-- [ ] Create and embed Proxmox/LXC health panels
-- [ ] Optimize UI for mobile (A7 Lite)
+> An earlier revision of this file claimed HTTPS, firewall and non-root were all
+> in place. They were not. Treat any ✅ in a checklist without a matching test or
+> command as unverified.
 
-### Phase 9: UI/UX Modernization (Pending)
-- [ ] Implement themable CSS system using Custom Properties
-- [ ] Build dynamic background engine (time/state based)
-- [ ] Redesign visual hierarchy for readability and workflow
-- [ ] Verify performance on Galaxy A7 Lite
+## Next steps
 
-### Phase 10: Magic Mirror Display (Pending)
-- [ ] Sideload and configure WallPanel PRO on A7 Lite
-- [ ] Implement MQTT wake/brightness control in Node-RED
-- [ ] Wire HA motion sensors to tablet wake triggers
-- [ ] Implement time-of-day view switching via `eval` commands
-- [ ] Verify <1s motion-to-wake latency
+1. Set `HA_URL` / `HA_TOKEN` / `HA_ENTITY_ID` on the container and restart
+   Node-RED — the only thing standing between the current code and a working HA
+   integration (`docs/HOME_ASSISTANT_INTEGRATION.md`).
+2. Decide whether Hubitat is actually being retired; until then the dashboard
+   speaks two device protocols.
+3. Phase 9 remainder (dynamic backgrounds, palettes, feedback) or explicitly drop
+   it.
+4. Phase 10 (WallPanel kiosk, MQTT control) if the Magic Mirror direction is
+   still wanted.

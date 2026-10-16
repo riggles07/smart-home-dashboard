@@ -11,8 +11,14 @@ Home Dashboard — tabs, dashboard widgets, and processing nodes wired together.
 | `02-hubitat-devices.flow.json`   | Power switch + brightness slider → Hubitat Maker API |
 | `03-unifi-network.flow.json`     | UniFi client poll → count + client table |
 | `04-kanban-board.flow.json`      | Local task board (add card → table) |
-| `05-settings.flow.json`          | Deployment info panel |
-| `all-flows.flow.json`            | All 5 tabs combined (single-shot import) |
+| `05-system-health.flow.json`     | Six Grafana iframes + Prometheus summary stats |
+| `06-settings.flow.json`          | Deployment info panel |
+| `99-other.flow.json`             | Home Assistant tab (WebSocket state sync + light control) |
+| `all-flows.flow.json`            | All 7 tabs combined — 94 nodes (single-shot import) |
+
+Note `06-settings`, not `05-settings`: the settings flow was renamed when the
+System Health tab took slot 5, and the generator maps the tab id to
+`06-settings.flow.json`. A stale `05-settings.flow.json` must not exist.
 
 Every file is a JSON array of node **instances** (`tab`, `ui_*` widgets,
 `inject`, `function`, `http request`, `json`, `debug`) — the format Node-RED's
@@ -54,8 +60,14 @@ environment** of the running Node-RED:
 | Variable | Used by |
 |----------|---------|
 | `PROXMOX_URL`, `PROXMOX_NODE`, `PROXMOX_TOKEN` | Home Lab tab |
-| `HUBITAT_URL`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices tab |
+| `HUBITAT_URL`, `HUBITAT_API_KEY`, `HUBITAT_APP_ID`, `HUBITAT_ACCESS_TOKEN`, `HUBITAT_DEVICE_ID` | Devices tab |
 | `UNIFI_URL`, `UNIFI_SITE`, `UNIFI_API_KEY` *or* `UNIFI_USERNAME`+`UNIFI_PASSWORD`, `UNIFI_LOGIN_URL` | Network tab |
+| `PROMETHEUS_URL`, `GRAFANA_URL`, `GRAFANA_DASH_UID` | System Health tab |
+| `HA_URL`, `HA_TOKEN`, `HA_ENTITY_ID` | Home Assistant tab |
+
+`deploy/.env.example` is the source of truth for this list, and
+`tests/test_env_template.py` fails if a flow reads a name it does not document —
+so add any new variable in both places.
 
 ### UniFi: get the URL form right
 
@@ -138,8 +150,11 @@ unconfigured backend, not a fault.
 ## Testing
 
 ```bash
-node tools/test_flow_functions.js     # 34 assertions against real func bodies
+python3 -m pytest -q                       # 382 tests (Python)
+node tools/test_flow_functions.js          # 108 assertions, real func bodies
+node tools/test_ha_functions.js            # 41 assertions, HA state + control paths
 python3 tools/validate_flows.py flows/all-flows.flow.json   # structure/wire integrity
+python3 tools/gen_flows.py && git diff --exit-code flows/   # drift check
 ```
 
 `test_flow_functions.js` extracts the `func` source straight out of the flow
@@ -147,6 +162,15 @@ JSON and runs it against stubbed `env`/`node`/`flow` globals, so it tests the
 deployed logic rather than a copy. It covers the UniFi API-key path, the legacy
 login path, the missing-credentials path, cookie capture, Proxmox metric maths,
 Hubitat URL construction, error formatting, and the Kanban store.
+`test_ha_functions.js` does the same for the Home Assistant nodes, additionally
+stubbing a fake `ws` — it covers the auth handshake, the state path, socket
+reuse across ticks, and the switch-to-service-call path.
+
+Structural checks alone are not enough here: `validate_flows.py` and the whole
+Python suite once passed while both Home Assistant nodes were dead code, because
+an over-escaped `func` body can be syntactically valid and still do nothing.
+`test_ha_functions.js` and `tests/test_flow_newline_guard.py` exist because of
+that.
 
 `validate_flows.py` catches dangling wires, orphaned `z`/`group`/`tab` refs, and
 empty function bodies — run it before importing.
@@ -163,7 +187,13 @@ curl -s -X POST http://<host>:1880/flows \
 # -> HTTP 204; the canvas populates immediately
 ```
 
-`deploy/setup.sh` runs this automatically (Step 11) and verifies it.
+> **Do not add a `Node-RED-API-Version` header.** v2 expects an object payload
+> rather than a bare array and fails with
+> `Cannot read properties of undefined (reading 'forEach')`. Omit it to get the
+> v1 behaviour, which accepts this file as-is.
+
+`deploy/setup.sh` runs this automatically (Step 11) and verifies it. Only
+**environment variables** need a container restart; flows do not.
 
 ### Option B — Web UI
 

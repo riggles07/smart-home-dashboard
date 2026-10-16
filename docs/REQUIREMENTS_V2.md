@@ -12,8 +12,34 @@
 
 ### Technical Constraints
 - **Protocol:** Prefer WebSocket for real-time status; REST for one-off commands.
-- **Backend:** Integration must reside in `flows/home-assistant-integration.js` (replacing `hubitat-integration.js`).
-- **Deployment:** Ensure HA connectivity from the `sh-dashboard` LXC (LAN: 192.168.4.178).
+- **Backend:** Integration is implemented in the **generated** flows —
+  `tools/gen_flows.py` emits the Home Assistant tab into
+  `flows/99-other.flow.json` (and `all-flows.flow.json`). `flows/home-assistant-integration.js`
+  and its `.py` mirror are custom **node-type definitions** retained as
+  reference implementations, not flows; editing them does not change the
+  dashboard.
+- **Deployment:** Ensure HA connectivity from the `sh-dashboard` LXC
+  (LAN: `192.168.4.100`, tailnet `100.76.56.35`). Note HA is reached over the
+  tailnet on **port 80**, not 8123 — see `docs/HOME_ASSISTANT_INTEGRATION.md`.
+
+---
+
+## 4. Implementation status (recorded 2026-10-16)
+
+Requirements above are the original statement of intent; this records what
+actually shipped, so the two are not confused.
+
+| § | Requirement | Status |
+|---|-------------|--------|
+| 1 | Home Assistant migration | **Additive, not a replacement.** HA ships as tab 7 with WebSocket state sync + REST control. The Hubitat Devices tab is still present and still speaks Maker API — Hubitat has not been retired. |
+| 1 | HA auth via LLAT in `.env` | Done — `HA_TOKEN`, presence-checked by `tools/nodered_env_probe3.py` |
+| 1 | Command execution from the UI | Done — the switch maps to `light.turn_on` / `light.turn_off` for `HA_ENTITY_ID` |
+| 2 | Grafana embeds | Done — six `d-solo` iframes + a native Prometheus summary query on the System Health tab |
+| 2 | LXC/VM health, latency, packet loss | Done via Grafana panels; the Blackbox exporter supplies latency/loss |
+| 3 | CSS-variable theming in `css/dashboard.css` | Done — `--shd-*` custom properties, guarded by `tests/test_colour_guard.py` and `tests/test_theme_wiring.py` |
+| 3 | 44px touch targets | Done — asserted by `tests/test_mobile_ui.py` |
+| 3 | Dynamic backgrounds / multiple palettes | **Not delivered.** One dark theme; no time-of-day or weather-driven backgrounds. |
+| 3 | Animations / haptic-style feedback | **Not delivered.** |
 
 ---
 
