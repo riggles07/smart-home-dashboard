@@ -11,7 +11,7 @@ inject/function/http-request/debug) -- not custom node-type definitions.
 Credentials are NEVER hardcoded: function nodes read them from env vars
 (PROXMOX_URL / PROXMOX_TOKEN / HUBITAT_* / UNIFI_*).
 """
-import json, os, hashlib
+import json, os, hashlib, re
 
 # Resolve output paths relative to THIS script so the generator works in any
 # checkout (CI, fresh clone), not only on the author's machine.
@@ -58,6 +58,54 @@ def load_theme_css(path=THEME_CSS_PATH):
         b = css.index("*/", a) + 2
         css = css[:a] + css[b:]
     return css
+
+
+# ---------------------------------------------------------------- Theme Manager
+#
+# Palette switching (task t_2fd8fb10). js/themes.js holds EVERY palette as a
+# mapping of the --shd-* tokens to concrete values; the browser-side manager
+# applies a palette by setting the custom properties on the document root.
+# The dashboard serves no static files, so the module is INLINED into a
+# global-scope ui_template appended to <head> (same delivery mechanism as the
+# theme's <style> block above): its <script> executes on load.
+#
+# The picker buttons and the "Set theme" node below are built from the palettes
+# PARSED OUT OF js/themes.js, so the UI can never drift from what ships.
+THEMES_JS_PATH = os.path.join(_ROOT, "js", "themes.js")
+
+
+def load_theme_manager_js(path=THEMES_JS_PATH):
+    """Read js/themes.js and guard it against breaking the head <script> block.
+
+    (No </script> can appear in a palette, but the check makes the invariant
+    explicit -- the whole file is inlined into the node's format.)"""
+    with open(path) as fh:
+        src = fh.read()
+    if "</script" in src:
+        raise ValueError(f"{path} must not contain '</script' -- the whole "
+                         "file is inlined into a ui_template <script> block")
+    return src
+
+
+def parse_themes_js(path=THEMES_JS_PATH):
+    """Extract {palette_id: label} from js/themes.js.
+
+    The file is an IIFE, not JSON, so parse it textually: each palette entry
+    has the shape  '<id>': { ... label: '<label>' ... }. Deliberately strict --
+    a shape change here fails loudly at generation time, not silently in the
+    browser."""
+    src = load_theme_manager_js(path)
+    pattern = re.compile(
+        r"'([a-z0-9-]+)':\s*\{[^{}]*?label:\s*'([^']*)'", re.S)
+    found = pattern.findall(src)
+    if not found:
+        raise ValueError(f"no palettes found in {path} -- expected entries "
+                         "like \"'nord': { label: 'Nord', ... }\"")
+    out = []
+    for pid, label in found:
+        out.append({"id": pid, "label": label})
+    return out
+
 
 
 # The dashboard ships its own rule:
@@ -321,6 +369,27 @@ add({"id": nid("tpl-theme"), "type": "ui_template", "z": T, "name": "Mobile them
      "format": "<style>\n" + _theme_css + "\n" + THEME_OVERRIDE + "</style>",
      "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
      "templateScope": "global", "x": 130, "y": 900, "wires": [[]]})
+
+# ---- Theme Manager: palette definitions + boot (task t_2fd8fb10) -----------
+# js/themes.js is inlined VERBATIM into a second global-scope template. The
+# dashboard appends global templates to <head> (jQuery .append -> the inline
+# script executes synchronously), so the stored palette is applied to the
+# document root BEFORE the tab content first paints -- no flash of the wrong
+# theme. Every (re)connect and every ui-controls replay tears the head block
+# down and re-appends it, which re-defines the (idempotent) manager and
+# re-runs init(); that is the dashboard's own lifecycle, not ours to fight.
+# The live 3.6.6 client (dist/js/app.min.js, function O) was read before
+# choosing this delivery route.
+_theme_manager_js = load_theme_manager_js()
+add({"id": nid("tpl-theme-manager"), "type": "ui_template", "z": T,
+     "name": "Theme manager", "group": _TG, "order": 2, "width": "0", "height": "0",
+     "format": "<script>\n" + _theme_manager_js + "\nSHDThemeManager.init();\n</script>",
+     "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "global", "x": 130, "y": 960, "wires": [[]]})
+# Palette ids/labels are PARSED out of js/themes.js -- the Settings picker
+# buttons and the "Set theme" validator are both generated from this, so the
+# UI can never drift from the palettes actually shipped to the browser.
+PALETTES = parse_themes_js()
 
 # --- UI Settings (ui_base) --------------------------------------------------
 # This is what tells the dashboard it is on a DARK theme. Without it the
@@ -1309,6 +1378,98 @@ add({"id": nid("inj-s"), "type": "inject", "z": T, "name": "Load info",
      # feeds a display must re-fire on an interval.
      "repeat": "300", "crontab": "", "once": True, "onceDelay": 2.0, "topic": "",
      "payload": "", "payloadType": "date", "x": 150, "y": 120, "wires": [[nid("txt-info")]]})
+
+# ---- Theme picker (task t_2fd8fb10) ----------------------------------------
+# One ui_button per palette, generated from js/themes.js via PALETTES (parsed
+# above): the Settings tab can never offer a palette the browser does not
+# ship, and a palette added to js/themes.js shows up here on regeneration.
+# ui_dropdown is NOT in the live palette (tools/data/nr-types.txt), so the
+# picker is a button row -- one tap per theme, which is also the better touch
+# target on the A7 Lite (no dropdown reflow).
+G = nid("grp-theme-picker")
+add({"id": G, "type": "ui_group", "z": T, "name": "Theme",
+     "tab": nid("uitab-s"), "order": 2, "disp": True, "width": "6", "collapse": False})
+
+_THEME_BUTTON_XS = [130, 330, 530, 730, 930]   # one column per button, deterministic
+for _i, _pal in enumerate(PALETTES):
+    add({"id": nid("btn-theme-" + _pal["id"]), "type": "ui_button", "z": T,
+         "name": "Theme: " + _pal["label"], "group": G, "order": 1 + _i,
+         "width": 0, "height": 0, "passthru": False,
+         "label": _pal["label"], "tooltip": "Switch to " + _pal["label"],
+         "color": "", "bgcolor": "", "className": "",
+         "icon": "palette", "payload": _pal["id"], "payloadType": "str",
+         "topic": "shd/theme", "topicType": "str",
+         "x": _THEME_BUTTON_XS[_i % len(_THEME_BUTTON_XS)], "y": 220,
+         "wires": [[nid("fn-theme-set")]]})
+
+# "Set theme" (function): the single programmatic entry point.
+#   * Accepts msg.payload = palette id from the picker buttons OR any wired
+#     Node-RED msg (acceptance criterion: a msg can trigger the change).
+#   * msg.socketid is DELETED before passing on: the dashboard's ui.js
+#     emitSocket() targets that id when set, and a button click carries it --
+#     without the delete, the theme change would reach ONLY the browser that
+#     clicked and every other client would stay on the old palette.
+#   * msg.enabled / res / req are stripped too (ui.js treats msg.enabled as a
+#     widget-disable flag, and res/req are circular and dropped server-side
+#     anyway -- keep the payload clean).
+#   * Persists the palette id in flow context, and the inject below re-pushes
+#     it to all clients on deploy so a Node-RED restart re-syncs browsers
+#     whose localStorage holds a different palette.
+add({"id": nid("fn-theme-set"), "type": "function", "z": T, "name": "Set theme",
+     "func": (
+        "var KNOWN = " + json.dumps([p["id"] for p in PALETTES]) + ";\n"
+        "var id = (typeof msg.payload === 'string') ? msg.payload.trim().toLowerCase() : '';\n"
+        "if (KNOWN.indexOf(id) === -1) {\n"
+        "  node.status({fill:'red', shape:'ring', text:'unknown theme: ' + String(msg.payload).slice(0, 20)});\n"
+        "  return null;\n"
+        "}\n"
+        "delete msg.socketid;\n"
+        "delete msg.enabled;\n"
+        "delete msg.res;\n"
+        "delete msg.req;\n"
+        "msg.payload = id;\n"
+        "flow.set('shd_theme', id);\n"
+        "node.status({fill:'green', shape:'dot', text: id});\n"
+        "return msg;"
+     ),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 350, "y": 220,
+     "wires": [[nid("tpl-theme-status")]]})
+
+# Current-theme display + the browser-side bridge (local ui_template):
+# The "Set theme" node's output is broadcast by the dashboard to every client
+# (socketid was stripped). A LOCAL template's msg arrives on its scope -- the
+# same $watch channel the Grafana embeds use -- so the watcher calls
+# SHDThemeManager.apply(msg.payload) and writes localStorage. No reload: the
+# CSS custom properties flip, the browser repaints, done.
+add({"id": nid("tpl-theme-status"), "type": "ui_template", "z": T,
+     "name": "Theme status", "group": G, "order": 1 + len(PALETTES),
+     "width": 0, "height": 0,
+     "format": (
+        "<div class=\"shd-muted\">Theme: {{msg.payload || 'default'}}</div>\n"
+        "<script>\n"
+        "(function(scope) {\n"
+        "  scope.$watch(\n"
+        "    function() { return scope.msg && scope.msg.payload; },\n"
+        "    function(id) {\n"
+        "      if (!id || typeof id !== 'string') { return; }\n"
+        "      if (window.SHDThemeManager) { window.SHDThemeManager.apply(id); }\n"
+        "    });\n"
+        "})(scope);\n"
+        "</script>"
+     ),
+     "storeOutMessages": True, "fwdInMessages": True, "resendOnRefresh": True,
+     "templateScope": "local", "x": 570, "y": 220, "wires": [[]]})
+
+# On deploy, re-push the persisted palette id so all clients re-sync after a
+# Node-RED restart (a client whose localStorage disagrees adopts the
+# server-selected palette). repeat=0: one shot, exactly once, at startup.
+add({"id": nid("inj-theme-sync"), "type": "inject", "z": T,
+     "name": "Re-push theme on deploy",
+     "props": [{"p": "payload", "v": "shd_theme", "vt": "flow"}],
+     "repeat": "", "crontab": "", "once": True, "onceDelay": 1.0, "topic": "",
+     "payload": "", "payloadType": "date", "x": 150, "y": 280,
+     "wires": [[nid("fn-theme-set")]]})
 
 # ---------------------------------------------------------------- write files
 os.makedirs(OUT, exist_ok=True)
