@@ -264,8 +264,8 @@ class TestRenderBoardMalformedRejected:
                     n["wires"] = [["no-such-node-id"], list(n.get("wires", [[], []])[1])]
         path = write_mutated(tmp_path, mutate)
         rc, out = run_validator(path)
-        assert rc != 0, f"validator ACCEPTED a dangling wire out of {RENDER_NAME}:\n{out}"
-        assert "unknown" in out, out
+        assert rc != 0, f"validator ACCEPTED a dangling wire out of {RENDER_NAME}:\\n{out}"
+        assert "does not exist" in out, out
 
     def test_render_board_orphaned_from_its_tab_is_rejected(self, tmp_path):
         def mutate(nodes):

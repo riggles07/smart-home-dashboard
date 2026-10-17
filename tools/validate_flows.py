@@ -26,7 +26,7 @@ for n in nodes:
     for out_idx, out in enumerate(n.get("wires", []) or []):
         for target in out:
             if target not in ids:
-                errors.append(f"{n['type']}({n.get('name','')}) output {out_idx} -> unknown {target}")
+                errors.append(f"wire target {target} does not exist (from {n['type']}({n.get('name','')}) output {out_idx})")
 
 # 3. every non-tab node has a valid z (tab)
 tabs = {n["id"] for n in nodes if n["type"] == "tab"}
@@ -35,16 +35,16 @@ for n in nodes:
         continue
     z = n.get("z")
     if z is None:
-        errors.append(f"{n['type']}({n.get('name','')}) has no z tab")
+        errors.append(f"node {n['id']} ({n['type']}) has no z tab")
     elif z not in tabs:
-        errors.append(f"{n['type']}({n.get('name','')}) z={z} is not a tab")
+        errors.append(f"node {n['id']} z={z} is not a tab")
 
 # 4. ui_group.tab must reference a ui_tab
 uitabs = {n["id"] for n in nodes if n["type"] == "ui_tab"}
 for n in nodes:
     if n["type"] == "ui_group":
         if n.get("tab") not in uitabs:
-            errors.append(f"ui_group({n.get('name','')}) tab={n.get('tab')} not a ui_tab")
+            errors.append(f"ui_group {n['id']} tab={n.get('tab')} is not a ui_tab")
 
 # 5. dashboard widgets must reference a ui_group
 groups = {n["id"] for n in nodes if n["type"] == "ui_group"}
@@ -53,7 +53,7 @@ WIDGETS = {"ui_gauge","ui_text","ui_chart","ui_switch","ui_slider","ui_template"
 for n in nodes:
     if n["type"] in WIDGETS:
         if n.get("group") not in groups:
-            errors.append(f"{n['type']}({n.get('name','')}) group={n.get('group')} not a ui_group")
+            errors.append(f"widget {n['id']} ({n['type']}) group={n.get('group')} is not a ui_group")
 
 # 6. http request nodes use method 'use' (set by preceding function)
 for n in nodes:
