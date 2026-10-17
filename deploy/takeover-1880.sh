@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
+
+[ "${EUID:-$(id -u)}" -eq 0 ] || {
+    echo "error: $(basename "$0"): must run as root (this script modifies the system)" >&2
+    exit 2
+}
+# --- fail fast on missing prerequisites (error handling only) --------------
+command -v systemctl >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'systemctl' not found" >&2
+    exit 3
+}
 # Free port 1880 from an orphan Node-RED so the systemd unit can bind it.
 #
 # The observed failure:

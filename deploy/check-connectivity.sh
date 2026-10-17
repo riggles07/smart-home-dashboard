@@ -7,7 +7,17 @@
 # It reads the same env vars the flow function nodes read, so a problem here is
 # a problem the flows will hit. Nothing is printed except hostnames and HTTP
 # status codes -- no secrets.
-set -uo pipefail
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
+
+# --- fail fast on missing prerequisites (error handling only) --------------
+command -v curl >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'curl' not found" >&2
+    exit 3
+}
 
 echo "Smart Home Dashboard - connectivity check"
 echo "date: $(date -Is)"

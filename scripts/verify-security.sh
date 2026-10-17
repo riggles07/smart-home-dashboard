@@ -9,7 +9,11 @@
 #
 # Usage: ./scripts/verify-security.sh
 
-set -uo pipefail
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -84,19 +88,17 @@ DEPLOY_SETUP="${PROJECT_DIR}/deploy/setup.sh"
 # deployment path is checked here. The old script asserted these same rules in
 # proxmox/ AND in the unit, which is why it reported failures regardless of
 # reality.
-for f in "$DEPLOY_SETUP"; do
-    if grep -q "ufw --force enable" "$f" 2>/dev/null; then
-        check "ufw enabled in $(basename "$f")" pass
-    else
-        check "ufw enabled in $(basename "$f")" warn
-        echo "     (no ufw rules in the deploy script -- firewall is NOT applied by this repo)"
-    fi
-    if grep -q "from 192.168.1.0/24" "$f" 2>/dev/null; then
-        check "LAN-only allow rules in $(basename "$f")" pass
-    else
-        check "LAN-only allow rules in $(basename "$f")" warn
-    fi
-done
+if grep -q "ufw --force enable" "$DEPLOY_SETUP" 2>/dev/null; then
+    check "ufw enabled in $(basename "$DEPLOY_SETUP")" pass
+else
+    check "ufw enabled in $(basename "$DEPLOY_SETUP")" warn
+    echo "     (no ufw rules in the deploy script -- firewall is NOT applied by this repo)"
+fi
+if grep -q "from 192.168.1.0/24" "$DEPLOY_SETUP" 2>/dev/null; then
+    check "LAN-only allow rules in $(basename "$DEPLOY_SETUP")" pass
+else
+    check "LAN-only allow rules in $(basename "$DEPLOY_SETUP")" warn
+fi
 
 # Live firewall check (only meaningful on the deploy host)
 if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then

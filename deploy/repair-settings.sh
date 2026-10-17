@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
+
+[ "${EUID:-$(id -u)}" -eq 0 ] || {
+    echo "error: $(basename "$0"): must run as root (this script modifies the system)" >&2
+    exit 2
+}
+# --- fail fast on missing prerequisites (error handling only) --------------
+command -v node >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'node' not found" >&2
+    exit 3
+}
 # Repair a broken /root/.node-red/settings.js with a known-good one.
 #
 # Context: the previous settings.js.example in this repo invented keys that are
