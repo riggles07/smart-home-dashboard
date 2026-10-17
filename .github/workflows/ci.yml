@@ -23,7 +23,10 @@ jobs:
           node-version: '20'
 
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
 
       # ---------------------------------------------------------------------
       # Why each step exists (this workflow previously ran only pytest, which
@@ -37,6 +40,13 @@ jobs:
         run: |
           node --check config/settings.js
           node -e "require('./config/settings.js'); console.log('settings.js loads OK')"
+
+      - name: Lint Python code
+        # Errors-only rules (pycodestyle E9 + Pyflakes F63/F7/F82): syntax
+        # errors and undefined names. The full default rule set reports 188
+        # pre-existing findings, so `ruff check .` would fail CI on the first
+        # run; this subset currently passes with zero findings.
+        run: ruff check . --select E9,F63,F7,F82
 
       # Structural integrity of the flow graph: dangling wires, orphaned
       # tab/group refs, empty function bodies, duplicate ids.
@@ -76,4 +86,10 @@ jobs:
         run: python3 tests/test_system_health.py
 
       - name: Run test suite
-        run: python -m pytest -v
+        run: |
+          python -m pytest --cov=flows tests/ -q
+          # Floor with margin. MEASURED 2026-10-17: flows/ coverage is 90%
+          # (1208/1341 statements). A --fail-under=90 gate passes by one
+          # rounding step and would fail the build on the next uncovered
+          # line, so the gate sits two points below measured reality.
+          python -m coverage report --fail-under=88
