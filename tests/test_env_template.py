@@ -119,3 +119,34 @@ class TestEnvTemplate:
             "systemd's EnvironmentFile does NOT strip it -- the comment becomes "
             "part of the value. Put the comment on its own line."
         )
+
+
+def test_no_redaction_placeholders_in_commands():
+    """A redaction placeholder inside a runnable command gets PASTED literally.
+
+    Measured 2026-10-17: a doc shipped `curl -i -H "Authorization: Bearer ***"`.
+    It was copied verbatim, HA replied `401 Unauthorized` (body: the plain text
+    "401: Unauthorized"), and the failure surfaced as a confusing
+    `JSONDecodeError: Extra data: line 1 column 4 (char 3)` instead of anything
+    mentioning auth. Use a shell variable (`$HA_TOKEN`) so the line is safe to
+    paste -- the reader's own env supplies the secret.
+    """
+    banned = ("Bearer ***", "[REDACTED]", "Bearer <token>", "Bearer XXX")
+    hits = []
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+            continue
+        if path.suffix not in (".md", ".sh", ".js", ".py", ".example", ".json"):
+            continue
+        try:
+            text = path.read_text()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for i, line in enumerate(text.splitlines(), 1):
+            for b in banned:
+                if b in line:
+                    hits.append(f"{path.relative_to(ROOT)}:{i}: {line.strip()[:90]}")
+    assert not hits, (
+        "Redaction placeholder in a runnable command -- it will be pasted "
+        f"literally. Use $VAR instead: {hits}"
+    )
