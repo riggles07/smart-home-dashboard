@@ -142,7 +142,20 @@ def test_no_redaction_placeholders_in_commands():
             text = path.read_text()
         except (UnicodeDecodeError, OSError):
             continue
-        for i, line in enumerate(text.splitlines(), 1):
+        if path.suffix == ".md":
+            # Only fenced code blocks are pasteable. Prose may legitimately
+            # DISCUSS the placeholder by name (this doc does), and flagging that
+            # would make the guard unusable.
+            scoped, in_fence = [], False
+            for i, line in enumerate(text.splitlines(), 1):
+                if line.lstrip().startswith("```"):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    scoped.append((i, line))
+        else:
+            scoped = list(enumerate(text.splitlines(), 1))
+        for i, line in scoped:
             for b in banned:
                 if b in line:
                     hits.append(f"{path.relative_to(ROOT)}:{i}: {line.strip()[:90]}")
