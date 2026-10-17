@@ -133,8 +133,15 @@ def test_no_redaction_placeholders_in_commands():
     """
     banned = ("Bearer ***", "[REDACTED]", "Bearer <token>", "Bearer XXX")
     hits = []
+    # Exclude THIS file. It has to name the banned strings in order to define
+    # and explain them, and a hygiene check that matches its own source is
+    # guaranteed to fail -- the same self-referential trap as a residue check
+    # that flags the very script doing the checking.
+    self_path = Path(__file__).resolve()
     for path in sorted(ROOT.rglob("*")):
         if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+            continue
+        if path.resolve() == self_path:
             continue
         if path.suffix not in (".md", ".sh", ".js", ".py", ".example", ".json"):
             continue
