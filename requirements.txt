@@ -7,5 +7,16 @@ pytest-cov>=4.0.0
 # Validation and testing tools
 jsonschema>=4.0.0
 
-# WebSocket client for Home Assistant integration
-ws>=7.0.0
+# ---------------------------------------------------------------------------
+# NOT a pip dependency: `ws`
+#
+# The Home Assistant tab's WebSocket client uses the **`ws` npm module**, which
+# Node-RED injects into function nodes via their `libs` config:
+#     "libs": [{"var": "ws", "module": "ws"}]
+# It is not a Python package, and listing it here is fatal:
+#     ERROR: Could not find a version that satisfies the requirement ws>=7.0.0
+#            (from versions: 0.2, 0.3, 0.3.1, 0.3.2)
+# PyPI's unrelated `ws` stops at 0.3.2, so `pip install -r requirements.txt`
+# fails outright. It went unnoticed because CI installed only pytest by hand;
+# adding a real `pip install -r requirements.txt` step exposed it immediately.
+# ---------------------------------------------------------------------------
