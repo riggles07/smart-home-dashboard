@@ -70,5 +70,166 @@
         "b094712d07a28780"
       ]
     ]
+  },
+  {
+    "id": "e93c927500c48fda",
+    "type": "ui_group",
+    "z": "1743dae8afd71d46",
+    "name": "Theme",
+    "tab": "6ce99278d5cb3466",
+    "order": 2,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ab755b4e9943c08c",
+    "type": "ui_button",
+    "z": "1743dae8afd71d46",
+    "name": "Theme: Midnight (default)",
+    "group": "e93c927500c48fda",
+    "order": 1,
+    "width": 0,
+    "height": 0,
+    "passthru": false,
+    "label": "Midnight (default)",
+    "tooltip": "Switch to Midnight (default)",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "palette",
+    "payload": "default",
+    "payloadType": "str",
+    "topic": "shd/theme",
+    "topicType": "str",
+    "x": 130,
+    "y": 220,
+    "wires": [
+      [
+        "7a8805300275f1e9"
+      ]
+    ]
+  },
+  {
+    "id": "c680810408bf18e2",
+    "type": "ui_button",
+    "z": "1743dae8afd71d46",
+    "name": "Theme: Nord",
+    "group": "e93c927500c48fda",
+    "order": 2,
+    "width": 0,
+    "height": 0,
+    "passthru": false,
+    "label": "Nord",
+    "tooltip": "Switch to Nord",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "palette",
+    "payload": "nord",
+    "payloadType": "str",
+    "topic": "shd/theme",
+    "topicType": "str",
+    "x": 330,
+    "y": 220,
+    "wires": [
+      [
+        "7a8805300275f1e9"
+      ]
+    ]
+  },
+  {
+    "id": "a41dc7f82e235189",
+    "type": "ui_button",
+    "z": "1743dae8afd71d46",
+    "name": "Theme: Cyberpunk",
+    "group": "e93c927500c48fda",
+    "order": 3,
+    "width": 0,
+    "height": 0,
+    "passthru": false,
+    "label": "Cyberpunk",
+    "tooltip": "Switch to Cyberpunk",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "palette",
+    "payload": "cyberpunk",
+    "payloadType": "str",
+    "topic": "shd/theme",
+    "topicType": "str",
+    "x": 530,
+    "y": 220,
+    "wires": [
+      [
+        "7a8805300275f1e9"
+      ]
+    ]
+  },
+  {
+    "id": "7a8805300275f1e9",
+    "type": "function",
+    "z": "1743dae8afd71d46",
+    "name": "Set theme",
+    "func": "var KNOWN = [\"default\", \"nord\", \"cyberpunk\"];\nvar id = (typeof msg.payload === 'string') ? msg.payload.trim().toLowerCase() : '';\nif (KNOWN.indexOf(id) === -1) {\n  node.status({fill:'red', shape:'ring', text:'unknown theme: ' + String(msg.payload).slice(0, 20)});\n  return null;\n}\ndelete msg.socketid;\ndelete msg.enabled;\ndelete msg.res;\ndelete msg.req;\nmsg.payload = id;\nflow.set('shd_theme', id);\nnode.status({fill:'green', shape:'dot', text: id});\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 220,
+    "wires": [
+      [
+        "c9c04796aadd3429"
+      ]
+    ]
+  },
+  {
+    "id": "c9c04796aadd3429",
+    "type": "ui_template",
+    "z": "1743dae8afd71d46",
+    "name": "Theme status",
+    "group": "e93c927500c48fda",
+    "order": 4,
+    "width": 0,
+    "height": 0,
+    "format": "<div class=\"shd-muted\">Theme: {{msg.payload || 'default'}}</div>\n<script>\n(function(scope) {\n  scope.$watch(\n    function() { return scope.msg && scope.msg.payload; },\n    function(id) {\n      if (!id || typeof id !== 'string') { return; }\n      if (window.SHDThemeManager) { window.SHDThemeManager.apply(id); }\n    });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 570,
+    "y": 220,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "1fe8b2fb061fddad",
+    "type": "inject",
+    "z": "1743dae8afd71d46",
+    "name": "Re-push theme on deploy",
+    "props": [
+      {
+        "p": "payload",
+        "v": "shd_theme",
+        "vt": "flow"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 280,
+    "wires": [
+      [
+        "7a8805300275f1e9"
+      ]
+    ]
   }
 ]

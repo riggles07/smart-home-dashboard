@@ -27,7 +27,12 @@
   --shd-text-dim: #aab;
   --shd-ok: #2ecc71;
   --shd-warn: #f1c40f;
-  --shd-err: #e74c3c;
+  /* Status colours double as TEXT (.status-error etc.), so they must clear
+     WCAG AA (4.5:1) on --shd-card. The original #e743c-style flat-ui red
+     reached only ~3.7:1 there; #ff7676 measures 5.42:1 on #1f2b47 and is
+     asserted by tests/test_theme_manager.py (ratios recomputed from the
+     palette tables, so drift fails CI). */
+  --shd-err: #ff7676;
   --shd-touch-target: 44px;   /* minimum Apple/Google touch target */
   --shd-radius: 10px;
 

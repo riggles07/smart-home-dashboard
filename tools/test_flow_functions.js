@@ -518,5 +518,103 @@ console.log('== System Health: summary parsing ==');
   check('non-JSON body -> null (no crash)', out2 === null || out2 === undefined);
 }
 
+console.log('== Theme Manager: "Set theme" validation ==');
+{
+  // The node is the single entry point for every theme change (picker buttons
+  // AND programmatic msgs). It must normalise, reject unknown palettes, strip
+  // socketid (or the dashboard's emitSocket would deliver the change ONLY to
+  // the clicking browser), and persist to flow context.
+  const store = flowStore();
+  const statuses = [];
+  const fn = new Function('msg', 'env', 'node', 'flow', 'context', 'global', byName['Set theme']);
+
+  const out = fn({ payload: '  Nord ', socketid: 'sock-1', topic: 'shd/theme' },
+                 makeEnv({}), makeNode(statuses), store, {}, {});
+  check('accepts + normalises a known palette id', out && out.payload === 'nord', out && out.payload);
+  check('socketid stripped -> broadcast to ALL clients',
+        out && !('socketid' in out) && out.socketid === undefined, out && out.socketid);
+  check('persists to flow context', store.get('shd_theme') === 'nord', store.get('shd_theme'));
+  check('status shows applied palette', statuses.some(s => s.text === 'nord'), statuses);
+
+  const st2 = [];
+  const out2 = fn({ payload: 'CYBERPUNK' }, makeEnv({}), makeNode(st2), store, {}, {});
+  check('case-insensitive id accepted', out2 && out2.payload === 'cyberpunk', out2 && out2.payload);
+
+  const st3 = [];
+  const out3 = fn({ payload: 'neon-nightmare' }, makeEnv({}), makeNode(st3), store, {}, {});
+  check('unknown palette rejected (null)', out3 === null || out3 === undefined, out3);
+  check('unknown palette -> red status', st3.some(s => s.fill === 'red'), st3);
+
+  const st4 = [];
+  const out4 = fn({ payload: 42 }, makeEnv({}), makeNode(st4), store, {}, {});
+  check('non-string payload rejected (null)', out4 === null || out4 === undefined, out4);
+
+  const st5 = [];
+  const out5 = fn({ payload: 'default', enabled: false, res: {}, req: {} },
+                   makeEnv({}), makeNode(st5), store, {}, {});
+  check('enabled/res/req stripped from the broadcast',
+        out5 && !('enabled' in out5) && !('res' in out5) && !('req' in out5), out5 && Object.keys(out5));
+  check('flow context follows the latest valid palette',
+        store.get('shd_theme') === 'default', store.get('shd_theme'));
+}
+
+console.log('== Theme Manager: generated UI matches js/themes.js ==');
+{
+  // The picker buttons and the KNOWN list are PARSED OUT OF js/themes.js by
+  // the generator, so this asserts the no-drift property end to end: every
+  // palette in the shipped module has a button AND a validator entry.
+  const fs2 = require('fs');
+  const path2 = require('path');
+  const themesSrc = fs2.readFileSync(path2.join(here, '..', 'js', 'themes.js'), 'utf8');
+  const found = [...themesSrc.matchAll(/'([a-z0-9-]+)':\s*\{[^{}]*?label:\s*'([^']*)'/g)];
+  check('js/themes.js defines at least 2 palettes', found.length >= 2, found.length);
+  check('Nord palette present', found.some(m => m[1] === 'nord'));
+  check('Cyberpunk palette present', found.some(m => m[1] === 'cyberpunk'));
+
+  const byId = {};
+  for (const n of nodes) if (n.type === 'ui_button' && (n.topic === 'shd/theme')) byId[n.name] = n;
+  for (const [, pid, ] of found.map(m => [m[0], m[1], m[2]])) {
+    const label = found.find(m => m[1] === pid)[2];
+    const btn = nodes.find(n => n.type === 'ui_button' && n.payload === pid && n.topic === 'shd/theme');
+    check(`picker button for '${pid}' exists`, !!btn, pid);
+    check(`button payload is the palette id`, btn && btn.payload === pid, btn && btn.payload);
+    check(`button label matches module label`, btn && btn.label === label, btn && btn.label);
+  }
+  const setTheme = nodes.find(n => n.type === 'function' && n.name === 'Set theme');
+  check('Set theme node exists', !!setTheme);
+  check('Set theme KNOWN list matches the shipped palettes',
+        setTheme && JSON.parse(setTheme.func.match(/KNOWN = (\[[^\]]*\])/)[1])
+          .sort().join() === found.map(m => m[1]).sort().join(),
+        setTheme && setTheme.func.slice(0, 120));
+
+  // The browser-side manager itself: shipped verbatim in the global template.
+  const mgr = nodes.find(n => n.type === 'ui_template' && n.name === 'Theme manager');
+  check('Theme manager global template exists', !!mgr);
+  check('manager templateScope is global', mgr && mgr.templateScope === 'global');
+  check('manager inlines js/themes.js verbatim',
+        mgr && mgr.format.includes(themesSrc), 'format does not contain the module source');
+  check('manager boot calls SHDThemeManager.init()',
+        mgr && /SHDThemeManager\.init\(\)/.test(mgr.format));
+  check('manager boot script runs BEFORE first paint (in <head> via global scope)',
+        mgr && mgr.format.startsWith('<script>'));
+
+  // The local bridge: the $watch template that applies broadcasts.
+  const bridge = nodes.find(n => n.type === 'ui_template' && n.name === 'Theme status');
+  check('Theme status bridge template exists', !!bridge);
+  check('bridge watches scope.msg.payload and applies via SHDThemeManager',
+        bridge && /scope\.\$watch/.test(bridge.format)
+              && /SHDThemeManager\.apply/.test(bridge.format));
+  check('bridge is local scope (receives input msgs on its scope)',
+        bridge && bridge.templateScope === 'local');
+
+  // Persistence re-push on deploy.
+  const inj = nodes.find(n => n.type === 'inject' && n.name === 'Re-push theme on deploy');
+  check('deploy re-push inject exists', !!inj);
+  check('inject reads the shd_theme flow-context key',
+        inj && JSON.stringify(inj.props).indexOf('shd_theme') !== -1,
+        inj && JSON.stringify(inj.props));
+  check('inject fires once at startup', inj && inj.once === true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
