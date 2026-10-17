@@ -87,3 +87,35 @@ class TestEnvTemplate:
             f"deploy/.env.example documents {unknown}, which no flow reads. "
             f"Remove them (or add to allowed_non_flow with a reason)."
         )
+
+    def test_no_inline_comments_after_values(self):
+        """An inline '#' is NOT stripped by systemd's EnvironmentFile parser.
+
+        The value runs to end-of-line, so `HA_URL=http://x  # note` sets HA_URL
+        to "http://x  # note". Most other readers (bash `source`, dotenv
+        libraries, docker --env-file) DO strip it, so the mistake passes every
+        local check and only breaks inside the running service.
+
+        Measured 2026-10-17 on a real deployment:
+            HA_URL        len=81 'http://homeassistant.tail5a1c91.ts.net     # port 80, ...'
+            HA_ENTITY_ID  len=74 'light.kitchen                         # whichever ...'
+        The Home Assistant WebSocket client then threw
+            Invalid URL: ws://homeassistant.tail5a1c91.ts.net  # port 80.../api/websocket
+
+        Quoted values are allowed to contain '#'; put comments on their own line.
+        """
+        bad = []
+        for i, line in enumerate(TEMPLATE.read_text().splitlines(), 1):
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            key, _, value = s.partition("=")
+            if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key.strip()):
+                continue
+            if "#" in value and not value.strip().startswith(('"', "'")):
+                bad.append((i, s))
+        assert not bad, (
+            f"deploy/.env.example has an inline '#' after a value at {bad}. "
+            "systemd's EnvironmentFile does NOT strip it -- the comment becomes "
+            "part of the value. Put the comment on its own line."
+        )
