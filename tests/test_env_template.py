@@ -141,6 +141,16 @@ def test_no_redaction_placeholders_in_commands():
     for path in sorted(ROOT.rglob("*")):
         if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
             continue
+        # Skip kanban worker worktrees. They are nested INSIDE the repo at
+        # .worktrees/<card>/, so rglob walks them -- and each one is a full
+        # checkout containing a COPY of this very file, plus the docs it scans.
+        # Without this the guard trips on its own duplicates and fails in the MAIN
+        # tree while passing inside a worktree (where nothing is nested beneath it).
+        # That asymmetry is what blocked a verified commit from being pushed on
+        # 2026-10-17: the gate passed in the worktree, then failed on main.
+        # .worktrees/ is gitignored, but this guard walks the filesystem, not git.
+        if ".worktrees" in path.parts:
+            continue
         if path.resolve() == self_path:
             continue
         if path.suffix not in (".md", ".sh", ".js", ".py", ".example", ".json"):
