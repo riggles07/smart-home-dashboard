@@ -6,7 +6,33 @@
 # This script installs dependencies, configures Node-RED, and sets up services
 #
 
-set -e
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
+
+[ "${EUID:-$(id -u)}" -eq 0 ] || {
+    echo "error: $(basename "$0"): must run as root (this script modifies the system)" >&2
+    exit 2
+}
+# --- fail fast on missing prerequisites (error handling only) --------------
+command -v node >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'node' not found" >&2
+    exit 3
+}
+command -v npm >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'npm' not found" >&2
+    exit 3
+}
+command -v systemctl >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'systemctl' not found" >&2
+    exit 3
+}
+command -v apt-get >/dev/null 2>&1 || {
+    echo "error: $(basename "$0"): required tool 'apt-get' not found" >&2
+    exit 3
+}
 
 # Colors
 RED='\033[0;31m'

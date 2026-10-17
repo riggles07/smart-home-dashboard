@@ -1,4 +1,16 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Uses bash, not sh: `set -o pipefail` is not POSIX, so under #!/bin/sh
+# (dash) it is undefined and unverifiable. bash is guaranteed present on
+# the LXC and the body below is POSIX-clean, so this is behaviour-neutral.
+# NOTE: this launcher is deliberately fault-tolerant: a malformed line in
+# .env must never stop Node-RED from starting. Every tolerated failure below
+# is explicitly guarded (`|| true`, `if`, or a `case`), which is what makes
+# `set -e` safe here. Do not add unguarded commands to the parse loop.
+set -euo pipefail
+[ "$#" -eq 0 ] || {
+    echo "error: $(basename "$0"): takes no arguments (got $#)" >&2
+    exit 2
+}
 # Hardened Node-RED launcher: loads /root/.node-red/.env and starts Node-RED.
 #
 # Use this as the container's start command (or run it to bring Node-RED up).
@@ -16,7 +28,10 @@ LOG="${NODE_RED_START_LOG:-$USER_DIR/start.log}"
 
 log() { printf '%s %s\n' "$(date -Is)" "$*" >> "$LOG" 2>/dev/null; }
 
-mkdir -p "$USER_DIR" 2>/dev/null
+if ! mkdir -p "$USER_DIR" 2>/dev/null; then
+    echo "error: $(basename "$0"): cannot create user dir '$USER_DIR'" >&2
+    exit 4
+fi
 
 {
     echo "=== $(date -Is) launching node-red ==="
@@ -63,7 +78,7 @@ fi
 NODE_RED_BIN=$(command -v node-red 2>/dev/null || true)
 if [ -z "$NODE_RED_BIN" ]; then
     for c in /usr/bin/node-red /usr/local/bin/node-red /usr/lib/node_modules/node-red/red.js; do
-        [ -x "$c" ] && { NODE_RED_BIN="$c"; break; }
+        if [ -x "$c" ]; then NODE_RED_BIN="$c"; break; fi
     done
 fi
 
