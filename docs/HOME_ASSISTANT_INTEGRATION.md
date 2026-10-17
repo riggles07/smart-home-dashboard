@@ -13,12 +13,22 @@ The dashboard needs a **Long-Lived Access Token (LLAT)**. Create it in the HA UI
 4. Name it something recognisable, e.g. `smart-home-dashboard node-red`
 5. **Copy it immediately** — HA shows it once, then only the last 4 characters
 
-Verify it before wiring it in:
+Verify it before wiring it in. Load the real values from the env file first —
+`$HA_TOKEN` is a shell variable, so the command is paste-safe, unlike a
+redaction placeholder:
 
 ```bash
-curl -i -H "Authorization: Bearer ***" "$HA_URL/api/"
+set -a; . /root/.node-red/.env; set +a          # pulls in HA_URL + HA_TOKEN
+curl -i -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/api/"
 # want: 200 OK  {"message":"API running."}
 ```
+
+> **Never paste a placeholder like `Bearer ***` into a shell.** It is sent
+> literally and HA answers `401 Unauthorized`, whose body is the *plain text*
+> `401: Unauthorized` — so piping it into `json.load` fails with the misleading
+> `JSONDecodeError: Extra data: line 1 column 4 (char 3)` rather than saying
+> "unauthorized". A `401` on `/api/` with a **correct** token means the token is
+> wrong; a `401` from a pasted placeholder means nothing at all.
 
 ## ⚠️ `HA_URL` is not always port 8123
 
@@ -58,13 +68,22 @@ HA_ENTITY_ID=light.kitchen               # the entity the dashboard switch drive
 Environment variables are read at process start, so **restart Node-RED** after
 changing them.
 
-Pick a real entity id from the API:
+Pick a real entity id from the API — **the placeholders in this repo
+(`light.kitchen`) are examples, not defaults; they will not exist on your
+instance.** Measured 2026-10-17: `HA_ENTITY_ID=light.kitchen` against a real
+install authenticated fine (289 entities) but no such entity existed, so the
+dashboard switch had nothing to drive:
 
 ```bash
-curl -s -H "Authorization: Bearer ***" "$HA_URL/api/states" | \
+set -a; . /root/.node-red/.env; set +a
+curl -s -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/api/states" | \
   python3 -c "import sys,json; [print(s['entity_id'],'|',s['attributes'].get('friendly_name')) \
               for s in json.load(sys.stdin) if s['entity_id'].startswith(('light.','switch.'))]"
 ```
+
+Check the chosen id is in that list, and that you can actually control it —
+read-only domains (`sensor`, `binary_sensor`, `weather`, …) are refused by the
+flow with a `read-only` status.
 
 ## Architecture
 
