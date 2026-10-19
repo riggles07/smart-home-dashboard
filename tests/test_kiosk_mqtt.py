@@ -43,13 +43,13 @@ def _by_name(nodes, t, name):
 
 # ------------------------------------------------------------------ broker
 
-def test_exactly_one_broker_and_it_points_at_the_lan_docker_host(nodes):
+def test_exactly_one_broker_and_it_points_at_the_ha_addon(nodes):
     brokers = _of_type(nodes, "mqtt-broker")
     assert len(brokers) == 1, f"expected 1 broker config node, got {len(brokers)}"
     b = brokers[0]
-    # The dashboard already reaches this host for Grafana (:3001) and
-    # Prometheus (:9090); MQTT rides the same path.
-    assert b["broker"] == "192.168.4.145", b["broker"]
+    # The HAOS Mosquitto add-on, pinned as the tailnet IP (reachability measured
+    # from the dashboard LXC). Changing this means re-proving reachability.
+    assert b["broker"] == "100.104.204.118", b["broker"]
     assert str(b["port"]) == "1883", b["port"]
     assert b["usetls"] is False
 

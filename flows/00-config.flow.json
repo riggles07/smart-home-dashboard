@@ -3,7 +3,7 @@
     "id": "f8893e8316d7e2b5",
     "type": "mqtt-broker",
     "name": "SHD MQTT",
-    "broker": "192.168.4.145",
+    "broker": "100.104.204.118",
     "port": "1883",
     "clientid": "",
     "autoConnect": true,
