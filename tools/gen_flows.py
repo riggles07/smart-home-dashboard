@@ -195,7 +195,7 @@ body.nr-dashboard-theme ui-card-panel {
    widgets (the device and client tables) stayed white while the theme's
    `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.
    invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY
-   white surfaces left; every other widget card was already #1f2b47. */
+   white surfaces left; every other widget card was already on --shd-card. */
 body.nr-dashboard-theme .nr-dashboard-template {
   background: transparent;
   color: var(--shd-text);
@@ -849,7 +849,7 @@ PALETTES = parse_themes_js()
 add({"id": nid("uibase"), "type": "ui_base", "z": T, "name": "",
      "theme": {
         "name": "theme-custom",
-        "baseColor": "#667eea",
+        "baseColor": "#fa6f63",
         "page": {"name": "Page", "style": "dark", "light": False,
                  "palette": "dark"},
         "angularTheme": {"primary": "indigo", "accents": "blue",

@@ -105,7 +105,14 @@
   function paletteBg() {
     var v = getComputedStyle(document.documentElement)
       .getPropertyValue('--shd-bg');
-    return (v || '').trim() || '#1a1a2e';
+    v = (v || '').trim();
+    if (v) { return v; }
+    /* No literal colour here on purpose. A hardcoded hex fallback becomes a
+       stale palette value the moment the palette changes -- and it tripped
+       tests/test_theme_manager.py's "manager template carries non-palette
+       colour" guard when the P0 palette landed. Ask the document instead: it is
+       already painted from the same token, so it cannot drift. */
+    return getComputedStyle(document.body).backgroundColor || 'rgb(0, 0, 0)';
   }
 
   function activeSeverity() {

@@ -25,7 +25,7 @@ class TestMobileThemeCss:
 
     def test_theme_has_dark_base(self):
         css = CSS_PATH.read_text()
-        assert '#1a1a2e' in css          # body background
+        assert '#0b1420' in css          # body background (NexusHome P0)
         assert 'box-sizing: border-box' in css.replace(' ', '') or \
                'box-sizing:border-box' in css.replace(' ', '')
 
