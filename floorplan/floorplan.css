@@ -1,0 +1,64 @@
+/* ha-floorplan stylesheet for the traced main-floor plan.
+ *
+ * The SVG ships with the Roborock app's own fill colours baked in. CSS here
+ * overrides them so room state reads instantly, and so ROOMS WITH NO TARGET
+ * look inert -- an unbound room that still shows a pointer cursor is the same
+ * class of lie as a dead button in the main dashboard.
+ */
+
+/* Base: every room is a muted surface. */
+.room {
+  fill: #243a54;
+  fill-opacity: 0.55;
+  stroke: #ffffff;
+  stroke-opacity: 0.18;
+  stroke-width: 1.5;
+  transition: fill 220ms ease, fill-opacity 220ms ease, stroke-opacity 220ms ease;
+}
+
+/* ON: the accent colour from the NexusHome palette, at a readable opacity. */
+.room.room-on {
+  fill: #fa6f63;
+  fill-opacity: 0.72;
+  stroke: #ff9a91;
+  stroke-opacity: 0.9;
+}
+
+/* OFF: quieter than the base, so an off room recedes instead of competing. */
+.room.room-off {
+  fill: #1b2a3d;
+  fill-opacity: 0.55;
+}
+
+/* Only rooms with a rule should look interactive. The four unbound rooms stay
+ * default-cursor -- see the "Deliberately UNBOUND" block in floorplan.yaml. */
+#study,
+#corridor,
+#living_room,
+#laundry {
+  cursor: pointer;
+}
+
+#study:hover,
+#corridor:hover,
+#living_room:hover,
+#laundry:hover {
+  stroke-opacity: 0.75;
+}
+
+/* Unbound rooms: explicitly inert, and visually recessive. */
+#kitchen,
+#dining_room,
+#bathroom {
+  cursor: default;
+  pointer-events: none;
+  fill-opacity: 0.32;
+  stroke-opacity: 0.10;
+}
+
+/* Respect a user's reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  .room {
+    transition: none;
+  }
+}
