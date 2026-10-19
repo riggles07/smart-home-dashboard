@@ -2046,12 +2046,22 @@ add({"id": nid("inj-theme-sync"), "type": "inject", "z": T,
 # device, so it is pinned here rather than left at the default mywallpanel).
 #
 # Broker: no MQTT broker existed anywhere on the LAN before this task, so the
-# host is pinned to the same Docker host the dashboard ALREADY talks to for
-# Grafana (:3001) and Prometheus (:9090). Pinned in the flow rather than read
-# from env on purpose: env is read only at Node-RED process start, and we have
-# no shell on the dashboard LXC to restart it -- the node would sit on
-# "undefined" forever. Same reason the Grafana/Prometheus URLs are literals.
-MQTT_BROKER_HOST = "192.168.4.145"
+# Host: the HAOS Mosquitto add-on, chosen over standing up a second broker.
+# Pinned as the tailnet IP rather than the MagicDNS name so the flow does not
+# depend on the LXC's resolver: reachability of 100.104.204.118:1883 FROM THE
+# DASHBOARD LXC was measured (reversible probe -> "CONNACK code=5"), and that
+# also proved the broker speaks MQTT and is reachable on the tailnet.
+#
+# Pinned in the flow rather than read from env on purpose: env is read only at
+# Node-RED process start, and there is no shell on the dashboard LXC to restart
+# it -- an env-sourced host would sit on "undefined" forever. Same reason the
+# Grafana/Prometheus URLs are literals.
+#
+# Credentials are NOT in this file. They are written to the runtime's credential
+# store with POST /flows using the v2 API object form:
+#   {"flows": [...], "credentials": {"<broker-node-id>": {"user": .., "password": ..}}}
+# Verified accepted (HTTP 200). The v1 array form cannot carry credentials.
+MQTT_BROKER_HOST = "100.104.204.118"
 MQTT_BROKER_PORT = 1883
 WP_BASE = "wallpanel/a7lite"
 WP_CMD_TOPIC = WP_BASE + "/command"
@@ -2106,10 +2116,14 @@ add({"id": G, "type": "ui_group", "z": T, "name": "Tablet",
 add({"id": nid("tpl-kiosk-status"), "type": "ui_template", "z": T,
      "name": "Tablet Status", "group": G, "order": 1, "width": "6",
      "height": "3", "format": """<div class="shd-kiosk">
-  <div class="shd-kiosk-row"><span>Screen</span><b>{{msg.payload.screenOn ? 'ON' : 'screensaver'}}</b></div>
-  <div class="shd-kiosk-row"><span>Brightness</span><b>{{msg.payload.brightness}}</b>/255</div>
-  <div class="shd-kiosk-row"><span>View</span><b>{{msg.payload.currentUrl}}</b></div>
-  <div class="shd-kiosk-row"><span>Last seen</span><b>{{msg.payload.age}}</b></div>
+  <!-- Before the first <base>/state message arrives msg.payload is undefined.
+       Angular renders the false branch of a ternary for undefined, so a bare
+       {{x ? 'ON' : 'screensaver'}} reported a confident "screensaver" for a
+       tablet that had never checked in. Guard on the payload itself. -->
+  <div class="shd-kiosk-row"><span>Screen</span><b>{{msg.payload ? (msg.payload.screenOn ? 'ON' : 'screensaver') : 'no data'}}</b></div>
+  <div class="shd-kiosk-row"><span>Brightness</span><b>{{msg.payload ? msg.payload.brightness : '--'}}</b>/255</div>
+  <div class="shd-kiosk-row"><span>View</span><b>{{msg.payload ? msg.payload.currentUrl : '--'}}</b></div>
+  <div class="shd-kiosk-row"><span>Last seen</span><b>{{msg.payload ? msg.payload.age : 'never'}}</b></div>
 </div>""", "storeOutMessages": True, "fwdInMessages": True,
      "templateScope": "local", "x": 640, "y": 120, "wires": []})
 
