@@ -1,0 +1,386 @@
+[
+  {
+    "id": "bf9fe1880d154acf",
+    "type": "tab",
+    "label": "Home Assistant",
+    "disabled": false,
+    "info": "Integration with Home Assistant"
+  },
+  {
+    "id": "5276ad7e61bef68f",
+    "type": "ui_tab",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant",
+    "icon": "home-assistant",
+    "order": 7,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "0c6e41af6623b945",
+    "type": "ui_group",
+    "z": "bf9fe1880d154acf",
+    "name": "Home Assistant Control",
+    "tab": "5276ad7e61bef68f",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "f21d1eb7bd642318",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA WebSocket Client",
+    "func": "// Home Assistant WebSocket client.\n// STATE PATH  : connect once, authenticate, pull all states, then re-emit\n//               state_changed events as {entityId, domain, state, friendlyName, isOn}.\n// CONTROL PATH: a boolean from the dashboard switch, or an explicit\n//               {domain, service, entityId} on topic 'ha/control', becomes a\n//               REST service call.\nvar WS_PATH = '/api/websocket';\nvar READ_ONLY = ['sensor', 'binary_sensor', 'input_datetime', 'weather', 'zone', 'device_tracker'];\n\nfunction normalise(eid, st) {\n  var a = st.attributes || {};\n  return {\n    entityId: eid,\n    domain: eid.split('.')[0],\n    state: st.state,\n    friendlyName: a.friendly_name || eid,\n    isOn: st.state === 'on',\n    brightnessPct: (a.brightness_pct === undefined ? null : a.brightness_pct)\n  };\n}\n\nfunction startWS() {\n  var baseUrl = env.get('HA_URL') || 'http://homeassistant.local:8123';\n  var token = env.get('HA_TOKEN');\n  if (!token) { node.status({fill:'red', shape:'ring', text:'no HA_TOKEN'}); return; }\n  var wsUrl = baseUrl.replace(/^http/, 'ws').replace(/\\/+$/, '') + WS_PATH;\n  var states = {};\n  var s = new ws(wsUrl);\n  context.set('ha_socket', s);\n  node.status({fill:'yellow', shape:'ring', text:'connecting'});\n  s.on('open', function () {\n    s.send(JSON.stringify({type: 'auth', access_token: token}));\n  });\n  s.on('message', function (data) {\n    var m;\n    try { m = JSON.parse(data); } catch (e) { return; }\n    if (m.type === 'auth_required') {\n      s.send(JSON.stringify({type: 'auth', access_token: token}));\n    } else if (m.type === 'auth_ok') {\n      node.status({fill:'green', shape:'dot', text:'connected'});\n      s.send(JSON.stringify({type: 'get_states'}));\n      s.send(JSON.stringify({type: 'subscribe_events', event_type: 'state_changed'}));\n    } else if (m.type === 'auth_invalid') {\n      node.status({fill:'red', shape:'ring', text:'auth failed'});\n      context.set('ha_socket', null);\n      try { s.close(); } catch (e) {}\n    } else if (m.type === 'result' && m.success && Array.isArray(m.result)) {\n      var n = 0;\n      m.result.forEach(function (x) { if (x.entity_id) { states[x.entity_id] = x; n++; } });\n      node.status({fill:'green', shape:'dot', text:n + ' entities'});\n      node.send([null, {payload: n, topic: 'ha/state_count'}]);\n    } else if (m.type === 'event' && m.event && m.event.data) {\n      var eid = m.event.data.entity_id;\n      var ns = m.event.data.new_state;\n      if (eid && ns) {\n        states[eid] = ns;\n        node.send([null, {payload: normalise(eid, ns), topic: 'ha/entity/' + eid + '/state'}]);\n      }\n    }\n  });\n  s.on('close', function () { context.set('ha_socket', null); node.status({fill:'grey', shape:'ring', text:'closed'}); });\n  s.on('error', function () { node.status({fill:'red', shape:'ring', text:'WS error'}); });\n}\n\n// --- per message ------------------------------------------------------------\n// Any input -- including the 60s Sync States tick -- makes sure we are connected.\nif (!context.get('ha_socket')) { startWS(); }\n\nvar req = null;\nif (msg.topic === 'ha/control' && msg.payload && typeof msg.payload === 'object') {\n  req = msg.payload;                                    // explicit request\n} else if (typeof msg.payload === 'boolean') {         // dashboard ui_switch\n  // CAVEAT: ui_switch may emit its initial value when the page loads, which\n  // actuates once. Harmless for an already-off light; revisit if it matters.\n  req = { entityId: env.get('HA_ENTITY_ID'), domain: 'light',\n          service: msg.payload ? 'turn_on' : 'turn_off' };\n}\nif (!req) { return null; }                             // tick only: connect, never actuate\nif (!req.entityId) { node.status({fill:'red', shape:'ring', text:'no HA_ENTITY_ID'}); return null; }\nif (!req.service)  { node.status({fill:'red', shape:'ring', text:'no service'}); return null; }\nif (READ_ONLY.indexOf(req.domain) >= 0) {\n  node.status({fill:'red', shape:'ring', text:'read-only'}); return null;\n}\nvar base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\nif (!base) { node.status({fill:'red', shape:'ring', text:'no HA_URL'}); return null; }\nvar body = {entity_id: req.entityId};\nif (req.serviceData) { for (var k in req.serviceData) { body[k] = req.serviceData[k]; } }\nnode.status({fill:'blue', shape:'dot', text:req.service});\nreturn [{payload: {url: base + '/api/services/' + req.domain + '/' + req.service,\n                   method: 'POST', body: body},\n         topic: 'ha/control'}, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [
+      {
+        "var": "ws",
+        "module": "ws"
+      }
+    ],
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "1ff5870c922f75a4"
+      ],
+      [
+        "7006b040bbdff398"
+      ]
+    ]
+  },
+  {
+    "id": "1ff5870c922f75a4",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST Controller",
+    "func": "// Format a Home Assistant service call for the HTTP request node.\n// Classic function node: the body runs per message and returns what to emit.\n// Guard the url so a stray state message cannot throw on msg.url.replace().\nif (!msg.url) { node.status({fill:'grey', shape:'ring', text:'no url'}); return null; }\nmsg.headers = {\n  'Authorization': 'Bearer ' + (env.get('HA_TOKEN') || ''),\n  'Content-Type': 'application/json'\n};\nmsg.method = msg.method || 'POST';\nmsg.url = String(msg.url).replace(/\\/+$/, '');\nmsg.payload = msg.body || {};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'green', shape:'dot', text:'sending to HA'});\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 120,
+    "wires": [
+      [
+        "a7e1fa99a10c9083"
+      ]
+    ]
+  },
+  {
+    "id": "a7e1fa99a10c9083",
+    "type": "http request",
+    "z": "bf9fe1880d154acf",
+    "name": "HA REST API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 620,
+    "y": 120,
+    "wires": [
+      [
+        "7006b040bbdff398"
+      ]
+    ]
+  },
+  {
+    "id": "7006b040bbdff398",
+    "type": "debug",
+    "z": "bf9fe1880d154acf",
+    "name": "HA Response",
+    "active": true,
+    "tosidebar": true,
+    "console": true,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 820,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "e05e4075ffedef13",
+    "type": "inject",
+    "z": "bf9fe1880d154acf",
+    "name": "Sync States",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 130,
+    "y": 260,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
+    "id": "d049401ca53b943b",
+    "type": "ui_switch",
+    "z": "bf9fe1880d154acf",
+    "name": "Light Control",
+    "group": "0c6e41af6623b945",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "label": "Primary Light",
+    "tooltip": "Bound to HA_ENTITY_ID (see .env)",
+    "x": 130,
+    "y": 340,
+    "wires": [
+      [
+        "f21d1eb7bd642318"
+      ]
+    ]
+  },
+  {
+    "id": "189e27e7fa08d715",
+    "type": "ui_group",
+    "z": "bf9fe1880d154acf",
+    "name": "Alerts",
+    "tab": "5276ad7e61bef68f",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "c76c9fa67bed1633",
+    "type": "ui_template",
+    "z": "bf9fe1880d154acf",
+    "name": "Alert Banner",
+    "group": "189e27e7fa08d715",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "0dcfaa4d9add8abd",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "Evaluate alerts",
+    "func": "// Catch-node feed: a node failure MUST surface as a critical banner.\nif (msg.error) {\n  var src = (msg.error.source && msg.error.source.name)\n    ? msg.error.source.name : 'integration';\n  var emsg = String(msg.error.message || 'failed').slice(0, 110);\n  node.status({fill: 'red', shape: 'ring', text: 'node error'});\n  msg.payload = {severity: 'critical', message: src + ' failed: ' + emsg};\n  return msg;\n}\n// Home Assistant alert banner: API reachability + unavailable entities.\n// Format HA states attaches {total, unavailable, controllable} on _stats.\nif (msg.topic === 'ha/error' || msg._error) {\n  node.status({fill: 'red', shape: 'ring', text: 'ha down'});\n  msg.payload = {severity: 'critical',\n    message: 'Home Assistant unreachable: ' + String(msg._error || msg.payload || '').slice(0, 100)};\n  return msg;\n}\nvar st = msg._stats;\nvar sev = 'ok';\nvar text;\nif (st) {\n  if (st.unavailable > 0) {\n    sev = st.unavailable >= 3 ? 'warning' : 'info';\n    text = st.unavailable + ' of ' + st.total + ' entities unavailable';\n  } else {\n    text = st.controllable + ' devices controllable, ' + st.total + ' entities tracked';\n  }\n} else {\n  sev = 'info';\n  text = String(msg.payload || 'Awaiting first result');\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1080,
+    "y": 300,
+    "wires": [
+      [
+        "c76c9fa67bed1633"
+      ]
+    ]
+  },
+  {
+    "id": "8e69b25957da444a",
+    "type": "catch",
+    "z": "bf9fe1880d154acf",
+    "name": "Catch failures (ha)",
+    "scope": null,
+    "uncaught": false,
+    "x": 1250,
+    "y": 300,
+    "wires": [
+      [
+        "0dcfaa4d9add8abd"
+      ]
+    ]
+  },
+  {
+    "id": "8fc3b1c06318879e",
+    "type": "ui_group",
+    "z": "bf9fe1880d154acf",
+    "name": "Devices",
+    "tab": "5276ad7e61bef68f",
+    "order": 2,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "8b3e2b4ca4a6e68c",
+    "type": "ui_text",
+    "z": "bf9fe1880d154acf",
+    "name": "Device Summary",
+    "group": "8fc3b1c06318879e",
+    "order": 1,
+    "width": "6",
+    "height": "2",
+    "label": "Devices",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "className": "",
+    "x": 650,
+    "y": 520,
+    "wires": []
+  },
+  {
+    "id": "cdbb66bec7efca98",
+    "type": "ui_template",
+    "z": "bf9fe1880d154acf",
+    "name": "HA Device List",
+    "group": "8fc3b1c06318879e",
+    "order": 2,
+    "width": "12",
+    "height": "14",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>State</th><th></th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload track by d.entityId'>\n      <td>{{d.name}}</td>\n      <td>{{d.domain}}</td>\n      <td><span class='status-dot' ng-class=\"d.state === 'on' ? 'ok' : 'warning'\"></span>\n          {{d.state}}</td>\n      <td><button ng-if='d.controllable' class='shd-row-btn' ng-click='haToggle(d)'>{{d.isOn ? 'Turn off' : 'Turn on'}}</button></td>\n    </tr>\n    <tr ng-if='!msg.payload || !msg.payload.length'>\n      <td colspan='4'>{{msg.emptyText || 'No controllable entities yet'}}</td>\n    </tr>\n  </tbody>\n</table>\n<script>\n(function (scope) {\n  scope.haToggle = function (d) {\n    scope.send({topic: 'ha/control', payload: {\n      entityId: d.entityId, domain: d.domain, service: d.isOn ? 'turn_off' : 'turn_on'\n    }});\n  };\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 650,
+    "y": 600,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "e1829dab8d135559",
+    "type": "inject",
+    "z": "bf9fe1880d154acf",
+    "name": "Refresh devices",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "30",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 520,
+    "wires": [
+      [
+        "63643ad0c96c405d"
+      ]
+    ]
+  },
+  {
+    "id": "63643ad0c96c405d",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "Build HA states call",
+    "func": "// Build GET /api/states. One call returns every entity, so a single\n// message feeds the table, the summary and the alert evaluator.\nvar base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\nvar token = env.get('HA_TOKEN');\nif (!base || !token) {\n  node.status({fill:'red',shape:'ring',text:'missing HA_URL/HA_TOKEN'});\n  var miss = [];\n  if (!base) { miss.push('HA_URL'); }\n  if (!token) { miss.push('HA_TOKEN'); }\n  msg._error = 'missing ' + miss.join(', ') + ' in /root/.node-red/.env';\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nmsg.method = 'GET';\nmsg.ret = 'obj';\nmsg.url = base + '/api/states';\nmsg.headers = {Authorization: 'Bearer ' + token};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'blue',shape:'dot',text:'polling'});\nreturn [msg, null];",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 520,
+    "wires": [
+      [
+        "380a6362a0ee3fa1"
+      ],
+      [],
+      [
+        "0dcfaa4d9add8abd"
+      ]
+    ]
+  },
+  {
+    "id": "380a6362a0ee3fa1",
+    "type": "http request",
+    "z": "bf9fe1880d154acf",
+    "name": "HA states",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 620,
+    "y": 520,
+    "wires": [
+      [
+        "0417778bd435ba7b"
+      ]
+    ]
+  },
+  {
+    "id": "0417778bd435ba7b",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "Format HA states",
+    "func": "// Shape /api/states into table rows + alert stats.\nif (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg._error = msg.error ? String(msg.error.message || msg.error)\n    : ('HTTP ' + (msg.statusCode || '?'));\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nvar all = Array.isArray(msg.payload) ? msg.payload : [];\nvar DOMAINS = ['light','switch','fan','cover','climate','media_player','scene','script','lock','input_boolean'];\nvar rows = [];\nvar unavailable = 0;\nall.forEach(function (e) {\n  if (!e || !e.entity_id) { return; }\n  var dom = e.entity_id.split('.')[0];\n  if (DOMAINS.indexOf(dom) < 0) { return; }\n  var a = e.attributes || {};\n  var state = String(e.state || 'unknown');\n  if (state === 'unavailable' || state === 'unknown') { unavailable++; }\n  rows.push({\n    entityId: e.entity_id,\n    name: a.friendly_name || e.entity_id,\n    domain: dom,\n    state: state,\n    isOn: state === 'on' || state === 'open' || state === 'playing',\n    controllable: state !== 'unavailable'\n  });\n});\nrows.sort(function (x, y) { return x.name.localeCompare(y.name); });\nnode.status({fill:'green',shape:'dot',text:rows.length + ' devices'});\nvar stats = {total: rows.length, unavailable: unavailable,\n             controllable: rows.length - unavailable};\n// out0 = table rows, out1 = summary STRING (a ui_text prints whatever it\n// is given -- passing it the rows array rendered raw JSON), out2 = alert.\nreturn [{payload: rows, emptyText:\n          all.length ? 'No controllable entities (only sensors/reports)'\n                     : 'Home Assistant returned no entities'},\n        {payload: stats.controllable + ' of ' + stats.total + ' ready', _stats: stats},\n        null];",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 850,
+    "y": 520,
+    "wires": [
+      [
+        "cdbb66bec7efca98"
+      ],
+      [
+        "8b3e2b4ca4a6e68c",
+        "0dcfaa4d9add8abd"
+      ],
+      [
+        "0dcfaa4d9add8abd"
+      ]
+    ]
+  },
+  {
+    "id": "2b2c54e22a79dee9",
+    "type": "function",
+    "z": "bf9fe1880d154acf",
+    "name": "Trigger refresh",
+    "func": "// Any completed service call re-polls the entity list.\nmsg.payload = Date.now();\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 850,
+    "y": 240,
+    "wires": [
+      [
+        "63643ad0c96c405d"
+      ]
+    ]
+  }
+]
