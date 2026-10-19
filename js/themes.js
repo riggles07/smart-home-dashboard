@@ -47,8 +47,11 @@
   /* ---------------------------------------------------------------- palettes */
 
   /* Token order mirrors css/dashboard.css :root. Colour values were checked
-     against WCAG AA (>= 4.5:1 for body text on bg/surface/card, >= 3:1 for
-     status/accent text); tests/test_theme_manager.py recomputes the ratios
+     --shd-accent-text is the TEXT-role accent (group headings, widget titles);
+     --shd-accent stays decorative/gradient. Every TEXT token below clears
+     WCAG AA (>= 4.5:1) on bg/surface/card -- there is no relaxed 3:1 tier for
+     text any more, because a 3:1 accent was exactly how group headings shipped
+     at 3.84:1. tests/test_theme_manager.py recomputes the ratios
      from these definitions, so a below-floor palette fails CI. */
   var THEMES = {
     'default': {
@@ -59,6 +62,7 @@
         '--shd-card':      '#1f2b47',
         '--shd-accent':    '#667eea',
         '--shd-accent-2':  '#764ba2',
+        '--shd-accent-text': '#7c95f0',
         '--shd-text':      '#eeeeee',
         '--shd-muted':     '#b8c4de',
         '--shd-text-dim':  '#aaaabb',
@@ -75,6 +79,7 @@
         '--shd-card':      '#434c5e',
         '--shd-accent':    '#88c0d0',
         '--shd-accent-2':  '#5e81ac',
+        '--shd-accent-text': '#9ad0e0',
         '--shd-text':      '#eceff4',
         '--shd-muted':     '#d8dee9',
         '--shd-text-dim':  '#b8c2d0',
@@ -91,6 +96,7 @@
         '--shd-card':      '#26123f',
         '--shd-accent':    '#00f0ff',
         '--shd-accent-2':  '#ff2a6d',
+        '--shd-accent-text': '#00f0ff',
         '--shd-text':      '#f0eaff',
         '--shd-muted':     '#c9b8ff',
         '--shd-text-dim':  '#b8a8e0',

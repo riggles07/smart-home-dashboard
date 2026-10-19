@@ -17,6 +17,12 @@
   --shd-card: #1f2b47;
   --shd-accent: #667eea;
   --shd-accent-2: #764ba2;
+  /* TEXT-role accent. --shd-accent is a decorative/gradient colour and fails
+     WCAG AA as text on --shd-card (#667eea on #1f2b47 = 3.84:1). Group
+     headings are painted by the dashboard from --nr-dashboard-groupTextColor,
+     so they can only be fixed by moving that mapping onto this lighter token.
+     Measured on --shd-card: 4.96:1 (default), 5.12:1 (nord), 12.02:1 (cyberpunk). */
+  --shd-accent-text: #7c95f0;
   --shd-text: #eee;
   /* Secondary text. Measured contrast: 8.02:1 on --shd-card, 9.07:1 on
      --shd-surface, 9.74:1 on --shd-bg -- passes WCAG AA (4.5:1) and AAA
@@ -79,11 +85,11 @@
   --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);
   --nr-dashboard-groupBackgroundColor:        var(--shd-card);
   --nr-dashboard-groupBorderColor:            var(--shd-card);
-  --nr-dashboard-groupTextColor:              var(--shd-accent);
+  --nr-dashboard-groupTextColor:              var(--shd-accent-text);
   --nr-dashboard-widgetBackgroundColor:       var(--shd-card);
   --nr-dashboard-widgetBgndColor:             var(--shd-card);
   --nr-dashboard-widgetBorderColor:           var(--shd-card);
-  --nr-dashboard-widgetColor:                 var(--shd-accent);
+  --nr-dashboard-widgetColor:                 var(--shd-accent-text);
   --nr-dashboard-widgetTextColor:             var(--shd-text);
 }
 
