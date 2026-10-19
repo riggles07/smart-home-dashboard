@@ -2134,18 +2134,23 @@ add({"id": G2, "type": "ui_group", "z": T, "name": "Remote control",
      "collapse": False})
 
 add({"id": nid("btn-kiosk-wake"), "type": "ui_button", "z": T,
-     "name": "Wake", "group": G2, "order": 1, "width": 2, "height": 1,
-     "passthru": False, "label": "Wake", "tooltip": "Wake the tablet screen",
-     "color": "", "bgcolor": "", "className": "", "icon": "sun-o",
+     "name": "Wake", "group": G2, "order": 1, "width": 6, "height": 1,
+     "passthru": False, "label": "Wake tablet", "tooltip": "Wake the tablet screen",
+     # NO icon. Two Font Awesome names (sun-o, lightbulb-o) both rendered as a
+     # literal "?" glyph on the live A7-lite view -- this dashboard build ships a
+     # reduced icon set. The button label carries the meaning; a "?" does not.
+     "color": "", "bgcolor": "", "className": "", "icon": "",
      "payload": "wake", "payloadType": "str", "topic": "kiosk/wake",
      "topicType": "str", "x": 130, "y": 260, "wires": [[nid("fn-kiosk-cmd")]]})
 
 for _i, (_key, _label, _order) in enumerate(sorted(WP_VIEWS, key=lambda v: v[2])):
     add({"id": nid("btn-kiosk-view-" + _key), "type": "ui_button", "z": T,
          "name": "View: " + _label, "group": G2, "order": 10 + _i,
-         "width": 2, "height": 1, "passthru": False, "label": _label,
+         "width": 3, "height": 1, "passthru": False, "label": _label,
          "tooltip": "Switch tablet to " + _label, "color": "", "bgcolor": "",
-         "className": "", "icon": "eye",
+         # No icon: the six view labels are the touch targets and long names
+         # ("System Health", "Home Assistant") need the full button width.
+         "className": "", "icon": "",
          "payload": _key, "payloadType": "str", "topic": "kiosk/view",
          "topicType": "str", "x": 130, "y": 300 + 40 * _i,
          "wires": [[nid("fn-kiosk-cmd")]]})

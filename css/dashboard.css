@@ -432,3 +432,37 @@ body.shd-bg-animated,
   background: var(--shd-accent);
   color: var(--shd-bg);
 }
+
+/* ---------- Kiosk: tablet status card (task t_57dfd219) ----------
+   These classes were referenced by the Tablet Status ui_template before any CSS
+   existed for them, so the rows rendered as run-together text ("ScreenON").
+   Kept to the palette tokens: no new colours, so the contrast guards still hold. */
+.shd-kiosk {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shd-kiosk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 44px;                 /* A7 Lite touch/read floor */
+  background: var(--shd-surface);
+  border-radius: var(--shd-radius);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shd-kiosk-row span {
+  color: var(--shd-muted);
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+}
+
+.shd-kiosk-row b {
+  color: var(--shd-text);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
