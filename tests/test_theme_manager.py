@@ -44,8 +44,8 @@ DRIVER = ROOT / "tools" / "_theme_manager_driver.js"
 # overridden by a palette.
 COLOUR_TOKENS = [
     "--shd-bg", "--shd-surface", "--shd-card", "--shd-accent", "--shd-accent-2",
-    "--shd-text", "--shd-muted", "--shd-text-dim", "--shd-ok", "--shd-warn",
-    "--shd-err",
+    "--shd-accent-text", "--shd-text", "--shd-muted", "--shd-text-dim",
+    "--shd-ok", "--shd-warn", "--shd-err",
 ]
 
 
@@ -179,8 +179,12 @@ class TestPalettes:
     @pytest.mark.parametrize("pid", ["nord", "cyberpunk"])
     def test_accent_colours_clear_the_ui_floor(self, pid):
         """--shd-accent also appears as text/ui colour (the ui_base
-        groupTextColor / widgetColor derive from it): >= 3:1, the WCAG
-        UI-component / large-text floor, on every surface.
+        decorative gradient): >= 3:1, the WCAG UI-component floor.
+
+        NOTE: groupTextColor/widgetColor no longer derive from --shd-accent;
+        they use --shd-accent-text, which is held to the 4.5:1 TEXT floor by
+        test_accent_text_clears_the_text_floor. The old 3:1 relaxation is what
+        let group headings ship at 3.84:1.
 
         --shd-accent-2 is EXEMPT: in the shipped CSS it is only ever a
         decorative gradient endpoint (.status-bar background) and never text
@@ -191,6 +195,27 @@ class TestPalettes:
         assert worst >= 3.0, (
             f"{pid} --shd-accent reaches only {worst:.2f}:1 -- below the 3:1 "
             f"UI-component floor"
+        )
+
+    @pytest.mark.parametrize("pid", ["default", "nord", "cyberpunk"])
+    def test_accent_text_clears_the_text_floor(self, pid):
+        """--shd-accent-text is painted as TEXT (group headings via
+        --nr-dashboard-groupTextColor, widget titles via
+        --nr-dashboard-widgetColor), so it must clear WCAG AA 4.5:1 on every
+        surface -- not the 3:1 UI-component floor.
+
+        Regression guard for the audited defect: the default palette's
+        group headings measured 3.84:1 (#667eea on #1f2b47) and Nord 4.31:1
+        while this token did not exist and the mapping used --shd-accent."""
+        pal = _parse_palettes(_module_source())[pid]["tokens"]
+        worst, worst_surf = min(
+            ((_ratio(pal["--shd-accent-text"], pal[s]), s) for s in
+             ("--shd-bg", "--shd-surface", "--shd-card")),
+            key=lambda t: t[0],
+        )
+        assert worst >= 4.5, (
+            f"{pid} --shd-accent-text reaches only {worst:.2f}:1 on "
+            f"{worst_surf} -- below the WCAG AA 4.5:1 text floor"
         )
 
     def test_no_new_hardcoded_colours_outside_the_palette_sources(self):
