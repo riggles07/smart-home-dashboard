@@ -2100,5 +2100,468 @@
         "7a8805300275f1e9"
       ]
     ]
+  },
+  {
+    "id": "bdd11d56e84ec55e",
+    "type": "tab",
+    "label": "Kiosk",
+    "disabled": false,
+    "info": "WallPanel PRO tablet control over MQTT"
+  },
+  {
+    "id": "3bd6024618f2a075",
+    "type": "ui_tab",
+    "z": "bdd11d56e84ec55e",
+    "name": "Kiosk",
+    "icon": "tablet",
+    "order": 8,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "f8893e8316d7e2b5",
+    "type": "mqtt-broker",
+    "name": "SHD MQTT",
+    "broker": "192.168.4.145",
+    "port": "1883",
+    "clientid": "",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true,
+    "autoUnsubscribe": true,
+    "birthTopic": "",
+    "birthQos": "0",
+    "birthRetain": "false",
+    "birthPayload": "",
+    "closeTopic": "",
+    "closeQos": "0",
+    "closeRetain": "false",
+    "closePayload": "",
+    "willTopic": "",
+    "willQos": "0",
+    "willRetain": "false",
+    "willPayload": ""
+  },
+  {
+    "id": "633987ac99d5ec4a",
+    "type": "ui_group",
+    "z": "bdd11d56e84ec55e",
+    "name": "Tablet",
+    "tab": "3bd6024618f2a075",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "db9d3d54aea707f3",
+    "type": "ui_template",
+    "z": "bdd11d56e84ec55e",
+    "name": "Tablet Status",
+    "group": "633987ac99d5ec4a",
+    "order": 1,
+    "width": "6",
+    "height": "3",
+    "format": "<div class=\"shd-kiosk\">\n  <div class=\"shd-kiosk-row\"><span>Screen</span><b>{{msg.payload.screenOn ? 'ON' : 'screensaver'}}</b></div>\n  <div class=\"shd-kiosk-row\"><span>Brightness</span><b>{{msg.payload.brightness}}</b>/255</div>\n  <div class=\"shd-kiosk-row\"><span>View</span><b>{{msg.payload.currentUrl}}</b></div>\n  <div class=\"shd-kiosk-row\"><span>Last seen</span><b>{{msg.payload.age}}</b></div>\n</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "templateScope": "local",
+    "x": 640,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "207290e58b594764",
+    "type": "ui_group",
+    "z": "bdd11d56e84ec55e",
+    "name": "Remote control",
+    "tab": "3bd6024618f2a075",
+    "order": 2,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "26c7f0c9bb72abc0",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "Wake",
+    "group": "207290e58b594764",
+    "order": 1,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Wake",
+    "tooltip": "Wake the tablet screen",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "sun-o",
+    "payload": "wake",
+    "payloadType": "str",
+    "topic": "kiosk/wake",
+    "topicType": "str",
+    "x": 130,
+    "y": 260,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "c98882a5775ce4d5",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: Home Lab",
+    "group": "207290e58b594764",
+    "order": 10,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Home Lab",
+    "tooltip": "Switch tablet to Home Lab",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "homelab",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 300,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "c240ec45595f22a9",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: Network",
+    "group": "207290e58b594764",
+    "order": 11,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Network",
+    "tooltip": "Switch tablet to Network",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "network",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 340,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "ee33a590898561a9",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: Kanban",
+    "group": "207290e58b594764",
+    "order": 12,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Kanban",
+    "tooltip": "Switch tablet to Kanban",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "kanban",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 380,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "7c00d5b6b90ff852",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: System Health",
+    "group": "207290e58b594764",
+    "order": 13,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "System Health",
+    "tooltip": "Switch tablet to System Health",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "health",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 420,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "56dda8e7115f3917",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: Settings",
+    "group": "207290e58b594764",
+    "order": 14,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Settings",
+    "tooltip": "Switch tablet to Settings",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "settings",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 460,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "cd8b02fd22e0cf3b",
+    "type": "ui_button",
+    "z": "bdd11d56e84ec55e",
+    "name": "View: Home Assistant",
+    "group": "207290e58b594764",
+    "order": 15,
+    "width": 2,
+    "height": 1,
+    "passthru": false,
+    "label": "Home Assistant",
+    "tooltip": "Switch tablet to Home Assistant",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "eye",
+    "payload": "ha",
+    "payloadType": "str",
+    "topic": "kiosk/view",
+    "topicType": "str",
+    "x": 130,
+    "y": 500,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "c2b000cd0a28aab8",
+    "type": "function",
+    "z": "bdd11d56e84ec55e",
+    "name": "Build kiosk command",
+    "func": "// Classic function style: runs per message, `return` is what gets emitted.\n// Turns a UI action (or the motion path) into a WallPanel command payload.\n// Keys and ranges are the documented WallPanel contract:\n//   wake/brightness/eval -- see tools/gen_flows.py Tab 8 header.\nvar VIEWS = {'homelab': 0, 'network': 1, 'kanban': 2, 'health': 3, 'settings': 4, 'ha': 5};\n\nvar t = String(msg.topic || '');\nvar p = msg.payload;\n\nif (t === 'kiosk/wake') {\n    // wakeTime keeps the screen on for 180s, then the app returns to its\n    // screensaver on user inactivity (documented wake behaviour).\n    msg.payload = JSON.stringify({ wake: true, wakeTime: 180 });\n} else if (t === 'kiosk/view') {\n    var key = String(p || '').trim().toLowerCase();\n    var idx = VIEWS.hasOwnProperty(key) ? VIEWS[key] : parseInt(key, 10);\n    if (!isFinite(idx)) { return null; }\n    // Hash routing verified live: this switches the visible tab with no reload.\n    msg.payload = JSON.stringify({ eval: \"location.hash='#!/\" + idx + \"'\" });\n} else if (typeof p === 'object' && p !== null &&\n           (p.hasOwnProperty('wake') || p.hasOwnProperty('eval'))) {\n    // Already a command (motion path reuses this node) -- pass through.\n    msg.payload = JSON.stringify(p);\n} else {\n    // Unknown action: emit nothing rather than an empty command the tablet\n    // would log as a parse error.\n    return null;\n}\n\nmsg.topic = 'wallpanel/a7lite/command';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 430,
+    "y": 260,
+    "wires": [
+      [
+        "4cadebe03781e3c7"
+      ]
+    ]
+  },
+  {
+    "id": "4cadebe03781e3c7",
+    "type": "mqtt out",
+    "z": "bdd11d56e84ec55e",
+    "name": "Kiosk command",
+    "topic": "wallpanel/a7lite/command",
+    "qos": "1",
+    "retain": "false",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "f8893e8316d7e2b5",
+    "x": 680,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "4ce5c3c03a7beec5",
+    "type": "function",
+    "z": "bdd11d56e84ec55e",
+    "name": "Motion -> wake",
+    "func": "// WallPanel motion payload is {\"value\": true|false}. Only a real rising\n// edge should wake the screen: the false edge is published too, and waking on\n// it would defeat the screensaver.\nvar v = msg.payload;\nvar on = (v === true) ||\n         (v && typeof v === 'object' && v.value === true) ||\n         (typeof v === 'string' && v.trim().toLowerCase() === 'true');\nif (!on) { return null; }\n\n// wakeTime 180s: long enough to read the dashboard after walking up to it,\n// after which the app falls back to its screensaver on inactivity.\nmsg.payload = JSON.stringify({ wake: true, wakeTime: 180 });\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 430,
+    "y": 400,
+    "wires": [
+      [
+        "c2b000cd0a28aab8"
+      ]
+    ]
+  },
+  {
+    "id": "75e0c172f2adf7f0",
+    "type": "mqtt in",
+    "z": "bdd11d56e84ec55e",
+    "name": "Tablet motion",
+    "topic": "wallpanel/a7lite/sensor/motion",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "f8893e8316d7e2b5",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 150,
+    "y": 400,
+    "wires": [
+      [
+        "4ce5c3c03a7beec5"
+      ]
+    ]
+  },
+  {
+    "id": "a8c994dd1387e921",
+    "type": "function",
+    "z": "bdd11d56e84ec55e",
+    "name": "Schedule -> brightness",
+    "func": "// WallPanel brightness range is 1-255 (documented), NOT a percentage.\nvar B = { night: 40, dawn: 120,\n          day: 200, dusk: 110 };\n\nvar h = new Date().getHours();\nvar bucket;\nif (h >= 22 || h < 7)      { bucket = 'night'; }\nelse if (h < 9)            { bucket = 'dawn';  }\nelse if (h < 18)           { bucket = 'day';   }\nelse                       { bucket = 'dusk';  }\n\nvar level = B[bucket];\n// Re-publish when the bucket changes OR when we have not published in 30 min.\n// The periodic re-publish is deliberate self-healing: a retained message can be\n// dropped by a broker restart, and the tablet has no way to ask for it again.\nvar prev = context.get('bucket');\nvar last = context.get('lastPublish') || 0;\nvar due = prev !== bucket || (Date.now() - last) > 30 * 60 * 1000;\nif (!due) { return null; }\ncontext.set('bucket', bucket);\ncontext.set('lastPublish', Date.now());\n\nmsg.payload = JSON.stringify({ brightness: level });\nmsg.topic = 'wallpanel/a7lite/command';\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 450,
+    "y": 520,
+    "wires": [
+      [
+        "27fa5b573307fb08"
+      ]
+    ]
+  },
+  {
+    "id": "27fa5b573307fb08",
+    "type": "mqtt out",
+    "z": "bdd11d56e84ec55e",
+    "name": "Brightness (retained)",
+    "topic": "wallpanel/a7lite/command",
+    "qos": "1",
+    "retain": "true",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "f8893e8316d7e2b5",
+    "x": 700,
+    "y": 520,
+    "wires": []
+  },
+  {
+    "id": "952c9ff3c92b2a3a",
+    "type": "inject",
+    "z": "bdd11d56e84ec55e",
+    "name": "Schedule tick",
+    "props": [
+      {
+        "p": "payload",
+        "v": "",
+        "vt": "str"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 5.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 520,
+    "wires": [
+      [
+        "a8c994dd1387e921"
+      ]
+    ]
+  },
+  {
+    "id": "0c1aaffb556673c0",
+    "type": "function",
+    "z": "bdd11d56e84ec55e",
+    "name": "Tablet state",
+    "func": "// WallPanel publishes application state to <base>/state as\n// {\"currentUrl\":..,\"screenOn\":bool,\"brightness\":N}.\nvar p = msg.payload;\nif (typeof p === 'string') {\n    try { p = JSON.parse(p); } catch (e) { return null; }\n}\nif (!p || typeof p !== 'object') { return null; }\n\nvar url = String(p.currentUrl || '');\n// Send only the tab portion: the full URL is long and wraps the widget.\nvar m = url.match(/#!\\/(\\d+)/);\nvar tab = m ? '#' + m[1] : (url ? url.slice(-28) : 'unknown');\n\nmsg.payload = {\n    screenOn: p.screenOn === true,\n    brightness: (p.brightness === 0 || p.brightness) ? p.brightness : '?',\n    currentUrl: tab,\n    age: 'just now'\n};\ncontext.set('lastSeen', Date.now());\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 640,
+    "wires": [
+      [
+        "db9d3d54aea707f3"
+      ]
+    ]
+  },
+  {
+    "id": "fa119d1e5dd2141d",
+    "type": "mqtt in",
+    "z": "bdd11d56e84ec55e",
+    "name": "Tablet state",
+    "topic": "wallpanel/a7lite/state",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "f8893e8316d7e2b5",
+    "nl": false,
+    "rap": true,
+    "rh": 0,
+    "inputs": 0,
+    "x": 150,
+    "y": 640,
+    "wires": [
+      [
+        "0c1aaffb556673c0"
+      ]
+    ]
   }
 ]

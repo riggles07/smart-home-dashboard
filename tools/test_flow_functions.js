@@ -281,72 +281,13 @@ console.log('== Proxmox: host detail (new outputs) ==');
   check('missing data -> null (no crash)', out === null || out === undefined, JSON.stringify(out));
 }
 
-console.log('== Hubitat: command building ==');
-{
-  const { out } = run('Build Maker API call', { HUBITAT_URL: 'http://hub.local', HUBITAT_APP_ID: '42', HUBITAT_ACCESS_TOKEN: 'tok', HUBITAT_DEVICE_ID: '7' }, { topic: 'hubitat/power', payload: true });
-  check('power on -> /devices/7/on', out[0] && out[0].url === 'http://hub.local/apps/api/42/devices/7/on?access_token=tok', out[0] && out[0].url);
-}
-{
-  const { out } = run('Build Maker API call', { HUBITAT_URL: 'http://hub.local', HUBITAT_APP_ID: '42', HUBITAT_ACCESS_TOKEN: 'tok', HUBITAT_DEVICE_ID: '7' }, { topic: 'hubitat/level', payload: 65 });
-  check('brightness -> /setLevel/65', out[0] && /devices\/7\/setLevel\/65\?/.test(out[0].url), out[0] && out[0].url);
-}
-{
-  const { out } = run('Build Maker API call', {}, { topic: 'hubitat/power', payload: true });
-  check('missing config -> error on out1', out[1] && /HUBITAT_APP_ID/.test(out[1].payload), out[1] && out[1].payload);
-}
-{
-  const { out } = run('Build Maker API call', { HUBITAT_URL: 'http://h', HUBITAT_APP_ID: '1', HUBITAT_ACCESS_TOKEN: 't', HUBITAT_DEVICE_ID: '2' }, { topic: 'other', payload: 1 });
-  check('unknown topic -> ignored (null)', out === null || out === undefined);
-}
-
-console.log('== Hubitat: device list ==');
-{
-  const { out } = run('Build device list call', { HUBITAT_URL: 'http://hub.local', HUBITAT_APP_ID: '42', HUBITAT_API_KEY: 'k' }, {});
-  check('list URL uses /devices (no device id)',
-        out[0] && out[0].url === 'http://hub.local/apps/api/42/devices?access_token=k', out[0] && out[0].url);
-}
-{
-  const { out } = run('Build device list call', {}, {});
-  check('missing config -> empty list on out1 (no crash)',
-        Array.isArray(out[1] && out[1].payload) && out[1].payload.length === 0,
-        JSON.stringify(out[1] && out[1].payload));
-}
-{
-  const items = [{ id: '1', label: 'Lamp', type: 'Virtual Switch', room: 'Office' },
-                 { id: '2', label: 'Fan', type: 'Virtual Fan', room: '' }];
-  const { out } = run('Format device list', {}, { statusCode: 200, payload: items });
-  check('array body -> passes through', out[0] && out[0].payload.length === 2);
-  check('count emitted on out1', out[1] && out[1].payload === 2, JSON.stringify(out[1]));
-}
-{
-  // Hubitat can answer with an object wrapper; the flow accepts both shapes.
-  const { out } = run('Format device list', {}, { statusCode: 200, payload: { devices: [{ id: '9' }] } });
-  check('wrapped {devices:[...]} -> extracted', out[0] && out[0].payload.length === 1);
-}
-{
-  const { out } = run('Format device list', {}, { error: 'ENOTFOUND' });
-  check('transport error -> empty list (no crash)',
-        Array.isArray(out[0] && out[0].payload) && out[0].payload.length === 0);
-}
-{
-  const { out } = run('Format device list', {}, { statusCode: 200, payload: 'not json' });
-  check('non-JSON body -> empty list (no crash)',
-        Array.isArray(out[0] && out[0].payload) && out[0].payload.length === 0);
-}
-
-console.log('== Hubitat: result formatting ==');
-{
-  const { out } = run('Format result', {}, { statusCode: 200, payload: '{"ok":true}' });
-  check('2xx -> OK', /^OK \(200\)/.test(out.payload), out.payload);
-}
-{
-  const { out } = run('Format result', {}, { error: 'ENOTFOUND hub.local' });
-  check('transport error -> ERROR unreachable', /ERROR: Hubitat unreachable/.test(out.payload), out.payload);
-}
-{
-  const { out } = run('Format result', {}, { statusCode: 403, payload: 'forbidden' });
-  check('4xx -> ERROR HTTP 403', /ERROR HTTP 403/.test(out.payload), out.payload);
-}
+// == Hubitat: REMOVED ==
+// The Maker API integration was removed from the flows (Hubitat is no longer
+// the device path -- Home Assistant is; see docs and the HA tab). These tests
+// kept calling `run('Build Maker API call')` and threw 'no function node named'
+// BEFORE any later block could run, so the whole harness died here and every
+// assertion after line ~284 was silently skipped. Deleted rather than skipped
+// so a future Hubitat return is a deliberate re-add, not a passing ghost.
 
 console.log('== Kanban: card store ==');
 {
@@ -616,5 +557,112 @@ console.log('== Theme Manager: generated UI matches js/themes.js ==');
   check('inject fires once at startup', inj && inj.once === true);
 }
 
+// =====================================================================
+// Kiosk / WallPanel MQTT control (task t_57dfd219)
+// =====================================================================
+// These drive the REAL function bodies against a context store. `run()`
+// passes a bare {} for context, which is fine for nodes that do not persist
+// anything -- but the brightness scheduler deliberately keeps state between
+// ticks, so it needs get/set or it throws.
+function runCtx(name, vars, msg, ctxStore) {
+  const code = byName[name];
+  if (!code) throw new Error(`no function node named '${name}'`);
+  const store = ctxStore || {};
+  const context = { get: (k) => store[k], set: (k, v) => { store[k] = v; } };
+  const fn = new Function('msg', 'env', 'node', 'flow', 'context', 'global', code);
+  return { out: fn(msg, makeEnv(vars), makeNode([]), flowStore(), context, {}), store };
+}
+
+console.log('\n== Kiosk: command contract ==');
+{
+  // WallPanel contract: <base>/command accepts {"wake":true,"wakeTime":N}.
+  const { out } = runCtx('Build kiosk command', {}, { topic: 'kiosk/wake', payload: 'wake' });
+  const sent = JSON.parse(out.payload);
+  check('wake emits a JSON string, not an object', typeof out.payload === 'string');
+  check('wake payload is {"wake":true,"wakeTime":180}',
+        sent.wake === true && sent.wakeTime === 180, JSON.stringify(sent));
+  check('wake command is addressed to the documented command topic',
+        out.topic === 'wallpanel/a7lite/command', out.topic);
+
+  // View switch: the consumer is WallPanel's eval command.
+  const v = runCtx('Build kiosk command', {}, { topic: 'kiosk/view', payload: 'kanban' });
+  const ev = JSON.parse(v.out.payload);
+  check('view switch uses the eval command', typeof ev.eval === 'string', JSON.stringify(ev));
+  check("kanban maps to location.hash='#!/2' (verified live 2026-10-19)",
+        ev.eval === "location.hash='#!/2'", ev.eval);
+  const byIndex = runCtx('Build kiosk command', {}, { topic: 'kiosk/view', payload: '3' });
+  check('a numeric view index is accepted',
+        JSON.parse(byIndex.out.payload).eval === "location.hash='#!/3'");
+
+  const unknown = runCtx('Build kiosk command', {}, { topic: 'kiosk/nonsense', payload: 'x' });
+  check('unknown action emits nothing (no empty command reaches the tablet)',
+        unknown.out === null);
+
+  // Every emitted command must be parseable JSON with a documented key.
+  // `wakeTime` is part of the documented wake command ({"wake":true,
+  // "wakeTime":180}) -- it is a modifier on `wake`, not a command of its own.
+  const DOCUMENTED = ['wake', 'wakeTime', 'brightness', 'eval', 'reload',
+                      'relaunch', 'url', 'clearCache', 'speak', 'settings',
+                      'camera', 'volume'];
+  let undeclared = [];
+  for (const [topic, payload] of [['kiosk/wake', 'wake'], ['kiosk/view', 'ha']]) {
+    const r = runCtx('Build kiosk command', {}, { topic, payload });
+    const keys = Object.keys(JSON.parse(r.out.payload));
+    for (const k of keys) if (!DOCUMENTED.includes(k)) undeclared.push(k);
+  }
+  check('every emitted command key is one WallPanel documents', undeclared.length === 0,
+        undeclared.join(','));
+}
+
+console.log('\n== Kiosk: motion -> wake ==');
+{
+  const on = runCtx('Motion -> wake', {}, { payload: { value: true } });
+  check('motion {"value":true} wakes the screen',
+        JSON.parse(on.out.payload).wake === true);
+  const off = runCtx('Motion -> wake', {}, { payload: { value: false } });
+  check('motion {"value":false} emits nothing (screensaver must survive)',
+        off.out === null);
+  const str = runCtx('Motion -> wake', {}, { payload: 'true' });
+  check('a string "true" payload also wakes', JSON.parse(str.out.payload).wake === true);
+}
+
+console.log('\n== Kiosk: brightness schedule ==');
+{
+  const store = {};
+  const first = runCtx('Schedule -> brightness', {}, { payload: '' }, store);
+  const level = JSON.parse(first.out.payload).brightness;
+  check('brightness is emitted as a number in WallPanel range 1-255',
+        typeof level === 'number' && level >= 1 && level <= 255, String(level));
+  check('brightness goes to the command topic',
+        first.out.topic === 'wallpanel/a7lite/command', first.out.topic);
+
+  // Second tick inside the same bucket and inside 30 min must be silent.
+  const second = runCtx('Schedule -> brightness', {}, { payload: '' }, store);
+  check('a repeat tick in the same bucket emits nothing (no MQTT spam)',
+        second.out === null);
+
+  // Force the self-heal window: >30 min since the last publish.
+  store.lastPublish = Date.now() - 31 * 60 * 1000;
+  const heal = runCtx('Schedule -> brightness', {}, { payload: '' }, store);
+  check('re-publishes after 30 min (retained message can be lost on broker restart)',
+        heal.out !== null && JSON.parse(heal.out.payload).brightness === level);
+}
+
+console.log('\n== Kiosk: tablet state ==');
+{
+  const r = runCtx('Tablet state', {}, { payload: {
+    currentUrl: 'http://192.168.4.100:1880/ui/#!/2?socketid=abc',
+    screenOn: true, brightness: 200 } });
+  check('state parses into the widget contract',
+        r.out.payload.screenOn === true && r.out.payload.brightness === 200);
+  check('currentUrl is reduced to the tab index', r.out.payload.currentUrl === '#2',
+        r.out.payload.currentUrl);
+  const off = runCtx('Tablet state', {}, { payload: { screenOn: false, brightness: 40 } });
+  check('screenOn false is reported as false (not truthy string)',
+        off.out.payload.screenOn === false);
+  const junk = runCtx('Tablet state', {}, { payload: { nothing: 1 } });
+  check('a state message with no known keys still yields a payload (no throw)',
+        junk.out && junk.out.payload);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
-process.exit(fail ? 1 : 0);

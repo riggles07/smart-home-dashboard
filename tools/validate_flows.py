@@ -30,8 +30,13 @@ for n in nodes:
 
 # 3. every non-tab node has a valid z (tab)
 tabs = {n["id"] for n in nodes if n["type"] == "tab"}
+# Config nodes are GLOBAL to the runtime: Node-RED stores them with no `z` and
+# no wires, and they appear once in the flow set rather than inside a tab.
+# Requiring a tab on them rejects a perfectly valid flow (first hit:
+# mqtt-broker for the kiosk tab, task t_57dfd219).
+CONFIG_TYPES = {"mqtt-broker", "tls-config", "http proxy", "memory-store"}
 for n in nodes:
-    if n["type"] == "tab":
+    if n["type"] == "tab" or n["type"] in CONFIG_TYPES:
         continue
     z = n.get("z")
     if z is None:
