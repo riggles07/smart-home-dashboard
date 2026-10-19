@@ -1053,7 +1053,7 @@ add({"id": nid("dbg-h"), "type": "debug", "z": T, "name": "Proxmox raw",
 T = nid("tab-ha")
 add({"id": T, "type": "tab", "label": "Home Assistant", "disabled": False, "info": "Integration with Home Assistant"})
 add({"id": nid("uitab-ha"), "type": "ui_tab", "z": T, "name": "Home Assistant",
-     "icon": "home-assistant", "order": 7, "disabled": False, "hidden": False})
+     "icon": "home", "order": 7, "disabled": False, "hidden": False})
 G = nid("grp-ha")
 add({"id": G, "type": "ui_group", "z": T, "name": "Home Assistant Control",
      "tab": nid("uitab-ha"), "order": 1, "disp": True, "width": "12", "collapse": False})
@@ -1584,7 +1584,7 @@ add({"id": nid("fn-u-parse"), "type": "function", "z": T, "name": "Split client 
 T = nid("tab-kanban")
 add({"id": T, "type": "tab", "label": "Kanban", "disabled": False, "info": ""})
 add({"id": nid("uitab-k"), "type": "ui_tab", "z": T, "name": "Kanban",
-     "icon": "tasks", "order": 4, "disabled": False, "hidden": False})
+     "icon": "view_column", "order": 4, "disabled": False, "hidden": False})
 G = nid("grp-kan")
 add({"id": G, "type": "ui_group", "z": T, "name": "Task Board",
      "tab": nid("uitab-k"), "order": 1, "disp": True, "width": "12", "collapse": False})
@@ -1667,7 +1667,7 @@ add({"id": nid("dbg-k"), "type": "debug", "z": T, "name": "Cards",
 T = nid("tab-syshealth")
 add({"id": T, "type": "tab", "label": "System Health", "disabled": False, "info": ""})
 add({"id": nid("uitab-sh"), "type": "ui_tab", "z": T, "name": "System Health",
-     "icon": "heartbeat", "order": 5, "disabled": False, "hidden": False})
+     "icon": "favorite", "order": 5, "disabled": False, "hidden": False})
 
 # ---- Alerts (order 1): whole-stack severity, never collapsible ------------
 # Parse health summary attaches the full stat map to its CPU output, so the
@@ -1914,7 +1914,7 @@ add({"id": nid("fn-sh-embeds"), "type": "function", "z": T, "name": "Build Grafa
 T = nid("tab-settings")
 add({"id": T, "type": "tab", "label": "Settings", "disabled": False, "info": ""})
 add({"id": nid("uitab-s"), "type": "ui_tab", "z": T, "name": "Settings",
-     "icon": "cog", "order": 6, "disabled": False, "hidden": False})
+     "icon": "settings", "order": 6, "disabled": False, "hidden": False})
 G = nid("grp-set")
 add({"id": G, "type": "ui_group", "z": T, "name": "System Info",
      "tab": nid("uitab-s"), "order": 1, "disp": True, "width": "6", "collapse": False})

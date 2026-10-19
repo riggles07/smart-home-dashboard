@@ -11,7 +11,7 @@
     "type": "ui_tab",
     "z": "9171e542e4309e3f",
     "name": "Kanban",
-    "icon": "tasks",
+    "icon": "view_column",
     "order": 4,
     "disabled": false,
     "hidden": false

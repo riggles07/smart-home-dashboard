@@ -11,7 +11,7 @@
     "type": "ui_tab",
     "z": "bf9fe1880d154acf",
     "name": "Home Assistant",
-    "icon": "home-assistant",
+    "icon": "home",
     "order": 7,
     "disabled": false,
     "hidden": false
