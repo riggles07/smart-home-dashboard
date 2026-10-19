@@ -17,12 +17,63 @@
     "hidden": false
   },
   {
+    "id": "71c7e430b5abf529",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "Alerts",
+    "tab": "13c088e1b9d32a25",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "e5291e1ed1c0e27c",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Alert Banner",
+    "group": "71c7e430b5abf529",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "799caa8a2d5cf7be",
+    "type": "function",
+    "z": "61550c749f923be9",
+    "name": "Evaluate alerts",
+    "func": "// System Health alert banner: Prometheus targets/probes + node pressure.\n// Parse health summary attaches the full stat map to its first output,\n// so one message evaluates the whole stack.\nvar m = msg.stats || {};\nvar cpu = m.pve_cpu, mem = m.pve_mem;\nvar tUp = m.targets_up, tTot = m.targets_total;\nvar pOk = m.probes_ok, pTot = m.probes_total;\nfunction pct(v) { return Math.round(v * 10) / 10 + '%'; }\nfunction escalate(s) {\n  if (s === 'critical') { sev = 'critical'; }\n  else if (s === 'warning' && sev !== 'critical') { sev = 'warning'; }\n}\nvar sev = 'ok';\nvar parts = [];\nif (!m || msg.payload === -1) {\n  // Parse health summary marks total failure with payload:-1 (stats\n  // null) or payload:-1 + empty stats (Prometheus up, nothing scraped).\n  sev = 'critical';\n  parts.push('Monitoring data unavailable');\n} else {\nif (typeof cpu === 'number') {\n  if (cpu >= 90) { escalate('critical'); parts.push('CPU ' + pct(cpu)); }\n  else if (cpu >= 75) { escalate('warning'); parts.push('CPU ' + pct(cpu)); }\n}\nif (typeof mem === 'number') {\n  if (mem >= 90) { escalate('critical'); parts.push('Memory ' + pct(mem)); }\n  else if (mem >= 75) { escalate('warning'); parts.push('Memory ' + pct(mem)); }\n}\nif (tTot > 0 && tUp < tTot) {\n  escalate(tUp === 0 ? 'critical' : 'warning');\n  parts.push('Targets ' + tUp + '/' + tTot);\n}\nif (pTot > 0 && pOk < pTot) {\n  escalate(pOk === 0 ? 'critical' : 'warning');\n  parts.push('Probes ' + pOk + '/' + pTot);\n}\nif (sev === 'ok') { parts.push('All monitored systems healthy'); }\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: parts.join(' | ')};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1020,
+    "y": 120,
+    "wires": [
+      [
+        "e5291e1ed1c0e27c"
+      ]
+    ]
+  },
+  {
     "id": "eacc0c2392940f6e",
     "type": "ui_group",
     "z": "61550c749f923be9",
     "name": "Health Summary",
     "tab": "13c088e1b9d32a25",
-    "order": 1,
+    "order": 2,
     "disp": true,
     "width": "12",
     "collapse": false
@@ -200,7 +251,7 @@
     "type": "function",
     "z": "61550c749f923be9",
     "name": "Parse health summary",
-    "func": "// Map the stat-labelled instant query onto one message per widget.\n// Missing stats degrade to 0 rather than 'undefined' text.\nvar r = msg.payload;\nif (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  return null;\n}\nvar m = {};\nr.data.result.forEach(function (s) {\n  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n});\nfunction pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\nvar mCpu = { payload: pct(m.pve_cpu) };\nvar mMem = { payload: pct(m.pve_mem) };\nvar mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\nvar mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\nvar mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\nnode.status({fill:'green',shape:'dot',text:'ok'});\nreturn [mCpu, mMem, mTgt, mPrb, mUp];",
+    "func": "// Map the stat-labelled instant query onto one message per widget.\n// Missing stats degrade to 0 rather than 'undefined' text.\nvar r = msg.payload;\nif (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  // out0 feeds the alert evaluator. An empty stat map would read as\n  // 'everything healthy' there -- send stats: null so the banner\n  // reports 'monitoring unavailable' (critical) instead of lying.\n  var mFail = { payload: -1, stats: null };\n  return [mFail, null, null, null, null];\n}\nvar m = {};\nr.data.result.forEach(function (s) {\n  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n});\n// Prometheus reachable but zero stats scraped: same as down for\n// alerting purposes -- the banner must not read it as 'healthy'.\nif (!m.targets_total && !m.probes_total && !m.pve_cpu && !m.pve_mem) {\n  var mNone = { payload: -1, stats: {} };\n  return [mNone, null, null, null, null];\n}\nfunction pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\nvar mCpu = { payload: pct(m.pve_cpu), stats: m };\nvar mMem = { payload: pct(m.pve_mem) };\nvar mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\nvar mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\nvar mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\nnode.status({fill:'green',shape:'dot',text:'ok'});\nreturn [mCpu, mMem, mTgt, mPrb, mUp];",
     "outputs": 5,
     "noerr": 0,
     "initialize": "",
@@ -210,7 +261,8 @@
     "y": 120,
     "wires": [
       [
-        "95a2bda9c84d2505"
+        "95a2bda9c84d2505",
+        "799caa8a2d5cf7be"
       ],
       [
         "2859742989b0ae98"
@@ -232,10 +284,11 @@
     "z": "61550c749f923be9",
     "name": "Proxmox Node Resources",
     "tab": "13c088e1b9d32a25",
-    "order": 2,
+    "order": 3,
     "disp": true,
     "width": "12",
-    "collapse": false
+    "collapse": true,
+    "className": "shd-collapsible"
   },
   {
     "id": "8712b582b49ce0e3",
@@ -303,10 +356,11 @@
     "z": "61550c749f923be9",
     "name": "LXC / VM Health",
     "tab": "13c088e1b9d32a25",
-    "order": 3,
+    "order": 4,
     "disp": true,
     "width": "12",
-    "collapse": false
+    "collapse": true,
+    "className": "shd-collapsible"
   },
   {
     "id": "fd87f23f3740f893",

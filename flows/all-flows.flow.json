@@ -29,7 +29,7 @@
     "order": 1,
     "width": "0",
     "height": "0",
-    "format": "<style>\n\n\n\n* { margin: 0; padding: 0; box-sizing: border-box; }\n\n:root {\n  --shd-bg: #1a1a2e;\n  --shd-surface: #16213e;\n  --shd-card: #1f2b47;\n  --shd-accent: #667eea;\n  --shd-accent-2: #764ba2;\n  --shd-text: #eee;\n  \n  --shd-muted: #b8c4de;\n  --shd-text-dim: #aab;\n  --shd-ok: #2ecc71;\n  --shd-warn: #f1c40f;\n  \n  --shd-err: #ff7676;\n  --shd-touch-target: 44px;   \n  --shd-radius: 10px;\n\n  \n  --nr-dashboard-pageBackgroundColor:         var(--shd-bg);\n  --nr-dashboard-pageSidebarBackgroundColor:  var(--shd-surface);\n  --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);\n  --nr-dashboard-groupBackgroundColor:        var(--shd-card);\n  --nr-dashboard-groupBorderColor:            var(--shd-card);\n  --nr-dashboard-groupTextColor:              var(--shd-accent);\n  --nr-dashboard-widgetBackgroundColor:       var(--shd-card);\n  --nr-dashboard-widgetBgndColor:             var(--shd-card);\n  --nr-dashboard-widgetBorderColor:           var(--shd-card);\n  --nr-dashboard-widgetColor:                 var(--shd-accent);\n  --nr-dashboard-widgetTextColor:             var(--shd-text);\n}\n\nhtml { font-size: 16px; }\n\nbody {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n  font-family: -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;   \n  -webkit-text-size-adjust: 100%;            \n  overflow-x: hidden;                         \n}\n\n\n.status-bar {\n  background: linear-gradient(135deg, var(--shd-accent), var(--shd-accent-2));\n  color: #fff;\n  padding: 12px 16px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: 8px;\n  position: sticky;\n  top: 0;\n  z-index: 100;\n}\n\n.status-bar .status-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  display: inline-block;\n  animation: pulse 2s ease-in-out infinite;\n}\n.status-dot.ok      { background: var(--shd-ok); }\n.status-dot.warning { background: var(--shd-warn); }\n.status-dot.error   { background: var(--shd-err); }\n\n\n.ui_tab {\n  border-bottom: 2px solid var(--shd-accent);\n  display: flex;\n  gap: 4px;\n  overflow-x: auto;             \n  -webkit-overflow-scrolling: touch;\n  scrollbar-width: none;\n}\n.ui_tab::-webkit-scrollbar { display: none; }\n\n.ui_tab .tab-link {\n  padding: 12px 16px;\n  white-space: nowrap;\n  color: var(--shd-text-dim);\n  text-decoration: none;\n  font-size: 14px;\n  border-bottom: 2px solid transparent;\n  min-height: var(--shd-touch-target);   \n  display: inline-flex;\n  align-items: center;\n  touch-action: manipulation;\n}\n.ui_tab .tab-link.active {\n  color: var(--shd-text);\n  border-bottom-color: var(--shd-accent);\n}\n\n\n.ui_card, .ui_group {\n  background: var(--shd-card);\n  border-radius: var(--shd-radius);\n  padding: 16px;\n  margin: 12px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n}\n\n.ui_row {\n  display: flex;\n  flex-direction: row;          \n  gap: 12px;\n  flex-wrap: wrap;\n}\n.ui_row > * { flex: 1 1 auto; }\n\n\n\n.mdc-button,\n.ui_button,\n.ui_toggle,\nbutton {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  padding: 10px 18px;\n  font-size: 15px;\n  border-radius: 8px;\n  cursor: pointer;\n  touch-action: manipulation;  \n}\n\n.ui_switch .mdc-switch,\n.ui_toggle {\n  transform-origin: left center;\n}\n\n.ui_slider input[type=\"range\"] {\n  height: 44px;                 \n  width: 100%;\n  accent-color: var(--shd-accent);\n}\n\n\n.status-ok      { color: var(--shd-ok); }\n.status-warning { color: var(--shd-warn); }\n.status-error   { color: var(--shd-err); }\n\n\n.ui_table { width: 100%; border-collapse: collapse; font-size: 14px; }\n.ui_table th, .ui_table td {\n  padding: 10px 8px;\n  text-align: left;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  overflow-wrap: break-word;\n}\n\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50%      { opacity: 0.7; }\n}\n.pulse { animation: pulse 2s ease-in-out infinite; }\n\n\n\n\n@media (min-width: 1280px) {\n  .ui_row { flex-direction: row; }\n  .ui_card, .ui_group { max-width: 480px; }\n}\n\n\n@media (max-width: 1024px) {\n  .ui_row { flex-direction: column; }\n  .ui_card, .ui_group { width: 100%; margin: 8px 0; }\n}\n\n\n@media (max-width: 900px) {\n  html { font-size: 15px; }\n  .ui_table th, .ui_table td { padding: 8px 6px; font-size: 13px; }\n  .status-bar { padding: 10px 12px; }\n}\n\n\n@media (max-width: 600px) {\n  html { font-size: 14px; }\n  .ui_row { flex-direction: column; }\n  .ui_table th, .ui_table td { padding: 6px 4px; font-size: 12px; }\n  .ui_card, .ui_group { padding: 12px; margin: 8px; }\n  .ui_tab .tab-link { padding: 10px 12px; font-size: 13px; }\n  .status-bar { flex-direction: column; align-items: flex-start; }\n}\n\n\n@media (max-width: 380px) {\n  html { font-size: 13px; }\n  .ui_tab .tab-link { padding: 10px 10px; }\n}\n\n\n\n.shd-embed {\n  position: relative;\n  width: 100%;\n  min-height: 240px;\n  border-radius: var(--shd-radius);\n  overflow: hidden;              \n  background: var(--shd-card);\n}\n.shd-grafana-frame {\n  display: block;\n  width: 100%;\n  height: 100%;\n  min-height: 240px;\n  border: 0;                     \n  background: transparent;\n  overscroll-behavior: contain;\n}\n\n\n@media (max-height: 480px) and (orientation: landscape) {\n  .status-bar { position: static; padding: 6px 12px; }\n  .ui_card, .ui_group { margin: 6px; padding: 10px; }\n}\n\n\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n  .pulse { animation: none; }\n}\n\n\n@media print {\n  body { background: #fff; color: #000; }\n  .status-bar, .ui_tab { display: none; }\n}\n\nbody.nr-dashboard-theme {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n}\n\n/* ------------------------------------------------------------------\n   The dashboard's own theme block defines the --nr-dashboard-* variables\n   but then PAINTS its primary surfaces with hardcoded colours that ignore\n   them. Measured in dashboard 3.6.6 (selector -> colour):\n     body.nr-dashboard-theme md-content md-card   -> #fff\n     .nr-dashboard-theme ui-card-panel            -> #fff\n     body.nr-dashboard-theme md-toolbar           -> #0094CE\n     body.nr-dashboard-theme md-sidenav           -> #eee\n   Overriding only the variables therefore darkens :root while the page\n   still renders light. These rules match or exceed each original's\n   specificity, and this block is injected last, so ties resolve here.\n   Deliberately not !important: nothing here is inline, and !important\n   would also defeat the dashboard's later runtime theming.\n   ------------------------------------------------------------------ */\nbody.nr-dashboard-theme md-content md-card {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme ui-card-panel {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\n\n/* The dashboard paints ui_template content on its OWN white panel:\n     .nr-dashboard-theme .nr-dashboard-template { background-color: #fff }\n   That selector is specificity (0,2,0) and therefore BEATS the (0,1,3)\n   `body.nr-dashboard-theme md-content md-card` rule above -- so templated\n   widgets (the device and client tables) stayed white while the theme's\n   `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.\n   invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY\n   white surfaces left; every other widget card was already #1f2b47. */\nbody.nr-dashboard-theme .nr-dashboard-template {\n  background: transparent;\n  color: var(--shd-text);\n}\n/* The dashboard's legacy `.table` class is written for a light background.\n   Its own rules only set borders/padding, so rows need explicit dark-theme\n   separation or the list reads as one undifferentiated block. */\nbody.nr-dashboard-theme table.table {\n  color: var(--shd-text);\n  border-collapse: collapse;\n}\nbody.nr-dashboard-theme table.table th {\n  color: var(--shd-text);\n  background: transparent;\n  border-bottom: 2px solid var(--shd-accent);\n}\nbody.nr-dashboard-theme table.table td {\n  color: var(--shd-text);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\nbody.nr-dashboard-theme table.table tbody tr:nth-child(even) {\n  background: rgba(255, 255, 255, 0.045);   /* zebra striping for scanability */\n}\n/* `--shd-muted` is deliberately lighter than the 4.5:1 floor against\n   --shd-card, so secondary text stays legible rather than decorative. */\nbody.nr-dashboard-theme .nr-dashboard-template .shd-muted,\nbody.nr-dashboard-theme .shd-muted {\n  color: var(--shd-muted);\n}\n/* The slider's floating value bubble paints TEXT on the dashboard's hardcoded\n   accent (--nr-dashboard-widgetBackgroundColor / #4FBAE4), which the theme's\n   light text sat on at ~2.2:1 -- the number was barely legible. Give the\n   bubble a dark surface. The track FILL keeps the accent: it is decorative\n   and carries no text, so it is not a contrast problem. */\nbody.nr-dashboard-theme .nr-dashboard-slider .md-sign,\nbody.nr-dashboard-theme md-slider .md-sign {\n  background-color: var(--shd-card);\n  color: var(--shd-text);\n}\n/* GAUGE TEXT -- this is the rule that actually works in dashboard 3.6.6.\n   justgage renders its labels as SVG <text fill=\"#111111\"> (near-black).\n   A presentation attribute sits at the BOTTOM of the cascade, so any CSS rule\n   beats it -- no !important needed. Setting the node's `valueFontColor` does\n   NOT work here: the 3.6.6 ui_gauge controller never forwards it to justgage\n   (verified -- the attribute stayed #111111 with the property set). Measured\n   before: values 0/4.7/100 at ~1.4:1, effectively invisible on the dark card. */\nbody.nr-dashboard-theme .nr-dashboard-gauge svg text {\n  fill: var(--shd-text);\n}\nbody.nr-dashboard-theme md-toolbar {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-sidenav {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\n\n/* Tab drawer entries and the toolbar button are Angular Material elements,\n   not `.ui_tab .tab-link` (which matches nothing in this version). The\n   toolbar button measured 40px -- under the 44px touch target. */\nbody.nr-dashboard-theme md-sidenav md-list-item,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  min-height: var(--shd-touch-target);\n  touch-action: manipulation;\n}\nbody.nr-dashboard-theme md-sidenav md-list-item p,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme button.md-icon-button,\nbody.nr-dashboard-theme .md-icon-button {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  touch-action: manipulation;\n  color: var(--shd-text);\n}\n\n/* Charts/gauge/template content the dashboard paints on its own light panel. */\nbody.nr-dashboard-theme md-card .nr-dashboard-text,\nbody.nr-dashboard-theme md-card table,\nbody.nr-dashboard-theme md-card th,\nbody.nr-dashboard-theme md-card td {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-card th {\n  border-bottom-color: var(--shd-accent);\n}\n\n/* ==================================================================\n   LANDSCAPE / WIDE-SCREEN LAYOUT\n   ------------------------------------------------------------------\n   The dashboard's masonry JS writes INLINE pixel widths onto\n   `.nr-dashboard-cardcontainer` (measured: width 318px for a width-12\n   group -> ~53.3px per grid unit) and INLINE `left`/`top` onto\n   `ui-card-panel`. It derives those from the group's `width` in grid\n   units and ignores the viewport, so on a 2166px screen every tab is a\n   ~320px column pinned near the centre and the rest of the screen is\n   empty.\n\n   Because the widths are INLINE they outrank any normal CSS rule, so\n   `!important` is required here \u2014 this is the case it exists for. We\n   then reflow the cards ourselves.\n\n   `!important` cannot beat inline styles for `left` on the same\n   element, so a group that sits right-of-centre would still be offset;\n   `margin-left: auto` is therefore applied with `!important` too, and\n   the panel is pinned with left/right as well. Measured before/after\n   below in tests/test_theme_wiring.py. */\n\n/* Any reasonably wide viewport: stop the dashboard pinning a fixed\n   narrow column. */\n@media (min-width: 900px) {\n  body.nr-dashboard-theme ui-card-panel {\n    width: auto !important;\n    max-width: none !important;\n    /* The panel carries inline left/top from the masonry layout. `auto` with\n       !important neutralises them without introducing an offset of its own\n       (`right` must NOT be set here: on a relatively-positioned box a non-auto\n       `right` shifts the element left by its own width). */\n    position: relative !important;\n    left: auto !important;\n    top: auto !important;\n    margin-left: 0 !important;\n    margin-right: 0 !important;\n  }\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    width: 100% !important;\n    height: auto !important;\n  }\n  /* The title bar carries an inline width matching the old fixed column. */\n  body.nr-dashboard-theme .nr-dashboard-cardtitle {\n    width: auto !important;\n  }\n  /* Let the masonry container span the content area. */\n  body.nr-dashboard-theme .masonry-container {\n    width: 100% !important;\n  }\n  /* The widgets inside a card are `position: absolute` with an inline `top`\n     (measured: top 0/54/108/216/324px), so the card had no height of its own\n     and collapsed to 0 -- the panel then shrank to a 56px strip and the\n     widgets, though still painted, were clipped out of the layout. Returning\n     them to normal flow makes the container grow to fit.\n\n     They are then laid out as a wrapping row rather than stretched to the full\n     width: the dashboard sizes each widget's inline height for the ORIGINAL\n     ~318px column, so stretching a widget to 2166px stretched its canvas to\n     2144x221 (measured) -- a badly distorted, unreadable gauge. Content-sized\n     cards that wrap into columns keep every widget at a sane aspect ratio and\n     still fill the screen.\n\n     `height` is deliberately left alone: gauges and charts depend on their\n     dashboard-computed inline height to size the canvas. */\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer md-card,\n  body.nr-dashboard-theme .nr-dashboard-card {\n    position: static !important;\n    left: auto !important;\n    top: auto !important;\n    display: inline-block;\n    vertical-align: top;\n    width: auto !important;\n    max-width: 100% !important;\n    min-width: 180px;\n    margin: 8px 12px 12px 0;\n  }\n}\n\n/* Genuinely wide screens (tablet landscape, desktop, wall panel). Every tab\n   currently carries ONE group, so the panel fills the content width.\n   NOTE: this block must NOT set a width on `md-card` -- the 900px block above\n   already sizes widgets for their own aspect ratio, and an equal-specificity\n   `width: 100% !important` here would win on source order and stretch every\n   canvas again (measured: a gauge canvas blown out to 2144x221). */\n@media (min-width: 1280px) {\n  body.nr-dashboard-theme ui-card-panel {\n    display: block;\n    width: 100% !important;\n  }\n  body.nr-dashboard-theme .masonry-container {\n    text-align: left;\n  }\n}\n\n/* Short-and-wide (tablet held in landscape): trim vertical padding so\n   more fits above the fold. */\n@media (max-height: 600px) and (orientation: landscape) {\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    padding-top: 0;\n  }\n  body.nr-dashboard-theme ui-card-panel {\n    margin-top: 0;\n  }\n}\n\n</style>",
+    "format": "<style>\n\n\n\n* { margin: 0; padding: 0; box-sizing: border-box; }\n\n:root {\n  --shd-bg: #1a1a2e;\n  --shd-surface: #16213e;\n  --shd-card: #1f2b47;\n  --shd-accent: #667eea;\n  --shd-accent-2: #764ba2;\n  --shd-text: #eee;\n  \n  --shd-muted: #b8c4de;\n  --shd-text-dim: #aab;\n  --shd-ok: #2ecc71;\n  --shd-warn: #f1c40f;\n  \n  --shd-err: #ff7676;\n  \n  --shd-critical: #c62828;      \n  --shd-warning: var(--shd-warn);\n  --shd-info: #00acc1;           \n  --shd-alert-ink: var(--shd-bg); \n  --shd-alert-padding: 12px;\n  --shd-alert-gap: 12px;\n  --shd-alert-fs: 1rem;          \n  --shd-alert-fs-strong: 1.2rem; \n  --shd-alert-border-w: 2px;\n  --shd-alert-glow: 0 0 15px rgba(198, 40, 40, 0.5);\n  --shd-touch-target: 44px;   \n  --shd-radius: 10px;\n\n  \n  --nr-dashboard-pageBackgroundColor:         var(--shd-bg);\n  --nr-dashboard-pageSidebarBackgroundColor:  var(--shd-surface);\n  --nr-dashboard-pageTitlebarBackgroundColor: var(--shd-surface);\n  --nr-dashboard-groupBackgroundColor:        var(--shd-card);\n  --nr-dashboard-groupBorderColor:            var(--shd-card);\n  --nr-dashboard-groupTextColor:              var(--shd-accent);\n  --nr-dashboard-widgetBackgroundColor:       var(--shd-card);\n  --nr-dashboard-widgetBgndColor:             var(--shd-card);\n  --nr-dashboard-widgetBorderColor:           var(--shd-card);\n  --nr-dashboard-widgetColor:                 var(--shd-accent);\n  --nr-dashboard-widgetTextColor:             var(--shd-text);\n}\n\nhtml { font-size: 16px; }\n\nbody {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n  font-family: -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;   \n  -webkit-text-size-adjust: 100%;            \n  overflow-x: hidden;                         \n}\n\n\n.status-bar {\n  background: linear-gradient(135deg, var(--shd-accent), var(--shd-accent-2));\n  color: #fff;\n  padding: 12px 16px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: 8px;\n  position: sticky;\n  top: 0;\n  z-index: 100;\n}\n\n.status-bar .status-dot {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  display: inline-block;\n  animation: pulse 2s ease-in-out infinite;\n}\n.status-dot.ok      { background: var(--shd-ok); }\n.status-dot.warning { background: var(--shd-warn); }\n.status-dot.error   { background: var(--shd-err); }\n\n\n\n.alert-ok {\n  background: var(--shd-card);\n  color: var(--shd-text);\n  font-size: var(--shd-alert-fs);\n  padding: var(--shd-alert-padding);\n  border-radius: var(--shd-radius);\n  border: var(--shd-alert-border-w) solid var(--shd-ok);\n  margin-bottom: var(--shd-alert-gap);\n  text-align: center;\n}\n.alert-info {\n  background: var(--shd-info);\n  color: var(--shd-alert-ink);\n  font-size: var(--shd-alert-fs);\n  padding: var(--shd-alert-padding);\n  border-radius: var(--shd-radius);\n  border: var(--shd-alert-border-w) solid var(--shd-alert-ink);\n  margin-bottom: var(--shd-alert-gap);\n  text-align: center;\n}\n.alert-warning {\n  background: var(--shd-warning);\n  color: var(--shd-alert-ink);\n  font-weight: 600;\n  font-size: var(--shd-alert-fs-strong);\n  padding: var(--shd-alert-padding);\n  border-radius: var(--shd-radius);\n  border: var(--shd-alert-border-w) solid var(--shd-alert-ink);\n  margin-bottom: var(--shd-alert-gap);\n  text-align: center;\n}\n.alert-critical {\n  background: var(--shd-critical);\n  color: var(--shd-text);\n  font-weight: bold;\n  font-size: var(--shd-alert-fs-strong);\n  padding: var(--shd-alert-padding);\n  border-radius: var(--shd-radius);\n  border: var(--shd-alert-border-w) solid var(--shd-text);\n  box-shadow: var(--shd-alert-glow);\n  animation: pulse 1.5s infinite;\n  margin-bottom: var(--shd-alert-gap);\n  z-index: 10;\n  text-align: center;\n}\n\nbody.nr-dashboard-theme .nr-dashboard-template .alert-critical {\n  display: block !important;\n}\n\n\n\n.nr-dashboard-cardtitle {\n  min-height: var(--shd-touch-target);\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  touch-action: manipulation;\n  margin: 0;\n}\n.nr-dashboard-cardtitle .nr-dashboard-cardcarat {\n  min-width: var(--shd-touch-target);\n  min-height: var(--shd-touch-target);\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  touch-action: manipulation;\n  cursor: pointer;\n}\n.ui_tab {\n  border-bottom: 2px solid var(--shd-accent);\n  display: flex;\n  gap: 4px;\n  overflow-x: auto;             \n  -webkit-overflow-scrolling: touch;\n  scrollbar-width: none;\n}\n.ui_tab::-webkit-scrollbar { display: none; }\n\n.ui_tab .tab-link {\n  padding: 12px 16px;\n  white-space: nowrap;\n  color: var(--shd-text-dim);\n  text-decoration: none;\n  font-size: 14px;\n  border-bottom: 2px solid transparent;\n  min-height: var(--shd-touch-target);   \n  display: inline-flex;\n  align-items: center;\n  touch-action: manipulation;\n}\n.ui_tab .tab-link.active {\n  color: var(--shd-text);\n  border-bottom-color: var(--shd-accent);\n}\n\n\n.ui_card, .ui_group {\n  background: var(--shd-card);\n  border-radius: var(--shd-radius);\n  padding: 16px;\n  margin: 12px;\n  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 255, 255, 0.05);\n}\n\n.ui_row {\n  display: flex;\n  flex-direction: row;          \n  gap: 12px;\n  flex-wrap: wrap;\n}\n.ui_row > * { flex: 1 1 auto; }\n\n\n\n.mdc-button,\n.ui_button,\n.ui_toggle,\nbutton {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  padding: 10px 18px;\n  font-size: 15px;\n  border-radius: 8px;\n  cursor: pointer;\n  touch-action: manipulation;  \n}\n\n.ui_switch .mdc-switch,\n.ui_toggle {\n  transform-origin: left center;\n}\n\n.ui_slider input[type=\"range\"] {\n  height: 44px;                 \n  width: 100%;\n  accent-color: var(--shd-accent);\n}\n\n\n.status-ok      { color: var(--shd-ok); }\n.status-warning { color: var(--shd-warn); }\n.status-error   { color: var(--shd-err); }\n\n\n.ui_table { width: 100%; border-collapse: collapse; font-size: 14px; }\n.ui_table th, .ui_table td {\n  padding: 10px 8px;\n  text-align: left;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n  overflow-wrap: break-word;\n}\n\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50%      { opacity: 0.7; }\n}\n.pulse { animation: pulse 2s ease-in-out infinite; }\n\n\n\n\n@media (min-width: 1280px) {\n  .ui_row { flex-direction: row; }\n  .ui_card, .ui_group { max-width: 480px; }\n}\n\n\n@media (max-width: 1024px) {\n  .ui_row { flex-direction: column; }\n  .ui_card, .ui_group { width: 100%; margin: 8px 0; }\n}\n\n\n@media (max-width: 900px) {\n  html { font-size: 15px; }\n  .ui_table th, .ui_table td { padding: 8px 6px; font-size: 13px; }\n  .status-bar { padding: 10px 12px; }\n}\n\n\n@media (max-width: 600px) {\n  html { font-size: 14px; }\n  .ui_row { flex-direction: column; }\n  .ui_table th, .ui_table td { padding: 6px 4px; font-size: 12px; }\n  .ui_card, .ui_group { padding: 12px; margin: 8px; }\n  .ui_tab .tab-link { padding: 10px 12px; font-size: 13px; }\n  .status-bar { flex-direction: column; align-items: flex-start; }\n}\n\n\n@media (max-width: 380px) {\n  html { font-size: 13px; }\n  .ui_tab .tab-link { padding: 10px 10px; }\n}\n\n\n\n.shd-embed {\n  position: relative;\n  width: 100%;\n  min-height: 240px;\n  border-radius: var(--shd-radius);\n  overflow: hidden;              \n  background: var(--shd-card);\n}\n.shd-grafana-frame {\n  display: block;\n  width: 100%;\n  height: 100%;\n  min-height: 240px;\n  border: 0;                     \n  background: transparent;\n  overscroll-behavior: contain;\n}\n\n\n@media (max-height: 480px) and (orientation: landscape) {\n  .status-bar { position: static; padding: 6px 12px; }\n  .ui_card, .ui_group { margin: 6px; padding: 10px; }\n}\n\n\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n  .pulse { animation: none; }\n}\n\n\n@media print {\n  body { background: #fff; color: #000; }\n  .status-bar, .ui_tab { display: none; }\n}\n\nbody.nr-dashboard-theme {\n  background: var(--shd-bg);\n  color: var(--shd-text);\n}\n\n/* ------------------------------------------------------------------\n   The dashboard's own theme block defines the --nr-dashboard-* variables\n   but then PAINTS its primary surfaces with hardcoded colours that ignore\n   them. Measured in dashboard 3.6.6 (selector -> colour):\n     body.nr-dashboard-theme md-content md-card   -> #fff\n     .nr-dashboard-theme ui-card-panel            -> #fff\n     body.nr-dashboard-theme md-toolbar           -> #0094CE\n     body.nr-dashboard-theme md-sidenav           -> #eee\n   Overriding only the variables therefore darkens :root while the page\n   still renders light. These rules match or exceed each original's\n   specificity, and this block is injected last, so ties resolve here.\n   Deliberately not !important: nothing here is inline, and !important\n   would also defeat the dashboard's later runtime theming.\n   ------------------------------------------------------------------ */\nbody.nr-dashboard-theme md-content md-card {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme ui-card-panel {\n  background: var(--shd-card);\n  color: var(--shd-text);\n}\n\n/* The dashboard paints ui_template content on its OWN white panel:\n     .nr-dashboard-theme .nr-dashboard-template { background-color: #fff }\n   That selector is specificity (0,2,0) and therefore BEATS the (0,1,3)\n   `body.nr-dashboard-theme md-content md-card` rule above -- so templated\n   widgets (the device and client tables) stayed white while the theme's\n   `#eee` text sat on top of them. Measured contrast ratio: 1.16:1, i.e.\n   invisible. Matching at (0,2,1) wins. Verified: the tables were the ONLY\n   white surfaces left; every other widget card was already #1f2b47. */\nbody.nr-dashboard-theme .nr-dashboard-template {\n  background: transparent;\n  color: var(--shd-text);\n}\n/* The dashboard's legacy `.table` class is written for a light background.\n   Its own rules only set borders/padding, so rows need explicit dark-theme\n   separation or the list reads as one undifferentiated block. */\nbody.nr-dashboard-theme table.table {\n  color: var(--shd-text);\n  border-collapse: collapse;\n}\nbody.nr-dashboard-theme table.table th {\n  color: var(--shd-text);\n  background: transparent;\n  border-bottom: 2px solid var(--shd-accent);\n}\nbody.nr-dashboard-theme table.table td {\n  color: var(--shd-text);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\nbody.nr-dashboard-theme table.table tbody tr:nth-child(even) {\n  background: rgba(255, 255, 255, 0.045);   /* zebra striping for scanability */\n}\n/* `--shd-muted` is deliberately lighter than the 4.5:1 floor against\n   --shd-card, so secondary text stays legible rather than decorative. */\nbody.nr-dashboard-theme .nr-dashboard-template .shd-muted,\nbody.nr-dashboard-theme .shd-muted {\n  color: var(--shd-muted);\n}\n/* The slider's floating value bubble paints TEXT on the dashboard's hardcoded\n   accent (--nr-dashboard-widgetBackgroundColor / #4FBAE4), which the theme's\n   light text sat on at ~2.2:1 -- the number was barely legible. Give the\n   bubble a dark surface. The track FILL keeps the accent: it is decorative\n   and carries no text, so it is not a contrast problem. */\nbody.nr-dashboard-theme .nr-dashboard-slider .md-sign,\nbody.nr-dashboard-theme md-slider .md-sign {\n  background-color: var(--shd-card);\n  color: var(--shd-text);\n}\n/* GAUGE TEXT -- this is the rule that actually works in dashboard 3.6.6.\n   justgage renders its labels as SVG <text fill=\"#111111\"> (near-black).\n   A presentation attribute sits at the BOTTOM of the cascade, so any CSS rule\n   beats it -- no !important needed. Setting the node's `valueFontColor` does\n   NOT work here: the 3.6.6 ui_gauge controller never forwards it to justgage\n   (verified -- the attribute stayed #111111 with the property set). Measured\n   before: values 0/4.7/100 at ~1.4:1, effectively invisible on the dark card. */\nbody.nr-dashboard-theme .nr-dashboard-gauge svg text {\n  fill: var(--shd-text);\n}\nbody.nr-dashboard-theme md-toolbar {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-sidenav {\n  background: var(--shd-surface);\n  color: var(--shd-text);\n}\n\n/* Tab drawer entries and the toolbar button are Angular Material elements,\n   not `.ui_tab .tab-link` (which matches nothing in this version). The\n   toolbar button measured 40px -- under the 44px touch target. */\nbody.nr-dashboard-theme md-sidenav md-list-item,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  min-height: var(--shd-touch-target);\n  touch-action: manipulation;\n}\nbody.nr-dashboard-theme md-sidenav md-list-item p,\nbody.nr-dashboard-theme md-sidenav .md-button {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme button.md-icon-button,\nbody.nr-dashboard-theme .md-icon-button {\n  min-height: var(--shd-touch-target);\n  min-width: var(--shd-touch-target);\n  touch-action: manipulation;\n  color: var(--shd-text);\n}\n\n/* Charts/gauge/template content the dashboard paints on its own light panel. */\nbody.nr-dashboard-theme md-card .nr-dashboard-text,\nbody.nr-dashboard-theme md-card table,\nbody.nr-dashboard-theme md-card th,\nbody.nr-dashboard-theme md-card td {\n  color: var(--shd-text);\n}\nbody.nr-dashboard-theme md-card th {\n  border-bottom-color: var(--shd-accent);\n}\n\n/* ==================================================================\n   LANDSCAPE / WIDE-SCREEN LAYOUT\n   ------------------------------------------------------------------\n   The dashboard's masonry JS writes INLINE pixel widths onto\n   `.nr-dashboard-cardcontainer` (measured: width 318px for a width-12\n   group -> ~53.3px per grid unit) and INLINE `left`/`top` onto\n   `ui-card-panel`. It derives those from the group's `width` in grid\n   units and ignores the viewport, so on a 2166px screen every tab is a\n   ~320px column pinned near the centre and the rest of the screen is\n   empty.\n\n   Because the widths are INLINE they outrank any normal CSS rule, so\n   `!important` is required here \u2014 this is the case it exists for. We\n   then reflow the cards ourselves.\n\n   `!important` cannot beat inline styles for `left` on the same\n   element, so a group that sits right-of-centre would still be offset;\n   `margin-left: auto` is therefore applied with `!important` too, and\n   the panel is pinned with left/right as well. Measured before/after\n   below in tests/test_theme_wiring.py. */\n\n/* Any reasonably wide viewport: stop the dashboard pinning a fixed\n   narrow column. */\n@media (min-width: 900px) {\n  body.nr-dashboard-theme ui-card-panel {\n    width: auto !important;\n    max-width: none !important;\n    /* The panel carries inline left/top from the masonry layout. `auto` with\n       !important neutralises them without introducing an offset of its own\n       (`right` must NOT be set here: on a relatively-positioned box a non-auto\n       `right` shifts the element left by its own width). */\n    position: relative !important;\n    left: auto !important;\n    top: auto !important;\n    margin-left: 0 !important;\n    margin-right: 0 !important;\n  }\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    width: 100% !important;\n    height: auto !important;\n  }\n  /* The title bar carries an inline width matching the old fixed column. */\n  body.nr-dashboard-theme .nr-dashboard-cardtitle {\n    width: auto !important;\n  }\n  /* Let the masonry container span the content area. */\n  body.nr-dashboard-theme .masonry-container {\n    width: 100% !important;\n  }\n  /* The widgets inside a card are `position: absolute` with an inline `top`\n     (measured: top 0/54/108/216/324px), so the card had no height of its own\n     and collapsed to 0 -- the panel then shrank to a 56px strip and the\n     widgets, though still painted, were clipped out of the layout. Returning\n     them to normal flow makes the container grow to fit.\n\n     They are then laid out as a wrapping row rather than stretched to the full\n     width: the dashboard sizes each widget's inline height for the ORIGINAL\n     ~318px column, so stretching a widget to 2166px stretched its canvas to\n     2144x221 (measured) -- a badly distorted, unreadable gauge. Content-sized\n     cards that wrap into columns keep every widget at a sane aspect ratio and\n     still fill the screen.\n\n     `height` is deliberately left alone: gauges and charts depend on their\n     dashboard-computed inline height to size the canvas. */\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer md-card,\n  body.nr-dashboard-theme .nr-dashboard-card {\n    position: static !important;\n    left: auto !important;\n    top: auto !important;\n    display: inline-block;\n    vertical-align: top;\n    width: auto !important;\n    max-width: 100% !important;\n    min-width: 180px;\n    margin: 8px 12px 12px 0;\n  }\n}\n\n/* Genuinely wide screens (tablet landscape, desktop, wall panel). Every tab\n   currently carries ONE group, so the panel fills the content width.\n   NOTE: this block must NOT set a width on `md-card` -- the 900px block above\n   already sizes widgets for their own aspect ratio, and an equal-specificity\n   `width: 100% !important` here would win on source order and stretch every\n   canvas again (measured: a gauge canvas blown out to 2144x221). */\n@media (min-width: 1280px) {\n  body.nr-dashboard-theme ui-card-panel {\n    display: block;\n    width: 100% !important;\n  }\n  body.nr-dashboard-theme .masonry-container {\n    text-align: left;\n  }\n}\n\n/* Short-and-wide (tablet held in landscape): trim vertical padding so\n   more fits above the fold. */\n@media (max-height: 600px) and (orientation: landscape) {\n  body.nr-dashboard-theme .nr-dashboard-cardcontainer {\n    padding-top: 0;\n  }\n  body.nr-dashboard-theme ui-card-panel {\n    margin-top: 0;\n  }\n}\n\n</style><script>\n/* shd-collapse-defaults: progressive disclosure (card t_b3218913).\n   Groups configured with className 'shd-collapsible' start collapsed; the\n   stock dashboard cannot do this itself (its localStorage key is shared by\n   every panel). Collapse by clicking the group's own caret -- the identical\n   code path the dashboard uses to restore a saved state -- so the caret icon\n   and scope state stay in sync. */\n(function () {\n  if (window.__shdCollapseDefaults) { return; }\n  window.__shdCollapseDefaults = true;\n  var PREFIX = 'shd_collapsed_';\n  var SHARED_KEY = '{{group.header.id}}';  /* the stock key: same literal text\n     for every panel (interpolation is unresolved at link time) */\n\n  function groupKey(host) {\n    var id = host.getAttribute('node-id') || '';\n    // Before interpolation resolves, the attribute holds the raw {{...}} text.\n    return id && id.indexOf('{') === -1 ? PREFIX + id : null;\n  }\n\n  function scrubShared() {\n    /* Our click made the stock write the shared key; if it is ever read at\n       link time again, EVERY panel auto-collapses on load. It must never\n       decide anything. */\n    try { localStorage.removeItem(SHARED_KEY); } catch (e) {}\n  }\n\n  function armCarat(host, carat) {\n    // Record the user's toggle in OUR namespace so choices survive reloads.\n    if (!carat || carat.getAttribute('data-shd-armed')) { return; }\n    carat.setAttribute('data-shd-armed', '1');\n    carat.addEventListener('click', function () {\n      var k = groupKey(host);\n      if (k) {\n        var cur = null;\n        try { cur = localStorage.getItem(k); } catch (e) {}\n        /* The click always TOGGLES, so the new state is the inverse of the\n           recorded one: 'false' (open) -> 'true'; anything else -> 'false'.\n           A null record means the panel was collapsed-by-default, so the\n           click opened it. */\n        try {\n          localStorage.setItem(k, cur === 'false' ? 'true' : 'false');\n        } catch (e) {}\n      }\n      scrubShared();\n    });\n  }\n\n  function armTitleBar(inner, host, carat) {\n    /* The stock binds ng-click on the CARAT SPAN ONLY -- a ~14x14px tap\n       target. The theme CSS enlarges the caret to the touch target and\n       makes the whole title <p> a 44px-high flex row; forward taps anywhere\n       on the row to the caret so the toggle area spans the full group\n       width (acceptance: touch-friendly expand/collapse). */\n    var title = inner.querySelector('.nr-dashboard-cardtitle');\n    if (!title || title.getAttribute('data-shd-armed')) { return; }\n    title.setAttribute('data-shd-armed', '1');\n    title.addEventListener('click', function (e) {\n      if (carat.contains(e.target)) { return; }  /* direct carat tap: the\n        carat's own ng-click + our carat listener already handled it */\n      carat.click();\n    });\n  }\n\n  function applyDefaults() {\n    /* className lives on the INNER .nr-dashboard-cardpanel div (ng-class in\n       the stock template) -- never on the <ui-card-panel> host. */\n    var inners = document.querySelectorAll(\n        '.nr-dashboard-cardpanel.shd-collapsible');\n    for (var i = 0; i < inners.length; i++) {\n      var inner = inners[i];\n      var host = inner.parentNode;             /* <ui-card-panel node-id=...> */\n      var carat = inner.querySelector('.nr-dashboard-cardcarat');\n      var container = inner.querySelector('.nr-dashboard-cardcontainer');\n      if (!host || host.nodeType !== 1 || !carat || !container) { continue; }\n\n      var k = groupKey(host);\n      if (!k) { continue; }                    /* id not interpolated yet */\n\n      // One action per render: a second click during the 150ms slideToggle\n      // animation would flip the panel back the other way. The marker dies\n      // with the panel element when the tab re-renders.\n      var done = host.getAttribute('data-shd-done');\n      if (!done) {\n        var stored = null;\n        try { stored = localStorage.getItem(k); } catch (e) {}\n        var isCollapsed = container.offsetParent === null;\n        var act = false;\n        if (stored === 'false') {\n          act = isCollapsed;      /* user pinned OPEN; the stock shared-key\n             restore may have collapsed it anyway -> re-open */\n        } else if (stored === 'true') {\n          act = !isCollapsed;     /* user pinned CLOSED; keep it closed */\n        } else {\n          act = !isCollapsed;     /* fresh visit: default-collapsed */\n        }\n        if (act) {\n          carat.click();\n          scrubShared();\n          host.setAttribute('data-shd-done', '1');\n        }\n      }\n      // Arm AFTER any programmatic click so our own click is never recorded\n      // as a user choice; both arms are idempotent per panel render.\n      armCarat(host, carat);\n      armTitleBar(inner, host, carat);\n    }\n  }\n\n  var scheduled = false;\n  function schedule() {\n    if (scheduled) { return; }\n    scheduled = true;\n    setTimeout(function () { scheduled = false; applyDefaults(); }, 100);\n  }\n\n  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', applyDefaults);\n  } else {\n    applyDefaults();\n  }\n  setTimeout(applyDefaults, 500);\n  setTimeout(applyDefaults, 1500);\n  var observer = new MutationObserver(function (muts) {\n    for (var i = 0; i < muts.length; i++) {\n      if (muts[i].addedNodes.length) { schedule(); return; }\n    }\n  });\n  if (document.body) {\n    observer.observe(document.body, { childList: true, subtree: true });\n  } else {\n    document.addEventListener('DOMContentLoaded', function () {\n      observer.observe(document.body, { childList: true, subtree: true });\n    });\n  }\n})();\n</script>",
     "storeOutMessages": false,
     "fwdInMessages": false,
     "resendOnRefresh": true,
@@ -121,12 +121,63 @@
     "hidden": false
   },
   {
+    "id": "95c2fe0a8a27ac0e",
+    "type": "ui_group",
+    "z": "7021a0b2d35572fb",
+    "name": "Alerts",
+    "tab": "c3e4215d98ac0a8c",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "db7c1893ad9ad437",
+    "type": "ui_template",
+    "z": "7021a0b2d35572fb",
+    "name": "Alert Banner",
+    "group": "95c2fe0a8a27ac0e",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "9c40c848f77ef14b",
+    "type": "function",
+    "z": "7021a0b2d35572fb",
+    "name": "Evaluate alerts",
+    "func": "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n// Split metrics attaches mem + uptime to its CPU (out0) message, so a\n// single feed evaluates the whole tab state.\nvar cpu = (typeof msg.payload === 'number') ? msg.payload : -1;\nvar mem = (typeof msg.mem === 'number') ? msg.mem : 0;\nvar up = msg.uptime || '';\nvar sev = 'ok';\nvar parts = [];\nif (cpu < 0) {\n  sev = 'critical';\n  parts.push('Proxmox data unavailable');\n} else {\n  if (cpu >= 90) { sev = 'critical'; parts.push('CPU ' + cpu + '%'); }\n  else if (cpu >= 75) {\n    sev = 'warning'; parts.push('CPU ' + cpu + '%');\n  }\n  if (mem >= 90) { sev = 'critical'; parts.push('Memory ' + mem + '%'); }\n  else if (mem >= 75) {\n    if (sev === 'ok') { sev = 'warning'; }\n    parts.push('Memory ' + mem + '%');\n  }\n  if (sev === 'ok') { parts.push('Proxmox OK' + (up ? ' - up ' + up : '')); }\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: parts.join(' | ')};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1150,
+    "y": 120,
+    "wires": [
+      [
+        "db7c1893ad9ad437"
+      ]
+    ]
+  },
+  {
     "id": "ac2f99930040b4ff",
     "type": "ui_group",
     "z": "7021a0b2d35572fb",
     "name": "Proxmox Host",
     "tab": "c3e4215d98ac0a8c",
-    "order": 1,
+    "order": 2,
     "disp": true,
     "width": "12",
     "collapse": false
@@ -232,12 +283,24 @@
     "wires": []
   },
   {
+    "id": "f576884ea46a90a3",
+    "type": "ui_group",
+    "z": "7021a0b2d35572fb",
+    "name": "Host Details",
+    "tab": "c3e4215d98ac0a8c",
+    "order": 3,
+    "disp": true,
+    "width": "12",
+    "collapse": true,
+    "className": "shd-collapsible"
+  },
+  {
     "id": "bb7d3f9536634823",
     "type": "ui_template",
     "z": "7021a0b2d35572fb",
     "name": "Host Detail",
-    "group": "ac2f99930040b4ff",
-    "order": 5,
+    "group": "f576884ea46a90a3",
+    "order": 1,
     "width": "7",
     "height": "5",
     "format": "<table class='table' style='width:100%'>\n  <tbody>\n    <tr><td class='shd-muted'>Proxmox</td><td>{{msg.payload.pveversion}}</td></tr>\n    <tr><td class='shd-muted'>Kernel</td><td>{{msg.payload.kversion}}</td></tr>\n    <tr><td class='shd-muted'>CPU model</td><td>{{msg.payload.model}}</td></tr>\n    <tr><td class='shd-muted'>Cores</td><td>{{msg.payload.cores}} @ {{msg.payload.mhz}} MHz</td></tr>\n    <tr><td class='shd-muted'>Load avg</td><td>{{msg.payload.load1}} / {{msg.payload.load5}} / {{msg.payload.load15}}</td></tr>\n    <tr><td class='shd-muted'>Uptime</td><td>{{msg.payload.uptime}}</td></tr>\n  </tbody>\n</table>",
@@ -256,8 +319,8 @@
     "type": "ui_text",
     "z": "7021a0b2d35572fb",
     "name": "Swap",
-    "group": "ac2f99930040b4ff",
-    "order": 6,
+    "group": "f576884ea46a90a3",
+    "order": 2,
     "width": "4",
     "height": "2",
     "label": "Swap",
@@ -273,8 +336,8 @@
     "type": "ui_text",
     "z": "7021a0b2d35572fb",
     "name": "Disk (rootfs)",
-    "group": "ac2f99930040b4ff",
-    "order": 7,
+    "group": "f576884ea46a90a3",
+    "order": 3,
     "width": "4",
     "height": "2",
     "label": "Disk",
@@ -290,8 +353,8 @@
     "type": "ui_text",
     "z": "7021a0b2d35572fb",
     "name": "Memory Detail",
-    "group": "ac2f99930040b4ff",
-    "order": 8,
+    "group": "f576884ea46a90a3",
+    "order": 4,
     "width": "4",
     "height": "2",
     "label": "Memory",
@@ -388,7 +451,7 @@
     "type": "function",
     "z": "7021a0b2d35572fb",
     "name": "Split metrics",
-    "func": "var d = (msg.payload && msg.payload.data) ? msg.payload.data : null;\nif (!d) { node.status({fill:'red',shape:'ring',text:'no data'}); return null; }\nvar cpu = Math.round((d.cpu || 0) * 1000) / 10;\nvar memUsed = (d.memory && d.memory.used) || 0;\nvar memTot = (d.memory && d.memory.total) || 1;\nvar mem = Math.round(memUsed / memTot * 1000) / 10;\nvar up = d.uptime || 0;\nvar days = Math.floor(up / 86400), hrs = Math.floor((up % 86400) / 3600);\nnode.status({fill:'green',shape:'dot',text:cpu + '% cpu'});\n// Human-readable byte formatting for the disk/swap/memory rows.\nfunction gb(v) { return (Math.round(v / 1073741824 * 10) / 10) + ' GB'; }\nfunction pct(u, t) { return t ? Math.round(u / t * 1000) / 10 + '%' : 'n/a'; }\n// Nested sub-objects are flattened onto the payload so the Host Detail\n// template can reach them with plain dotted paths -- confirmed present in\n// the live response by tools/probe_proxmox_status.py.\nvar rootfs = d.rootfs || {}, swap = d.swap || {};\nvar mem2 = d.memory || {};\nvar ci = d.cpuinfo || {}, kd = d['current-kernel'] || {}, la = d.loadavg || [];\nvar detail = {\n  payload: {\n    pveversion: d.pveversion || 'unknown',\n    kversion: d.kversion || kd.release || 'unknown',\n    model: ci.model || 'unknown',\n    cores: ci.cores || ci.cpus || '?',\n    mhz: ci.mhz || '?',\n    load1: (la[0] != null ? Math.round(la[0] * 100) / 100 : '?'),\n    load5: (la[1] != null ? Math.round(la[1] * 100) / 100 : '?'),\n    load15: (la[2] != null ? Math.round(la[2] * 100) / 100 : '?'),\n    uptime: days + 'd ' + hrs + 'h'\n  }\n};\nvar mSwap = {payload: pct(swap.used, swap.total) + ' of ' + gb(swap.total || 0)};\nvar mDisk = {payload: pct(rootfs.used, rootfs.total) + ' of ' + gb(rootfs.total || 0)\n  + '  (' + gb(rootfs.avail || 0) + ' free)'};\nvar mMem  = {payload: gb(mem2.used || 0) + ' of ' + gb(mem2.total || 0)\n  + '  (' + gb(mem2.available || 0) + ' avail)'};\nvar mCpu = {payload: cpu};\nvar mMemG = {payload: mem};\nvar mStat = {payload: 'Up ' + days + 'd ' + hrs + 'h' + (d.loadavg ? ' | load ' + (Math.round(d.loadavg[0]*100)/100) : '')};\nvar mChart = {payload: cpu, topic: 'cpu'};\nreturn [mCpu, mMemG, mStat, mChart, detail, mSwap, mDisk, mMem];",
+    "func": "var d = (msg.payload && msg.payload.data) ? msg.payload.data : null;\nif (!d) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  // out0 feeds the alert evaluator: payload -1 is its 'data\n  // unavailable' marker -> a CRITICAL banner instead of a blank one.\n  // The gauge clamps -1 to its 0 floor (cosmetic; the banner is the\n  // authoritative alert element).\n  return [{payload: -1, mem: -1, uptime: ''}, null, null, null, null, null, null, null];\n}\nvar cpu = Math.round((d.cpu || 0) * 1000) / 10;\nvar memUsed = (d.memory && d.memory.used) || 0;\nvar memTot = (d.memory && d.memory.total) || 1;\nvar mem = Math.round(memUsed / memTot * 1000) / 10;\nvar up = d.uptime || 0;\nvar days = Math.floor(up / 86400), hrs = Math.floor((up % 86400) / 3600);\nnode.status({fill:'green',shape:'dot',text:cpu + '% cpu'});\n// Human-readable byte formatting for the disk/swap/memory rows.\nfunction gb(v) { return (Math.round(v / 1073741824 * 10) / 10) + ' GB'; }\nfunction pct(u, t) { return t ? Math.round(u / t * 1000) / 10 + '%' : 'n/a'; }\n// Nested sub-objects are flattened onto the payload so the Host Detail\n// template can reach them with plain dotted paths -- confirmed present in\n// the live response by tools/probe_proxmox_status.py.\nvar rootfs = d.rootfs || {}, swap = d.swap || {};\nvar mem2 = d.memory || {};\nvar ci = d.cpuinfo || {}, kd = d['current-kernel'] || {}, la = d.loadavg || [];\nvar detail = {\n  payload: {\n    pveversion: d.pveversion || 'unknown',\n    kversion: d.kversion || kd.release || 'unknown',\n    model: ci.model || 'unknown',\n    cores: ci.cores || ci.cpus || '?',\n    mhz: ci.mhz || '?',\n    load1: (la[0] != null ? Math.round(la[0] * 100) / 100 : '?'),\n    load5: (la[1] != null ? Math.round(la[1] * 100) / 100 : '?'),\n    load15: (la[2] != null ? Math.round(la[2] * 100) / 100 : '?'),\n    uptime: days + 'd ' + hrs + 'h'\n  }\n};\nvar mSwap = {payload: pct(swap.used, swap.total) + ' of ' + gb(swap.total || 0)};\nvar mDisk = {payload: pct(rootfs.used, rootfs.total) + ' of ' + gb(rootfs.total || 0)\n  + '  (' + gb(rootfs.avail || 0) + ' free)'};\nvar mMem  = {payload: gb(mem2.used || 0) + ' of ' + gb(mem2.total || 0)\n  + '  (' + gb(mem2.available || 0) + ' avail)'};\nvar mCpu = {payload: cpu, mem: mem, uptime: days + 'd ' + hrs + 'h'};\nvar mMemG = {payload: mem};\nvar mStat = {payload: 'Up ' + days + 'd ' + hrs + 'h' + (d.loadavg ? ' | load ' + (Math.round(d.loadavg[0]*100)/100) : '')};\nvar mChart = {payload: cpu, topic: 'cpu'};\nreturn [mCpu, mMemG, mStat, mChart, detail, mSwap, mDisk, mMem];",
     "outputs": 8,
     "noerr": 0,
     "initialize": "",
@@ -398,7 +461,8 @@
     "y": 120,
     "wires": [
       [
-        "9d6dc4f8f9d21681"
+        "9d6dc4f8f9d21681",
+        "9c40c848f77ef14b"
       ],
       [
         "6baba86761aa3549"
@@ -458,12 +522,63 @@
     "hidden": false
   },
   {
+    "id": "c34cb29086a20d94",
+    "type": "ui_group",
+    "z": "b30173dcd6d85862",
+    "name": "Alerts",
+    "tab": "b75f1a13a781d3de",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "16ca658d373e0d2a",
+    "type": "ui_template",
+    "z": "b30173dcd6d85862",
+    "name": "Alert Banner",
+    "group": "c34cb29086a20d94",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "0998871d434fa71c",
+    "type": "function",
+    "z": "b30173dcd6d85862",
+    "name": "Evaluate alerts",
+    "func": "// Devices alert banner. Two feeds arrive here:\n//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n//    config is missing) from Format result / Build Maker API call;\n//  - the 300s list poll from Format device list: a device COUNT\n//    (number) on success, 'ERROR ...' when the hub is unreachable.\nvar p = String(msg.payload || '');\nvar sev = 'ok';\nvar text;\nif (typeof msg.payload === 'number') {\n  // list poll succeeded: N devices reachable = hub is up\n  text = msg.payload + ' devices reachable';\n} else if (p.indexOf('ERROR') === 0) {\n  sev = 'critical';\n  text = p.slice(0, 120);\n} else if (p.indexOf('Set HUBITAT') === 0) {\n  sev = 'warning';\n  text = 'Hubitat config missing: set HUBITAT_APP_ID / ACCESS_TOKEN / DEVICE_ID';\n} else if (p.indexOf('OK') === 0) {\n  text = 'Hubitat control OK';\n} else {\n  sev = 'info';\n  text = p || 'Awaiting first result';\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 990,
+    "y": 170,
+    "wires": [
+      [
+        "16ca658d373e0d2a"
+      ]
+    ]
+  },
+  {
     "id": "0b3790228c6385f0",
     "type": "ui_group",
     "z": "b30173dcd6d85862",
     "name": "Device Control",
     "tab": "b75f1a13a781d3de",
-    "order": 1,
+    "order": 2,
     "disp": true,
     "width": "6",
     "collapse": false
@@ -548,8 +663,8 @@
     "type": "ui_text",
     "z": "b30173dcd6d85862",
     "name": "Device Count",
-    "group": "0b3790228c6385f0",
-    "order": 3,
+    "group": "71a7056811887412",
+    "order": 1,
     "width": "6",
     "height": "2",
     "label": "Devices",
@@ -565,8 +680,8 @@
     "type": "ui_template",
     "z": "b30173dcd6d85862",
     "name": "Device List",
-    "group": "0b3790228c6385f0",
-    "order": 5,
+    "group": "71a7056811887412",
+    "order": 2,
     "width": "12",
     "height": "10",
     "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n      <td>{{d.label || d.name}}</td>\n      <td>{{d.type}}</td>\n      <td>{{d.room}}</td>\n    </tr>\n  </tbody>\n</table>",
@@ -581,11 +696,23 @@
     ]
   },
   {
+    "id": "71a7056811887412",
+    "type": "ui_group",
+    "z": "b30173dcd6d85862",
+    "name": "Device Directory",
+    "tab": "b75f1a13a781d3de",
+    "order": 3,
+    "disp": true,
+    "width": "12",
+    "collapse": true,
+    "className": "shd-collapsible"
+  },
+  {
     "id": "79096e91e2e6c3a8",
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Build device list call",
-    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = [];\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/,'') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
+    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = [];\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",
@@ -599,7 +726,8 @@
       ],
       [
         "501357c8c65d74b4",
-        "8824314092076504"
+        "8824314092076504",
+        "0998871d434fa71c"
       ]
     ]
   },
@@ -629,7 +757,7 @@
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Format device list",
-    "func": "var body = msg.payload;\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = [];\n  return [msg, msg];\n}\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch (e) { body = []; }\n}\nvar list = Array.isArray(body) ? body : (body && body.devices) || [];\nnode.status({fill:'green',shape:'dot',text:list.length + ' devices'});\nmsg.payload = list;\nvar c = {payload: list.length};\nreturn [msg, c];",
+    "func": "var body = msg.payload;\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = [];\n  // out1 feeds Device Count AND the alert evaluator: an explicit\n  // ERROR string makes the banner critical ('hub unreachable'),\n  // which a count of 0 cannot distinguish from 'no devices'.\n  var e = {payload: 'ERROR: Hubitat unreachable (' + (msg.error || 'no response') + ')'};\n  return [msg, e];\n}\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch (e) { body = []; }\n}\nvar list = Array.isArray(body) ? body : (body && body.devices) || [];\nnode.status({fill:'green',shape:'dot',text:list.length + ' devices'});\nmsg.payload = list;\nvar c = {payload: list.length};\nreturn [msg, c];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",
@@ -642,7 +770,8 @@
         "501357c8c65d74b4"
       ],
       [
-        "8824314092076504"
+        "8824314092076504",
+        "0998871d434fa71c"
       ]
     ]
   },
@@ -689,7 +818,8 @@
         "ca0ba149ba035f16"
       ],
       [
-        "8ea1dae49ea2f59a"
+        "8ea1dae49ea2f59a",
+        "0998871d434fa71c"
       ]
     ]
   },
@@ -719,8 +849,8 @@
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Format result",
-    "func": "// http request sets msg.error on a transport failure.\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n  return msg;\n}\nif (msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'http ' + msg.statusCode});\n  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n}\nreturn msg;",
-    "outputs": 1,
+    "func": "// http request sets msg.error on a transport failure.\nif (msg.error || !msg.statusCode) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n  return [msg, msg];\n}\nif (msg.statusCode >= 200 && msg.statusCode < 300) {\n  node.status({fill:'green',shape:'dot',text:'ok'});\n  msg.payload = 'OK (' + msg.statusCode + ')';\n} else {\n  node.status({fill:'red',shape:'ring',text:'http ' + msg.statusCode});\n  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n}\nreturn [msg, msg];",
+    "outputs": 2,
     "noerr": 0,
     "initialize": "",
     "finalize": "",
@@ -730,6 +860,9 @@
     "wires": [
       [
         "8ea1dae49ea2f59a"
+      ],
+      [
+        "0998871d434fa71c"
       ]
     ]
   },
@@ -907,12 +1040,63 @@
     "hidden": false
   },
   {
+    "id": "6c1f1a6f69ec1b45",
+    "type": "ui_group",
+    "z": "1292414d65358a68",
+    "name": "Alerts",
+    "tab": "453b38c70c013c67",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "4d76b83dc8e120a4",
+    "type": "ui_template",
+    "z": "1292414d65358a68",
+    "name": "Alert Banner",
+    "group": "6c1f1a6f69ec1b45",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "fabede8dbf5c3f32",
+    "type": "function",
+    "z": "1292414d65358a68",
+    "name": "Evaluate alerts",
+    "func": "// Network alert banner: controller reachability + client-count anomaly.\n// Split client data tags its count output with topic 'unifi/error' when\n// the poll failed, so 'no clients' (warning) is distinguishable from an\n// unreachable controller (critical).\nvar n = (typeof msg.payload === 'number') ? msg.payload : -1;\nvar sev = 'ok';\nvar text;\nif (n < 0 || msg.topic === 'unifi/error') {\n  sev = 'critical';\n  text = 'UniFi controller unreachable' + (msg._error ? ' -- ' + String(msg._error).slice(0, 100) : '');\n} else if (n === 0) {\n  sev = 'warning';\n  text = 'No clients online';\n} else {\n  text = n + ' clients online';\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1150,
+    "y": 300,
+    "wires": [
+      [
+        "4d76b83dc8e120a4"
+      ]
+    ]
+  },
+  {
     "id": "626e7274ee98c352",
     "type": "ui_group",
     "z": "1292414d65358a68",
     "name": "Network Overview",
     "tab": "453b38c70c013c67",
-    "order": 1,
+    "order": 2,
     "disp": true,
     "width": "12",
     "collapse": false
@@ -939,8 +1123,8 @@
     "type": "ui_template",
     "z": "1292414d65358a68",
     "name": "Client List",
-    "group": "626e7274ee98c352",
-    "order": 2,
+    "group": "d0015d0818eb9513",
+    "order": 1,
     "width": "12",
     "height": "8",
     "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Client</th><th>IP</th><th>MAC</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='c in msg.payload'>\n      <td>{{c.hostname}}</td><td>{{c.ip}}</td><td>{{c.mac}}</td>\n    </tr>\n  </tbody>\n</table>",
@@ -953,6 +1137,18 @@
     "wires": [
       []
     ]
+  },
+  {
+    "id": "d0015d0818eb9513",
+    "type": "ui_group",
+    "z": "1292414d65358a68",
+    "name": "Client Directory",
+    "tab": "453b38c70c013c67",
+    "order": 3,
+    "disp": true,
+    "width": "12",
+    "collapse": true,
+    "className": "shd-collapsible"
   },
   {
     "id": "e457487ebf2d80ca",
@@ -984,8 +1180,8 @@
     "type": "function",
     "z": "1292414d65358a68",
     "name": "Build UniFi auth",
-    "func": "// UniFi controllers need auth. Credentials come from env vars.\n// UNIFI_URL may carry a path prefix: UniFi OS (UDM/Cloud Gateway) serves\n// the Network app under /proxy/network, self-hosted controllers do not.\nvar base = env.get('UNIFI_URL');\nvar site = env.get('UNIFI_SITE') || 'default';\nvar key  = env.get('UNIFI_API_KEY');\nvar user = env.get('UNIFI_USERNAME');\nvar pass = env.get('UNIFI_PASSWORD');\nmsg.rejectUnauthorized = false;\nmsg.headers = {'Accept': 'application/json'};\nif (!base) {\n  node.status({fill:'red',shape:'ring',text:'no UNIFI_URL'});\n  return [null, {payload: [], topic: 'unifi/error', _error: 'UNIFI_URL is not set. Use https://<host>/proxy/network for a UniFi OS console, or https://<host>:8443 for a self-hosted controller'}];\n}\nbase = base.replace(/\\/+$/, '');\nmsg.url_stat = base + '/api/s/' + site + '/stat/sta';\nif (key) {\n  node.status({fill:'green',shape:'dot',text:'api key'});\n  msg.method = 'GET';\n  msg.url = msg.url_stat;\n  msg.headers['X-API-KEY'] = key;\n  // out1 is the API-key path and MUST still go through the HTTP request\n  // node. Returning it on out0 (the login path) sent it straight to the\n  // parser, which then read the inject's Date payload instead of client\n  // data and always rendered 0 clients. Both auth routes converge on the\n  // same HTTP node; out0 only differs in that it needs a login first.\n  return [null, msg];\n}\nif (!user || !pass) {\n  node.status({fill:'red',shape:'ring',text:'no credentials'});\n  return [null, {payload: [], topic: 'unifi/error', _error: 'Set UNIFI_API_KEY, or UNIFI_USERNAME + UNIFI_PASSWORD, in the service environment'}];\n}\n// Pick the login endpoint. A UniFi OS console (base carries\n// /proxy/network) authenticates at the console root via /api/auth/login;\n// self-hosted controllers use /api/login. UNIFI_LOGIN_URL overrides both.\nvar login = env.get('UNIFI_LOGIN_URL');\nif (!login) {\n  login = base + '/api/login';\n  var m = base.match(/^(https?:\\/\\/[^\\/]+)\\/proxy\\/network/);\n  if (m) { login = m[1] + '/api/auth/login'; }\n}\nnode.status({fill:'blue',shape:'dot',text:'logging in'});\nmsg.method = 'POST';\nmsg.url = login;\nmsg.headers['Content-Type'] = 'application/json';\nmsg.payload = JSON.stringify({username: user, password: pass, remember: true});\nreturn [msg, null];",
-    "outputs": 2,
+    "func": "// UniFi controllers need auth. Credentials come from env vars.\n// UNIFI_URL may carry a path prefix: UniFi OS (UDM/Cloud Gateway) serves\n// the Network app under /proxy/network, self-hosted controllers do not.\nvar base = env.get('UNIFI_URL');\nvar site = env.get('UNIFI_SITE') || 'default';\nvar key  = env.get('UNIFI_API_KEY');\nvar user = env.get('UNIFI_USERNAME');\nvar pass = env.get('UNIFI_PASSWORD');\nmsg.rejectUnauthorized = false;\nmsg.headers = {'Accept': 'application/json'};\nif (!base) {\n  node.status({fill:'red',shape:'ring',text:'no UNIFI_URL'});\n  return [null, null, {payload: [], topic: 'unifi/error', _error: 'UNIFI_URL is not set. Use https://<host>/proxy/network for a UniFi OS console, or https://<host>:8443 for a self-hosted controller'}];\n}\nbase = base.replace(/\\/+$/, '');\nmsg.url_stat = base + '/api/s/' + site + '/stat/sta';\nif (key) {\n  node.status({fill:'green',shape:'dot',text:'api key'});\n  msg.method = 'GET';\n  msg.url = msg.url_stat;\n  msg.headers['X-API-KEY'] = key;\n  // out1 is the API-key path and MUST still go through the HTTP request\n  // node. Returning it on out0 (the login path) sent it straight to the\n  // parser, which then read the inject's Date payload instead of client\n  // data and always rendered 0 clients. Both auth routes converge on the\n  // same HTTP node; out0 only differs in that it needs a login first.\n  return [null, msg, null];\n}\nif (!user || !pass) {\n  node.status({fill:'red',shape:'ring',text:'no credentials'});\n  return [null, null, {payload: [], topic: 'unifi/error', _error: 'Set UNIFI_API_KEY, or UNIFI_USERNAME + UNIFI_PASSWORD, in the service environment'}];\n}\n// Pick the login endpoint. A UniFi OS console (base carries\n// /proxy/network) authenticates at the console root via /api/auth/login;\n// self-hosted controllers use /api/login. UNIFI_LOGIN_URL overrides both.\nvar login = env.get('UNIFI_LOGIN_URL');\nif (!login) {\n  login = base + '/api/login';\n  var m = base.match(/^(https?:\\/\\/[^\\/]+)\\/proxy\\/network/);\n  if (m) { login = m[1] + '/api/auth/login'; }\n}\nnode.status({fill:'blue',shape:'dot',text:'logging in'});\nmsg.method = 'POST';\nmsg.url = login;\nmsg.headers['Content-Type'] = 'application/json';\nmsg.payload = JSON.stringify({username: user, password: pass, remember: true});\nreturn [msg, null];",
+    "outputs": 3,
     "noerr": 0,
     "initialize": "",
     "finalize": "",
@@ -998,6 +1194,9 @@
       ],
       [
         "41c85a6a5aa569f9"
+      ],
+      [
+        "62f102051af2d959"
       ]
     ]
   },
@@ -1027,8 +1226,8 @@
     "type": "function",
     "z": "1292414d65358a68",
     "name": "Capture session",
-    "func": "// Carry the UniFi session cookie (or X-CSRF-Token on newer builds)\n// into the stat request.\nvar h = msg.headers || {};\nvar setCookie = h['set-cookie'] || h['Set-Cookie'];\nvar cookie = null;\nif (Array.isArray(setCookie)) { setCookie = setCookie.join('; '); }\nif (setCookie) {\n  var part = String(setCookie).split(';')[0];\n  if (part) { cookie = part; }\n}\nif (!cookie) {\n  node.status({fill:'red',shape:'ring',text:'login failed'});\n  msg.payload = [];\n  msg.topic = 'unifi/error';\n  msg._error = 'UniFi login returned no session cookie (HTTP ' + (msg.statusCode || '?') + ')';\n  return msg;\n}\nnode.status({fill:'green',shape:'dot',text:'session ok'});\nmsg.method = 'GET';\nmsg.url = msg.url_stat;\nmsg.headers = {'Accept': 'application/json'};\nif (msg.csrfToken || (h['x-csrf-token'])) {\n  msg.headers['X-CSRF-Token'] = msg.csrfToken || h['x-csrf-token'];\n}\nmsg.headers['Cookie'] = cookie;\nreturn msg;",
-    "outputs": 1,
+    "func": "// Carry the UniFi session cookie (or X-CSRF-Token on newer builds)\n// into the stat request.\nvar h = msg.headers || {};\nvar setCookie = h['set-cookie'] || h['Set-Cookie'];\nvar cookie = null;\nif (Array.isArray(setCookie)) { setCookie = setCookie.join('; '); }\nif (setCookie) {\n  var part = String(setCookie).split(';')[0];\n  if (part) { cookie = part; }\n}\nif (!cookie) {\n  node.status({fill:'red',shape:'ring',text:'login failed'});\n  msg.payload = [];\n  msg.topic = 'unifi/error';\n  msg._error = 'UniFi login returned no session cookie (HTTP ' + (msg.statusCode || '?') + ')';\n  // Failed login -> the PARSER's error branch, not another stat\n  // request with the login URL (bogus request, drops the real\n  // error). The parser tags the count 'unifi/error' so the alert\n  // banner reports the controller as unreachable (critical).\n  return [msg, msg];\n}\nnode.status({fill:'green',shape:'dot',text:'session ok'});\nmsg.method = 'GET';\nmsg.url = msg.url_stat;\nmsg.headers = {'Accept': 'application/json'};\nif (msg.csrfToken || (h['x-csrf-token'])) {\n  msg.headers['X-CSRF-Token'] = msg.csrfToken || h['x-csrf-token'];\n}\nmsg.headers['Cookie'] = cookie;\nreturn msg;",
+    "outputs": 2,
     "noerr": 0,
     "initialize": "",
     "finalize": "",
@@ -1038,6 +1237,9 @@
     "wires": [
       [
         "41c85a6a5aa569f9"
+      ],
+      [
+        "62f102051af2d959"
       ]
     ]
   },
@@ -1067,7 +1269,7 @@
     "type": "function",
     "z": "1292414d65358a68",
     "name": "Split client data",
-    "func": "// Handles both the success path and the config-error path.\nif (msg.topic === 'unifi/error' || msg._error) {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  var errMsg = msg._error || String(msg.payload || '');\n  return [ {payload: 0}, {payload: 'ERROR: ' + errMsg} ];\n}\nvar data = (msg.payload && msg.payload.data) ? msg.payload.data : [];\nvar rows = [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: (c.ip || (c['ip'] || '')), mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
+    "func": "// Handles both the success path and the config-error path.\nif (msg.topic === 'unifi/error' || msg._error) {\n  node.status({fill:'red',shape:'ring',text:'error'});\n  var errMsg = msg._error || String(msg.payload || '');\n  // out0 feeds Clients Online + the alert evaluator. Keep the\n  // error topic on the count so the banner says 'controller\n  // unreachable' (critical), not 'no clients' (warning).\n  return [ {payload: 0, topic: 'unifi/error', _error: errMsg},\n           {payload: 'ERROR: ' + errMsg} ];\n}\nvar data = (msg.payload && msg.payload.data) ? msg.payload.data : [];\nvar rows = [];\ndata.forEach(function (c) {\n  rows.push({hostname: c.hostname || c.name || c.mac, ip: (c.ip || (c['ip'] || '')), mac: c.mac || ''});\n});\nnode.status({fill:'green',shape:'dot',text:rows.length + ' clients'});\nreturn [ {payload: rows.length}, {payload: rows} ];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",
@@ -1077,7 +1279,8 @@
     "y": 300,
     "wires": [
       [
-        "b600ad1c10e3da25"
+        "b600ad1c10e3da25",
+        "fabede8dbf5c3f32"
       ],
       [
         "dcf1d5cee4fd6ca6"
@@ -1289,12 +1492,63 @@
     "hidden": false
   },
   {
+    "id": "71c7e430b5abf529",
+    "type": "ui_group",
+    "z": "61550c749f923be9",
+    "name": "Alerts",
+    "tab": "13c088e1b9d32a25",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "e5291e1ed1c0e27c",
+    "type": "ui_template",
+    "z": "61550c749f923be9",
+    "name": "Alert Banner",
+    "group": "71c7e430b5abf529",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "799caa8a2d5cf7be",
+    "type": "function",
+    "z": "61550c749f923be9",
+    "name": "Evaluate alerts",
+    "func": "// System Health alert banner: Prometheus targets/probes + node pressure.\n// Parse health summary attaches the full stat map to its first output,\n// so one message evaluates the whole stack.\nvar m = msg.stats || {};\nvar cpu = m.pve_cpu, mem = m.pve_mem;\nvar tUp = m.targets_up, tTot = m.targets_total;\nvar pOk = m.probes_ok, pTot = m.probes_total;\nfunction pct(v) { return Math.round(v * 10) / 10 + '%'; }\nfunction escalate(s) {\n  if (s === 'critical') { sev = 'critical'; }\n  else if (s === 'warning' && sev !== 'critical') { sev = 'warning'; }\n}\nvar sev = 'ok';\nvar parts = [];\nif (!m || msg.payload === -1) {\n  // Parse health summary marks total failure with payload:-1 (stats\n  // null) or payload:-1 + empty stats (Prometheus up, nothing scraped).\n  sev = 'critical';\n  parts.push('Monitoring data unavailable');\n} else {\nif (typeof cpu === 'number') {\n  if (cpu >= 90) { escalate('critical'); parts.push('CPU ' + pct(cpu)); }\n  else if (cpu >= 75) { escalate('warning'); parts.push('CPU ' + pct(cpu)); }\n}\nif (typeof mem === 'number') {\n  if (mem >= 90) { escalate('critical'); parts.push('Memory ' + pct(mem)); }\n  else if (mem >= 75) { escalate('warning'); parts.push('Memory ' + pct(mem)); }\n}\nif (tTot > 0 && tUp < tTot) {\n  escalate(tUp === 0 ? 'critical' : 'warning');\n  parts.push('Targets ' + tUp + '/' + tTot);\n}\nif (pTot > 0 && pOk < pTot) {\n  escalate(pOk === 0 ? 'critical' : 'warning');\n  parts.push('Probes ' + pOk + '/' + pTot);\n}\nif (sev === 'ok') { parts.push('All monitored systems healthy'); }\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: parts.join(' | ')};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1020,
+    "y": 120,
+    "wires": [
+      [
+        "e5291e1ed1c0e27c"
+      ]
+    ]
+  },
+  {
     "id": "eacc0c2392940f6e",
     "type": "ui_group",
     "z": "61550c749f923be9",
     "name": "Health Summary",
     "tab": "13c088e1b9d32a25",
-    "order": 1,
+    "order": 2,
     "disp": true,
     "width": "12",
     "collapse": false
@@ -1472,7 +1726,7 @@
     "type": "function",
     "z": "61550c749f923be9",
     "name": "Parse health summary",
-    "func": "// Map the stat-labelled instant query onto one message per widget.\n// Missing stats degrade to 0 rather than 'undefined' text.\nvar r = msg.payload;\nif (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  return null;\n}\nvar m = {};\nr.data.result.forEach(function (s) {\n  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n});\nfunction pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\nvar mCpu = { payload: pct(m.pve_cpu) };\nvar mMem = { payload: pct(m.pve_mem) };\nvar mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\nvar mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\nvar mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\nnode.status({fill:'green',shape:'dot',text:'ok'});\nreturn [mCpu, mMem, mTgt, mPrb, mUp];",
+    "func": "// Map the stat-labelled instant query onto one message per widget.\n// Missing stats degrade to 0 rather than 'undefined' text.\nvar r = msg.payload;\nif (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n  node.status({fill:'red',shape:'ring',text:'no data'});\n  // out0 feeds the alert evaluator. An empty stat map would read as\n  // 'everything healthy' there -- send stats: null so the banner\n  // reports 'monitoring unavailable' (critical) instead of lying.\n  var mFail = { payload: -1, stats: null };\n  return [mFail, null, null, null, null];\n}\nvar m = {};\nr.data.result.forEach(function (s) {\n  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n});\n// Prometheus reachable but zero stats scraped: same as down for\n// alerting purposes -- the banner must not read it as 'healthy'.\nif (!m.targets_total && !m.probes_total && !m.pve_cpu && !m.pve_mem) {\n  var mNone = { payload: -1, stats: {} };\n  return [mNone, null, null, null, null];\n}\nfunction pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\nvar mCpu = { payload: pct(m.pve_cpu), stats: m };\nvar mMem = { payload: pct(m.pve_mem) };\nvar mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\nvar mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\nvar mUp  = { payload: pct(m.pve_uptime_days) + ' days' };\nnode.status({fill:'green',shape:'dot',text:'ok'});\nreturn [mCpu, mMem, mTgt, mPrb, mUp];",
     "outputs": 5,
     "noerr": 0,
     "initialize": "",
@@ -1482,7 +1736,8 @@
     "y": 120,
     "wires": [
       [
-        "95a2bda9c84d2505"
+        "95a2bda9c84d2505",
+        "799caa8a2d5cf7be"
       ],
       [
         "2859742989b0ae98"
@@ -1504,10 +1759,11 @@
     "z": "61550c749f923be9",
     "name": "Proxmox Node Resources",
     "tab": "13c088e1b9d32a25",
-    "order": 2,
+    "order": 3,
     "disp": true,
     "width": "12",
-    "collapse": false
+    "collapse": true,
+    "className": "shd-collapsible"
   },
   {
     "id": "8712b582b49ce0e3",
@@ -1575,10 +1831,11 @@
     "z": "61550c749f923be9",
     "name": "LXC / VM Health",
     "tab": "13c088e1b9d32a25",
-    "order": 3,
+    "order": 4,
     "disp": true,
     "width": "12",
-    "collapse": false
+    "collapse": true,
+    "className": "shd-collapsible"
   },
   {
     "id": "fd87f23f3740f893",

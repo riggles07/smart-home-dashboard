@@ -28,11 +28,29 @@
   --shd-ok: #2ecc71;
   --shd-warn: #f1c40f;
   /* Status colours double as TEXT (.status-error etc.), so they must clear
-     WCAG AA (4.5:1) on --shd-card. The original #e743c-style flat-ui red
+     WCAG AA (4.5:1) on --shd-card. The original #e74c3c-style flat-ui red
      reached only ~3.7:1 there; #ff7676 measures 5.42:1 on #1f2b47 and is
      asserted by tests/test_theme_manager.py (ratios recomputed from the
      palette tables, so drift fails CI). */
   --shd-err: #ff7676;
+  /* ---- Alert hierarchy tokens -------------------------------------------
+     --shd-critical is deliberately DARKER than --shd-err: a banner paints
+     TEXT on it, and #e74c3c only reaches 3.8:1 with --shd-text (below the
+     4.5:1 AA floor), while this value reaches 4.9:1. --shd-err stays for
+     indicator dots/borders where saturation matters more than contrast.
+     --shd-warning/--shd-info/--shd-alert-ink alias palette tokens so an
+     alternate palette (Theme Manager) restyles banners automatically.
+     Contrast on --shd-warning: 10.3:1; on --shd-info: 6.2:1. */
+  --shd-critical: #c62828;      /* banner bg; --shd-text on it = 4.85:1 */
+  --shd-warning: var(--shd-warn);
+  --shd-info: #00acc1;           /* banner bg; --shd-alert-ink on it = 6.2:1 */
+  --shd-alert-ink: var(--shd-bg); /* text on the bright warning/info banners */
+  --shd-alert-padding: 12px;
+  --shd-alert-gap: 12px;
+  --shd-alert-fs: 1rem;          /* informational voice */
+  --shd-alert-fs-strong: 1.2rem; /* critical + warning voice */
+  --shd-alert-border-w: 2px;
+  --shd-alert-glow: 0 0 15px rgba(198, 40, 40, 0.5);
   --shd-touch-target: 44px;   /* minimum Apple/Google touch target */
   --shd-radius: 10px;
 
@@ -107,7 +125,90 @@ body {
 .status-dot.warning { background: var(--shd-warn); }
 .status-dot.error   { background: var(--shd-err); }
 
-/* ---------- Tab navigation ---------- */
+/* ---- Alert Prioritization ---- */
+/* Applied to REAL banner elements by the per-tab "Alerts" group widgets
+   (see tools/gen_flows.py). Severity ladder, strongest first:
+     critical > warning > info > ok
+   Sizing/colour/spacing all come from --shd-* tokens so an alternate
+   palette (Theme Manager) restyles the whole ladder at once. */
+.alert-ok {
+  background: var(--shd-card);
+  color: var(--shd-text);
+  font-size: var(--shd-alert-fs);
+  padding: var(--shd-alert-padding);
+  border-radius: var(--shd-radius);
+  border: var(--shd-alert-border-w) solid var(--shd-ok);
+  margin-bottom: var(--shd-alert-gap);
+  text-align: center;
+}
+.alert-info {
+  background: var(--shd-info);
+  color: var(--shd-alert-ink);
+  font-size: var(--shd-alert-fs);
+  padding: var(--shd-alert-padding);
+  border-radius: var(--shd-radius);
+  border: var(--shd-alert-border-w) solid var(--shd-alert-ink);
+  margin-bottom: var(--shd-alert-gap);
+  text-align: center;
+}
+.alert-warning {
+  background: var(--shd-warning);
+  color: var(--shd-alert-ink);
+  font-weight: 600;
+  font-size: var(--shd-alert-fs-strong);
+  padding: var(--shd-alert-padding);
+  border-radius: var(--shd-radius);
+  border: var(--shd-alert-border-w) solid var(--shd-alert-ink);
+  margin-bottom: var(--shd-alert-gap);
+  text-align: center;
+}
+.alert-critical {
+  background: var(--shd-critical);
+  color: var(--shd-text);
+  font-weight: bold;
+  font-size: var(--shd-alert-fs-strong);
+  padding: var(--shd-alert-padding);
+  border-radius: var(--shd-radius);
+  border: var(--shd-alert-border-w) solid var(--shd-text);
+  box-shadow: var(--shd-alert-glow);
+  animation: pulse 1.5s infinite;
+  margin-bottom: var(--shd-alert-gap);
+  z-index: 10;
+  text-align: center;
+}
+/* A critical banner can never legitimately live inside a collapsible group
+   (the generator enforces this -- see tools/gen_flows.py + the guard tests),
+   so no display:none parent can ever hide one. The extra selector below is
+   belt-and-braces: it guarantees the banner itself never collapses to zero
+   height inside its template panel. */
+body.nr-dashboard-theme .nr-dashboard-template .alert-critical {
+  display: block !important;
+}
+
+/* ---- Progressive disclosure: group collapse caret ---- */
+/* The dashboard renders the collapse toggle as a tiny <span class="nr-dashboard-
+   cardcarat"><i class="fa fa-caret-*"></i></span> inside the group title <p>.
+   Measured on the live 3.6.6 UI: the carat span paints ~14x14px -- far under
+   the 44px touch target, and the tap lands on the <i>, not the span. Pad the
+   hit area to the full title-bar height (which carries the min-height) and
+   the full row width so a tap anywhere in the title bar toggles the group. */
+.nr-dashboard-cardtitle {
+  min-height: var(--shd-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  touch-action: manipulation;
+  margin: 0;
+}
+.nr-dashboard-cardtitle .nr-dashboard-cardcarat {
+  min-width: var(--shd-touch-target);
+  min-height: var(--shd-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  cursor: pointer;
+}
 .ui_tab {
   border-bottom: 2px solid var(--shd-accent);
   display: flex;
