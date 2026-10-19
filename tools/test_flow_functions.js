@@ -616,14 +616,30 @@ console.log('\n== Kiosk: command contract ==');
 
 console.log('\n== Kiosk: motion -> wake ==');
 {
-  const on = runCtx('Motion -> wake', {}, { payload: { value: true } });
-  check('motion {"value":true} wakes the screen',
-        JSON.parse(on.out.payload).wake === true);
-  const off = runCtx('Motion -> wake', {}, { payload: { value: false } });
+  // Motion emits an OBJECT; `Build kiosk command` owns stringification. The
+  // two are tested as a CHAIN because a body-by-body test missed a real defect:
+  // motion used to stringify, and the command builder's object pass-through
+  // then never matched, silently dropping every motion wake.
+  function chain(motionPayload) {
+    const m = runCtx('Motion -> wake', {}, { payload: motionPayload, topic: 'wallpanel/a7lite/sensor/motion' });
+    if (m.out === null) { return null; }
+    // carry the real msg across the wire, as Node-RED does
+    const c = runCtx('Build kiosk command', {}, m.out);
+    return c.out;
+  }
+
+  const on = chain({ value: true });
+  check('motion {"value":true} -> a command survives the second node', on !== null,
+        'the wake was dropped by the command builder');
+  check('motion wake reaches the tablet as {"wake":true,"wakeTime":180}',
+        on && JSON.parse(on.payload).wake === true && JSON.parse(on.payload).wakeTime === 180,
+        on && on.payload);
+  check('motion wake is addressed to the command topic',
+        on && on.topic === 'wallpanel/a7lite/command', on && on.topic);
+
   check('motion {"value":false} emits nothing (screensaver must survive)',
-        off.out === null);
-  const str = runCtx('Motion -> wake', {}, { payload: 'true' });
-  check('a string "true" payload also wakes', JSON.parse(str.out.payload).wake === true);
+        chain({ value: false }) === null);
+  check('a string "true" payload also wakes', chain('true') !== null);
 }
 
 console.log('\n== Kiosk: brightness schedule ==');
