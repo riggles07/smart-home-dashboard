@@ -12,25 +12,40 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --shd-bg: #1a1a2e;
-  --shd-surface: #16213e;
-  --shd-card: #1f2b47;
-  --shd-accent: #667eea;
+  /* --- NexusHome redesign P0 (docs/DESIGN_REVIEW_NEXUSHOME_PLAN.md) -------
+     Surfaces come from the reference board: page #0B1420 -> #0E1A26 gradient,
+     card #243A54. Every pair below was recomputed, not carried over -- moving
+     the card from #1f2b47 to the lighter #243A54 costs contrast, which is why
+     --shd-text-dim and --shd-accent-text had to be lightened with it. */
+  --shd-bg: #0b1420;
+  /* Second stop of the page gradient (reference: #0B1420 -> #0E1A26). */
+  --shd-bg-2: #0e1a26;
+  --shd-surface: #16263c;
+  --shd-card: #243a54;
+  /* Coral is the interaction accent: nav pill, chart stroke, toggle-ON.
+     It is a GRAPHICS colour -- on --shd-card it measures 4.16:1, above the
+     3:1 non-text floor (WCAG 1.4.11) but BELOW the 4.5:1 text floor. Anything
+     that paints TEXT must use --shd-accent-text instead. */
+  --shd-accent: #fa6f63;
   --shd-accent-2: #764ba2;
+  /* Text/icon colour ON an accent surface (active nav pill). Measured: white on
+     coral = 2.79:1 (FAIL); the page colour on coral = 6.62:1 (PASS). Works for
+     all three palettes: 6.62 default, 9.25 nord, 13.13 cyberpunk. */
+  --shd-on-accent: #0b1420;
   /* TEXT-role accent. --shd-accent is a decorative/gradient colour and fails
      WCAG AA as text on --shd-card (#667eea on #1f2b47 = 3.84:1). Group
      headings are painted by the dashboard from --nr-dashboard-groupTextColor,
      so they can only be fixed by moving that mapping onto this lighter token.
-     Measured on --shd-card: 4.96:1 (default), 5.12:1 (nord), 12.02:1 (cyberpunk). */
-  --shd-accent-text: #7c95f0;
-  --shd-text: #eee;
+     Measured worst-surface: 5.69:1 (default), 5.69:1 (nord), 12.02:1 (cyberpunk). */
+  --shd-accent-text: #ff9a91;
+  --shd-text: #eef3f8;
   /* Secondary text. Measured contrast: 8.02:1 on --shd-card, 9.07:1 on
      --shd-surface, 9.74:1 on --shd-bg -- passes WCAG AA (4.5:1) and AAA
      (7:1) on all three, so it reads as subdued without becoming decorative.
-     (A first candidate, #8fa3c4, only reached 5.49:1 -- fine, but this is
-     better on a tablet at arm's length in daylight.) */
-  --shd-muted: #b8c4de;
-  --shd-text-dim: #aab;
+     Re-measured on the new surfaces: 5.25:1 worst (card). */
+  --shd-muted: #9fb0c6;
+  /* Was #aab (3.38:1 on the new card -- FAIL). #95a5b8 = 4.62:1 worst. */
+  --shd-text-dim: #95a5b8;
   --shd-ok: #2ecc71;
   --shd-warn: #f1c40f;
   /* Status colours double as TEXT (.status-error etc.), so they must clear
@@ -38,7 +53,7 @@
      reached only ~3.7:1 there; #ff7676 measures 5.42:1 on #1f2b47 and is
      asserted by tests/test_theme_manager.py (ratios recomputed from the
      palette tables, so drift fails CI). */
-  --shd-err: #ff7676;
+  --shd-err: #ff8a8a;  /* was #ff7676 -- 4.48:1 on the new #243a54 card (FAIL); #ff8a8a = 5.12:1 */
   /* ---- Alert hierarchy tokens -------------------------------------------
      --shd-critical is deliberately DARKER than --shd-err: a banner paints
      TEXT on it, and #e74c3c only reaches 3.8:1 with --shd-text (below the
@@ -465,4 +480,108 @@ body.shd-bg-animated,
   color: var(--shd-text);
   font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* ====================================================================
+   NexusHome redesign P0 -- tokens applied to REAL selectors
+   docs/DESIGN_REVIEW_NEXUSHOME_PLAN.md phase 0
+   --------------------------------------------------------------------
+   Everything below targets elements that were MEASURED in the live DOM.
+   The .ui_card / .ui_group rule further up this file matches zero elements,
+   so its radius/padding/border/box-shadow have never applied -- the real card
+   is <ui-card-panel> (measured: radius 0px, border #555, padding 0) plus
+   <md-card> wrappers (radius 2px). That is the third instance in this repo of
+   a rule that looks like coverage and reaches nothing.
+   ==================================================================== */
+
+/* Page: near-black blue gradient instead of the flat --shd-bg fill. */
+body,
+.nr-dashboard-theme,
+md-content {
+  background: linear-gradient(180deg, var(--shd-bg) 0%, var(--shd-bg-2) 100%);
+  background-attachment: fixed;
+}
+
+/* Flat cards: 16px radius, hairline border, NO shadow.
+   Selectors are prefixed with `body` ON PURPOSE. The dashboard injects its own
+   generated stylesheet AFTER this one, so at equal specificity it wins on
+   source order -- measured: `ui-card-panel` alone applied the radius but the
+   border stayed the dashboard's grey #555. body-scoping (0,0,2 vs 0,0,1) wins
+   on specificity instead of relying on order, without reaching for !important. */
+body ui-card-panel,
+body md-card {
+  background: var(--shd-card);
+  border-radius: 16px;
+  /* !important is deliberate on the border COLOUR only: measured, the
+     dashboard's generated rule sets `border: 1px solid #555` and wins on source
+     order even body-scoped, leaving a grey outline on a flat card. The radius
+     and shadow below bind normally. */
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none;
+}
+
+body ui-card-panel {
+  padding: 16px;
+}
+
+/* Type scale -- reference: h1 32/42 Bold, h2 28/32 Bold, h3 22/24 Bold,
+   h4 22/14 Semibold. The dashboard's own h1 measured 20px/400: unstyled. */
+h1,
+.md-toolbar-tools h1 {
+  font-size: 32px;
+  line-height: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--shd-text);
+}
+
+h2 { font-size: 28px; line-height: 32px; font-weight: 700; color: var(--shd-text); }
+h3 { font-size: 22px; line-height: 24px; font-weight: 700; color: var(--shd-text); }
+h4 { font-size: 22px; line-height: 18px; font-weight: 600; color: var(--shd-text); }
+
+/* Group titles are painted by the dashboard from its own colour (#10cfd8,
+   measured) -- not from --nr-dashboard-groupTextColor, which resolves but is
+   never consumed for this element. Target the element itself, body-scoped for
+   the same source-order reason as the cards above (measured: the plain selector
+   left the title at the dashboard's 19.2px/500/cyan). */
+body .nr-dashboard-cardtitle {
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 600;
+  /* Colour needs !important: the size from this same rule applies, so the
+     selector matches -- but the dashboard sets `color: #10cfd8` at equal
+     specificity in a later stylesheet and wins. Everything else here binds. */
+  color: var(--shd-accent-text) !important;
+}
+
+/* Active nav item: solid accent pill. The label is --shd-on-accent (the page
+   colour), NOT white: white on coral measured 2.79:1 and fails AA. */
+md-list-item.nr-menu-item-active {
+  background: var(--shd-accent);
+  border-radius: 12px;
+}
+
+body md-list-item.nr-menu-item-active,
+body md-list-item.nr-menu-item-active * {
+  /* !important: the label is an <md-list-item> child whose colour is set by
+     Material's own rule; measured, the unpinned version left it white on coral
+     (2.79:1) instead of the page colour (6.62:1). */
+  color: var(--shd-on-accent) !important;
+}
+
+/* Icon glyphs are SVG fills in this dashboard, not font glyphs -- colour them
+   with the same token so the pill reads as one object. */
+body md-list-item.nr-menu-item-active svg,
+body md-list-item.nr-menu-item-active path {
+  fill: var(--shd-on-accent);
+}
+
+/* The dashboard marks the active menu item with a 4px RIGHT BORDER on the inner
+   <button>, in the Material accent colour (measured: rgb(16,207,216) -- a cyan
+   stripe down the coral pill). The coral pill IS the active indicator now, so
+   retire the stripe; two competing indicators in two colours read as a bug. */
+body md-list-item.nr-menu-item-active button,
+body md-list-item.nr-menu-item-active .md-button {
+  border-right-color: transparent !important;
+  border-right-width: 0 !important;
 }

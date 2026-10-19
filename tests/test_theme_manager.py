@@ -43,9 +43,9 @@ DRIVER = ROOT / "tools" / "_theme_manager_driver.js"
 # (--shd-touch-target, --shd-radius) are theme-invariant and MUST NOT be
 # overridden by a palette.
 COLOUR_TOKENS = [
-    "--shd-bg", "--shd-surface", "--shd-card", "--shd-accent", "--shd-accent-2",
-    "--shd-accent-text", "--shd-text", "--shd-muted", "--shd-text-dim",
-    "--shd-ok", "--shd-warn", "--shd-err",
+    "--shd-bg", "--shd-bg-2", "--shd-surface", "--shd-card", "--shd-accent",
+    "--shd-accent-2", "--shd-accent-text", "--shd-on-accent", "--shd-text",
+    "--shd-muted", "--shd-text-dim", "--shd-ok", "--shd-warn", "--shd-err",
 ]
 
 
@@ -195,6 +195,21 @@ class TestPalettes:
         assert worst >= 3.0, (
             f"{pid} --shd-accent reaches only {worst:.2f}:1 -- below the 3:1 "
             f"UI-component floor"
+        )
+
+    @pytest.mark.parametrize("pid", ["default", "nord", "cyberpunk"])
+    def test_on_accent_clears_the_text_floor(self, pid):
+        """--shd-on-accent paints the label/icon ON the accent surface (the
+        active nav pill, and any filled accent button).
+
+        White on the coral accent measures 2.79:1 and FAILS, which is exactly the
+        mistake the reference design makes on its device tiles. We use the page
+        colour instead: 6.62:1 default, 9.25:1 nord, 13.13:1 cyberpunk."""
+        pal = _parse_palettes(_module_source())[pid]["tokens"]
+        r = _ratio(pal["--shd-on-accent"], pal["--shd-accent"])
+        assert r >= 4.5, (
+            f"{pid} --shd-on-accent {pal['--shd-on-accent']} on --shd-accent "
+            f"{pal['--shd-accent']} = {r:.2f}:1 -- below the 4.5:1 text floor"
         )
 
     @pytest.mark.parametrize("pid", ["default", "nord", "cyberpunk"])

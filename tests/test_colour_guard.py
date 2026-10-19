@@ -26,9 +26,10 @@ _CSSVAR = re.compile(r"(--[a-zA-Z][\w-]*)\s*:\s*(#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{
 #   gen hex set includes 667EEA (baseColor, gen_flows.py:339), 1F2B47 (card bg),
 #   EEE (text); css vars --shd-accent/--shd-card/--shd-text hold the same values.
 KNOWN_PAIRS = {
-    "--shd-accent": "667EEA",
-    "--shd-card": "1F2B47",
-    "--shd-text": "EEEEEE",  # css: #eee (3-digit), gen: #eee -> both normalize here
+    # Updated for the NexusHome P0 palette. gen_flows.py carries its own copy of
+    # the ui_base baseColor, so the accent genuinely exists in both files -- that
+    # duplication is what this guard exists to keep in sync.
+    "--shd-accent": "FA6F63",
 }
 
 
@@ -89,7 +90,7 @@ def test_all_known_pairs_cover_every_current_duplicate():
 def test_mutation_of_generator_is_detected(tmp_path):
     gen_copy = tmp_path / "gen_flows.py"
     gen_copy.write_text(
-        GEN_FLOWS.read_text(encoding="utf-8").replace("#667eea", "#9900ff"),
+        GEN_FLOWS.read_text(encoding="utf-8").replace("#fa6f63", "#9900ff"),
         encoding="utf-8")
     v = guard(gen_copy, CSS)
     assert v, "generator colour mutation was NOT detected"
@@ -99,7 +100,7 @@ def test_mutation_of_generator_is_detected(tmp_path):
 def test_mutation_of_css_is_detected(tmp_path):
     css_copy = tmp_path / "dashboard.css"
     css_copy.write_text(
-        CSS.read_text(encoding="utf-8").replace("#667eea", "#9900ff"),
+        CSS.read_text(encoding="utf-8").replace("#fa6f63", "#9900ff"),
         encoding="utf-8")
     v = guard(GEN_FLOWS, css_copy)
     assert v, "CSS colour mutation was NOT detected"
@@ -109,7 +110,7 @@ def test_mutation_of_css_is_detected(tmp_path):
 def test_new_duplicate_colour_is_detected_as_unmapped(tmp_path):
     """Drift can also ADD a colour: mutate gen to duplicate an existing css-only value."""
     gen_copy = tmp_path / "gen_flows.py"
-    gen_text = GEN_FLOWS.read_text(encoding="utf-8").replace("#667eea", "#764ba2")
+    gen_text = GEN_FLOWS.read_text(encoding="utf-8").replace("#fa6f63", "#764ba2")
     gen_copy.write_text(gen_text, encoding="utf-8")
     v = guard(gen_copy, CSS)
     assert any("--shd-accent-2" in x for x in v), f"added duplication not flagged: {v}"
