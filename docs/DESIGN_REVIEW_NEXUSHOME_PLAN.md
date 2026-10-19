@@ -156,7 +156,74 @@ Measured against the live deployment, not assumed:
    text, 44 px touch targets, the 3-palette contrast suite.
 
 > **Rule for this project:** do not build a widget around a data source we do not
-> have. Gated items are listed in Phase 5 and stay unbuilt until the entity exists.
+> **Rule for this project (revised 2026-10-19):** a widget may not *pretend*.
+> Where we lack a data source we either omit the widget, or build it on an
+> explicitly-labelled placeholder (see §4a). What is never acceptable is a
+> plausible-looking number that reads as measured fact.
+
+---
+
+## 4a. Interaction contract — "fully interactive" (requirement, 2026-10-19)
+
+The dashboard must be **fully interactive**. Made testable, that means every
+element on every tab falls into exactly one of three classes, and the class is
+verifiable by clicking it:
+
+| Class | Requirement |
+|---|---|
+| **Controls** | Do the real thing. A toggle writes to HA and the widget reflects the returned state within 2 s. If it cannot, it is not a control — remove it. |
+| **Navigation** | Move the view with no page reload (hash routing, already proven). |
+| **Display** | Never look interactive. No pointer cursor, no hover lift, no button chrome. |
+
+Concretely, per surface:
+
+- **Tiles** toggle the device; the tile state follows the HA event, not an
+  optimistic local flip (a flip that silently fails is worse than a spinner).
+- **Thermostat** dial is draggable *and* keyboard-adjustable (arrow keys), with
+  a numeric readout. It writes a setpoint somewhere real (see placeholder policy).
+- **Charts** respond to a click/drag: hover shows the exact value at that point,
+  and a time-range selector (24 h / 7 d) actually re-queries.
+- **Search / filter** narrow the tile grid live as you type, and a "no matches"
+  state appears instead of an empty grid.
+- **Media card** play/pause acts on the actual player; if the player is off the
+  control is disabled, not a dead button that appears to work.
+- **Every button has a pressed state** and a >= 44x44 px hit area (measured, not
+  declared — this repo has been bitten twice by rules that match zero elements).
+- **Keyboard**: Tab reaches every control, Enter/Space activates, focus is
+  visible. The kiosk tablet is touch-first, but the browser view is not.
+- **No dead ends**: a failed action surfaces a message. Silence after a tap is a
+  bug, not a UI style.
+
+**Global acceptance (applies to every phase):** an interactivity audit walks all
+seven tabs and records, per element, which of the three classes it claims and
+whether the claim holds. Any element that claims "control" but does nothing is a
+release blocker.
+
+---
+
+## 4b. Placeholder policy for thermostat + energy
+
+**Decision (user, 2026-10-19):** build the thermostat and energy widgets now on
+placeholder data; the real HA entities will be added later.
+
+Placeholders are allowed on these terms:
+
+1. **Visibly labelled.** A `DEMO` badge on the widget. A placeholder that is not
+   marked is indistinguishable from a measurement, which is the thing we are
+   trying to avoid.
+2. **Deterministic, not random.** The synthetic series is generated from a fixed
+   seed so it looks identical across reloads and tabs. A series that reshuffles
+   on every refresh reads as broken and destroys trust in the real charts next
+   to it.
+3. **Writes go to a real store.** The thermostat setpoint persists in Node-RED
+   flow context so dragging it is genuinely stateful (and survives a deploy),
+   rather than snapping back — which would make the control feel broken.
+4. **Single swap point.** Each placeholder reads through one function that
+   returns either the live entity or the placeholder. When the HA entity appears,
+   the swap is one condition, not a rewrite; the `DEMO` badge disappears by
+   itself because it keys off "is this the live source".
+5. **Never mixed.** A card is either fully live or fully demo — never a live
+   total blended with a demo component.
 
 ---
 
@@ -233,12 +300,29 @@ A7 Lite: 800×1280 portrait, tab order, and the wake/view buttons.
 **Gate:** verified on the physical tablet once WallPanel is deployed (parent card
 `t_3ed8e1bb`).
 
-### Phase 5 — Gated widgets (build only when the entity exists)
-Weather block, thermostat dial, real energy chart. Each requires an HA entity:
-`weather.*`, `climate.*`, `sensor.*` in W/kWh.
+### Phase 4 — Interactivity pass (all tabs)
+Enforce §4a across everything that exists, including the tabs this redesign does
+not touch (Home Lab, Network, Kanban, System Health settings). Remove or wire
+every element that claims to be a control but is not one.
 
-**Gate:** the entity is confirmed present in `get_states` **before** the widget is
-built. No placeholder data.
+**Gate:** the interactivity audit is written down, per element, with the class it
+claims; zero "control" elements that do nothing; 44 px hit areas measured on the
+rendered boxes; keyboard traversal reaches every control.
+
+### Phase 5 — Thermostat + energy on labelled placeholders (UNBLOCKED 2026-10-19)
+Per the user's decision, build the thermostat dial and the energy chart **now**,
+on placeholder data, to the terms in §4b: `DEMO` badge, deterministic seed,
+setpoint persisted in flow context, one swap point per widget so the real HA
+entity drops in later.
+
+**Gate:**
+- `DEMO` badge is visible in the live DOM (checked as text, not just in source).
+- The synthetic series is byte-identical across two page reloads and two deploys.
+- Dragging the thermostat and reloading the page returns the same setpoint
+  (proves it persists rather than snapping back).
+- Swapping in a real entity is a one-condition change: document the exact
+  condition and the entity id that will satisfy it.
+- No demo value is ever summed into a live total.
 
 ---
 
