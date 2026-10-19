@@ -208,9 +208,12 @@ placeholder data; the real HA entities will be added later.
 
 Placeholders are allowed on these terms:
 
-1. **Visibly labelled.** A `DEMO` badge on the widget. A placeholder that is not
-   marked is indistinguishable from a measurement, which is the thing we are
-   trying to avoid.
+1. **Marked in code, not on screen.** *(Revised 2026-10-19 at the user's
+   request: no visible demo tag.)* Each placeholder carries `data-demo="true"`
+   on its container plus a comment naming the entity that will replace it, so the
+   provenance is greppable and reviewable but never shown to the household. The
+   trade-off is explicit: a placeholder will look like real data on screen, so
+   the code marker and the swap condition are the only guard.
 2. **Deterministic, not random.** The synthetic series is generated from a fixed
    seed so it looks identical across reloads and tabs. A series that reshuffles
    on every refresh reads as broken and destroys trust in the real charts next
@@ -220,7 +223,7 @@ Placeholders are allowed on these terms:
    rather than snapping back — which would make the control feel broken.
 4. **Single swap point.** Each placeholder reads through one function that
    returns either the live entity or the placeholder. When the HA entity appears,
-   the swap is one condition, not a rewrite; the `DEMO` badge disappears by
+   the swap is one condition, not a rewrite; the `data-demo` marker disappears by
    itself because it keys off "is this the live source".
 5. **Never mixed.** A card is either fully live or fully demo — never a live
    total blended with a demo component.
@@ -311,12 +314,13 @@ rendered boxes; keyboard traversal reaches every control.
 
 ### Phase 5 — Thermostat + energy on labelled placeholders (UNBLOCKED 2026-10-19)
 Per the user's decision, build the thermostat dial and the energy chart **now**,
-on placeholder data, to the terms in §4b: `DEMO` badge, deterministic seed,
+on placeholder data, to the terms in §4b: `data-demo` marker (invisible), deterministic seed,
 setpoint persisted in flow context, one swap point per widget so the real HA
 entity drops in later.
 
 **Gate:**
-- `DEMO` badge is visible in the live DOM (checked as text, not just in source).
+- `data-demo="true"` present on both placeholder containers in the live DOM, and
+  the swap entity named in a code comment (no visible badge -- user decision).
 - The synthetic series is byte-identical across two page reloads and two deploys.
 - Dragging the thermostat and reloading the page returns the same setpoint
   (proves it persists rather than snapping back).

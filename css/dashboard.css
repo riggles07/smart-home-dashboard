@@ -585,3 +585,150 @@ body md-list-item.nr-menu-item-active .md-button {
   border-right-color: transparent !important;
   border-right-width: 0 !important;
 }
+
+/* ====================================================================
+   NexusHome P1 -- device tile grid (task t_dd58c5f7)
+   --------------------------------------------------------------------
+   Replaces a 96-row table. Colour is SEMANTIC per device domain and lives in
+   the ICON, on a 14%-alpha tint -- not the reference's solid fills, where white
+   text measured 2.79-3.85:1 and fails WCAG AA. Measured here: white text
+   8.55-9.90:1, icon-vs-own-tint 3.54-5.56:1 (above the 3:1 non-text floor).
+   ==================================================================== */
+
+.shd-tiles-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.shd-search {
+  flex: 1 1 180px;
+  min-height: 44px;                 /* touch floor, measured not declared */
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--shd-surface);
+  color: var(--shd-text);
+  font-size: 15px;
+}
+
+.shd-search::placeholder { color: var(--shd-muted); }
+
+.shd-chip {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--shd-surface);
+  color: var(--shd-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shd-chip.on {
+  background: var(--shd-accent);
+  border-color: var(--shd-accent);
+  color: var(--shd-on-accent);
+}
+
+.shd-chip:active { transform: translateY(1px); }
+
+/* 2 columns on the A7 Lite portrait, 4 when there is room. */
+.shd-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.shd-tile {
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shd-tile-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shd-tile-icon {
+  width: 24px;
+  height: 24px;
+  fill: var(--shd-muted);
+  flex: 0 0 auto;
+}
+
+.shd-tile-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: transparent;
+  color: var(--shd-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.shd-tile-state:active { transform: translateY(1px); }
+.shd-tile-state[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+.shd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--shd-text-dim);
+  flex: 0 0 auto;
+}
+
+.shd-dot.live { background: var(--shd-ok); }
+
+.shd-tile-name {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--shd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shd-tiles-empty {
+  grid-column: 1 / -1;
+  padding: 18px;
+  text-align: center;
+  color: var(--shd-muted);
+  font-size: 14px;
+}
+
+/* Domain tints + icon colours. Each pair measured (icon vs its own tint). */
+.shd-tile.d-light        { background: rgba(250, 111,  99, 0.14); }
+.shd-tile.d-light .shd-tile-icon        { fill: #fa6f63; }   /* 3.54:1 */
+.shd-tile.d-switch       { background: rgba( 77, 208, 225, 0.14); }
+.shd-tile.d-switch .shd-tile-icon       { fill: #4dd0e1; }   /* 4.73:1 */
+.shd-tile.d-media_player { background: rgba(100, 181, 246, 0.14); }
+.shd-tile.d-media_player .shd-tile-icon { fill: #64b5f6; }   /* 4.07:1 */
+.shd-tile.d-cover        { background: rgba(126, 184, 255, 0.14); }
+.shd-tile.d-cover .shd-tile-icon        { fill: #7eb8ff; }   /* 4.28:1 */
+.shd-tile.d-lock         { background: rgba(255, 200,  87, 0.14); }
+.shd-tile.d-lock .shd-tile-icon         { fill: #ffc857; }   /* 5.56:1 */
+
+/* ON tiles read as active without adding a second accent colour. */
+.shd-tile.on {
+  border-color: rgba(255, 255, 255, 0.20);
+}
