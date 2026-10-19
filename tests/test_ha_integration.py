@@ -223,12 +223,26 @@ class TestHAFlowsGenerated:
         assert len(found_patterns) >= 3, f"Expected at least 3 HA patterns, found: {found_patterns}"
         print(f"Found HA patterns: {found_patterns}")
     
-    def test_ha_tab_in_99_other(self):
-        """Test HA tab is in 99-other.flow.json."""
-        other_file = PROJECT_ROOT / "flows" / "99-other.flow.json"
-        content = other_file.read_text()
-        
-        assert "Home Assistant" in content, "HA tab not in 99-other.flow.json"
+    def test_ha_tab_in_home_assistant_file(self):
+        """The HA tab lives in 07-home-assistant.flow.json.
+
+        This used to assert "Home Assistant" appeared in 99-other.flow.json and
+        passed -- but only because 99-other was a STALE file left over from an
+        older generator run that had not yet been given a `07-` label. The tab
+        was never written there by the current generator. Regenerating 99-other
+        (2026-10-19, when config nodes gained a 00-config.flow.json home)
+        replaced the stale copy and the assertion finally failed. Assert the
+        real location, and that the stale file is gone.
+        """
+        ha_file = PROJECT_ROOT / "flows" / "07-home-assistant.flow.json"
+        content = ha_file.read_text()
+        assert "Home Assistant" in content, "HA tab not in 07-home-assistant.flow.json"
+        assert "HA WebSocket Client" in content, \
+            "07-home-assistant.flow.json is missing the HA WebSocket node"
+
+        stale = PROJECT_ROOT / "flows" / "99-other.flow.json"
+        assert not stale.exists() or "Home Assistant" not in stale.read_text(), \
+            "stale 99-other.flow.json still carries a duplicated copy of the HA tab"
 
 
 class TestHARequirements:

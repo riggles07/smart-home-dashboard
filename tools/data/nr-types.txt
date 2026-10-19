@@ -1,8 +1,12 @@
+catch
 debug
 function
 http request
 inject
 json
+mqtt in
+mqtt out
+mqtt-broker
 tab
 ui_base
 ui_button
@@ -15,4 +19,3 @@ ui_tab
 ui_template
 ui_text
 ui_text_input
-catch

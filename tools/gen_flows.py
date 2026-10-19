@@ -2027,6 +2027,278 @@ add({"id": nid("inj-theme-sync"), "type": "inject", "z": T,
      "payload": "", "payloadType": "date", "x": 150, "y": 280,
      "wires": [[nid("fn-theme-set")]]})
 
+# ---------------------------------------------------------------- Tab 8: Kiosk (MQTT)
+# Task t_57dfd219 -- WallPanel PRO remote control over MQTT.
+#
+# The topic contract below is taken from the WallPanel docs (fetched 2026-10-19,
+# wallpanel.xyz/docs/remote-control/{mqtt-setup,commands,sensors}, which mirror
+# TheTimeWalker/wallpanel-android). Do not invent topic names or payload keys --
+# the tablet is the consumer and it only speaks this contract:
+#
+#   IN   <base>/command                 {"wake":true,"wakeTime":180}
+#                                       {"brightness":1-255}      <- 1-255, NOT %
+#                                       {"eval":"<javascript>"}
+#   OUT  <base>/state                   {"currentUrl":..,"screenOn":bool,"brightness":N}
+#   OUT  <base>/sensor/motion           {"value":true|false}      <- immediate on detect
+#   OUT  <base>/sensor/<kind>           {"unit":..,"value":..}
+#
+# base = wallpanel/a7lite (WallPanel's "base topic" setting; must be unique per
+# device, so it is pinned here rather than left at the default mywallpanel).
+#
+# Broker: no MQTT broker existed anywhere on the LAN before this task, so the
+# host is pinned to the same Docker host the dashboard ALREADY talks to for
+# Grafana (:3001) and Prometheus (:9090). Pinned in the flow rather than read
+# from env on purpose: env is read only at Node-RED process start, and we have
+# no shell on the dashboard LXC to restart it -- the node would sit on
+# "undefined" forever. Same reason the Grafana/Prometheus URLs are literals.
+MQTT_BROKER_HOST = "192.168.4.145"
+MQTT_BROKER_PORT = 1883
+WP_BASE = "wallpanel/a7lite"
+WP_CMD_TOPIC = WP_BASE + "/command"
+WP_STATE_TOPIC = WP_BASE + "/state"
+WP_MOTION_TOPIC = WP_BASE + "/sensor/motion"
+
+# WallPanel brightness is 1-255 (documented range). Buckets are keyed on the
+# local hour; the retained publish makes a reconnecting tablet pick up the
+# current brightness immediately instead of waiting for the next tick.
+WP_BRIGHTNESS = {"night": 40, "dawn": 120, "day": 200, "dusk": 110}
+
+# View indices come from the ui_tab `order` fields above, sorted, hidden tabs
+# excluded -- NOT from file order. Measured live 2026-10-19: the nav reads
+# 0=Home Lab, 1=Network, 2=Kanban, 3=System Health, 4=Settings, 5=Home Assistant,
+# and setting location.hash='#!/2' really does land on Kanban with no reload.
+#
+# The dashboard routes tabs by URL hash (live hash: '#!/0?socketid=...'), so
+# switching a view is a hash write -- no reload, no re-navigation, no flicker.
+# That is what makes WallPanel's {"eval":...} command a view switcher here.
+WP_VIEWS = [
+    ("homelab",  "Home Lab",       1),
+    ("network",  "Network",        3),
+    ("kanban",   "Kanban",         4),
+    ("health",   "System Health",  5),
+    ("settings", "Settings",       6),
+    ("ha",       "Home Assistant", 7),
+]
+WP_VIEW_INDEX = {key: i for i, (key, _label, _order) in enumerate(
+    sorted(WP_VIEWS, key=lambda v: v[2]))}
+
+T = nid("tab-kiosk")
+add({"id": T, "type": "tab", "label": "Kiosk", "disabled": False,
+     "info": "WallPanel PRO tablet control over MQTT"})
+add({"id": nid("uitab-kiosk"), "type": "ui_tab", "z": T, "name": "Kiosk",
+     "icon": "tablet", "order": 8, "disabled": False, "hidden": False})
+
+# ---- Broker config ---------------------------------------------------------
+add({"id": nid("mqtt-broker"), "type": "mqtt-broker", "name": "SHD MQTT",
+     "broker": MQTT_BROKER_HOST, "port": str(MQTT_BROKER_PORT), "clientid": "",
+     "autoConnect": True, "usetls": False, "protocolVersion": "4",
+     "keepalive": "60", "cleansession": True, "autoUnsubscribe": True,
+     "birthTopic": "", "birthQos": "0", "birthRetain": "false", "birthPayload": "",
+     "closeTopic": "", "closeQos": "0", "closeRetain": "false", "closePayload": "",
+     "willTopic": "", "willQos": "0", "willRetain": "false", "willPayload": ""})
+
+# ---- Group 1: tablet status ------------------------------------------------
+G = nid("grp-kiosk-status")
+add({"id": G, "type": "ui_group", "z": T, "name": "Tablet",
+     "tab": nid("uitab-kiosk"), "order": 1, "disp": True, "width": "6",
+     "collapse": False})
+
+add({"id": nid("tpl-kiosk-status"), "type": "ui_template", "z": T,
+     "name": "Tablet Status", "group": G, "order": 1, "width": "6",
+     "height": "3", "format": """<div class="shd-kiosk">
+  <div class="shd-kiosk-row"><span>Screen</span><b>{{msg.payload.screenOn ? 'ON' : 'screensaver'}}</b></div>
+  <div class="shd-kiosk-row"><span>Brightness</span><b>{{msg.payload.brightness}}</b>/255</div>
+  <div class="shd-kiosk-row"><span>View</span><b>{{msg.payload.currentUrl}}</b></div>
+  <div class="shd-kiosk-row"><span>Last seen</span><b>{{msg.payload.age}}</b></div>
+</div>""", "storeOutMessages": True, "fwdInMessages": True,
+     "templateScope": "local", "x": 640, "y": 120, "wires": []})
+
+# ---- Group 2: manual controls ---------------------------------------------
+G2 = nid("grp-kiosk-control")
+add({"id": G2, "type": "ui_group", "z": T, "name": "Remote control",
+     "tab": nid("uitab-kiosk"), "order": 2, "disp": True, "width": "6",
+     "collapse": False})
+
+add({"id": nid("btn-kiosk-wake"), "type": "ui_button", "z": T,
+     "name": "Wake", "group": G2, "order": 1, "width": 2, "height": 1,
+     "passthru": False, "label": "Wake", "tooltip": "Wake the tablet screen",
+     "color": "", "bgcolor": "", "className": "", "icon": "sun-o",
+     "payload": "wake", "payloadType": "str", "topic": "kiosk/wake",
+     "topicType": "str", "x": 130, "y": 260, "wires": [[nid("fn-kiosk-cmd")]]})
+
+for _i, (_key, _label, _order) in enumerate(sorted(WP_VIEWS, key=lambda v: v[2])):
+    add({"id": nid("btn-kiosk-view-" + _key), "type": "ui_button", "z": T,
+         "name": "View: " + _label, "group": G2, "order": 10 + _i,
+         "width": 2, "height": 1, "passthru": False, "label": _label,
+         "tooltip": "Switch tablet to " + _label, "color": "", "bgcolor": "",
+         "className": "", "icon": "eye",
+         "payload": _key, "payloadType": "str", "topic": "kiosk/view",
+         "topicType": "str", "x": 130, "y": 300 + 40 * _i,
+         "wires": [[nid("fn-kiosk-cmd")]]})
+
+# ---- Command builder + output ---------------------------------------------
+# ONE function builds every outbound payload and ONE mqtt out publishes it, so
+# there is a single place where a malformed command can exist. Payloads are
+# JSON.stringify'd strings: WallPanel parses the payload as JSON, and handing
+# it a JS object through MQTT would serialise to "[object Object]".
+_view_map_js = ", ".join(
+    "'%s': %d" % (k, WP_VIEW_INDEX[k])
+    for k in sorted(WP_VIEW_INDEX, key=lambda k: WP_VIEW_INDEX[k])
+)
+add({"id": nid("fn-kiosk-cmd"), "type": "function", "z": T,
+     "name": "Build kiosk command", "func": (
+"""// Classic function style: runs per message, `return` is what gets emitted.
+// Turns a UI action (or the motion path) into a WallPanel command payload.
+// Keys and ranges are the documented WallPanel contract:
+//   wake/brightness/eval -- see tools/gen_flows.py Tab 8 header.
+var VIEWS = {""" + _view_map_js + """};
+
+var t = String(msg.topic || '');
+var p = msg.payload;
+
+if (t === 'kiosk/wake') {
+    // wakeTime keeps the screen on for 180s, then the app returns to its
+    // screensaver on user inactivity (documented wake behaviour).
+    msg.payload = JSON.stringify({ wake: true, wakeTime: 180 });
+} else if (t === 'kiosk/view') {
+    var key = String(p || '').trim().toLowerCase();
+    var idx = VIEWS.hasOwnProperty(key) ? VIEWS[key] : parseInt(key, 10);
+    if (!isFinite(idx)) { return null; }
+    // Hash routing verified live: this switches the visible tab with no reload.
+    msg.payload = JSON.stringify({ eval: "location.hash='#!/" + idx + "'" });
+} else if (typeof p === 'object' && p !== null &&
+           (p.hasOwnProperty('wake') || p.hasOwnProperty('eval'))) {
+    // Already a command (motion path reuses this node) -- pass through.
+    msg.payload = JSON.stringify(p);
+} else {
+    // Unknown action: emit nothing rather than an empty command the tablet
+    // would log as a parse error.
+    return null;
+}
+
+msg.topic = '""" + WP_CMD_TOPIC + """';
+return msg;"""),
+     "outputs": 1, "timeout": 0, "noerr": 0, "initialize": "",
+     "finalize": "", "libs": [], "x": 430, "y": 260,
+     "wires": [[nid("mqtt-out-cmd")]]})
+
+add({"id": nid("mqtt-out-cmd"), "type": "mqtt out", "z": T,
+     "name": "Kiosk command", "topic": WP_CMD_TOPIC, "qos": "1",
+     "retain": "false", "respTopic": "", "contentType": "",
+     "userProps": "", "correl": "", "expiry": "", "broker": nid("mqtt-broker"),
+     "x": 680, "y": 260, "wires": []})
+
+# ---- Motion -> wake --------------------------------------------------------
+# WallPanel publishes {"value":true} to <base>/sensor/motion the moment its
+# camera sees motion. That is a screen-wake trigger already on the network, so
+# no separate PIR/sensor integration is needed for the "wake on approach" path.
+add({"id": nid("fn-kiosk-motion"), "type": "function", "z": T,
+     "name": "Motion -> wake", "func": (
+"""// WallPanel motion payload is {"value": true|false}. Only a real rising
+// edge should wake the screen: the false edge is published too, and waking on
+// it would defeat the screensaver.
+var v = msg.payload;
+var on = (v === true) ||
+         (v && typeof v === 'object' && v.value === true) ||
+         (typeof v === 'string' && v.trim().toLowerCase() === 'true');
+if (!on) { return null; }
+
+// wakeTime 180s: long enough to read the dashboard after walking up to it,
+// after which the app falls back to its screensaver on inactivity.
+msg.payload = JSON.stringify({ wake: true, wakeTime: 180 });
+return msg;"""),
+     "outputs": 1, "timeout": 0, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 430, "y": 400, "wires": [[nid("fn-kiosk-cmd")]]})
+
+add({"id": nid("mqtt-in-motion"), "type": "mqtt in", "z": T,
+     "name": "Tablet motion", "topic": WP_MOTION_TOPIC, "qos": "0",
+     "datatype": "json", "broker": nid("mqtt-broker"), "nl": False,
+     "rap": True, "rh": 0, "inputs": 0, "x": 150, "y": 400,
+     "wires": [[nid("fn-kiosk-motion")]]})
+
+# ---- Time of day -> brightness --------------------------------------------
+# Retained on purpose: a tablet that reboots or reconnects gets the current
+# brightness replayed by the broker instead of sitting at whatever the previous
+# bucket was. Wake/eval are NOT retained -- a retained wake would re-wake the
+# screen on every reconnect.
+add({"id": nid("fn-kiosk-brightness"), "type": "function", "z": T,
+     "name": "Schedule -> brightness", "func": (
+"""// WallPanel brightness range is 1-255 (documented), NOT a percentage.
+var B = { night: """ + str(WP_BRIGHTNESS["night"]) + """, dawn: """ + str(WP_BRIGHTNESS["dawn"]) + """,
+          day: """ + str(WP_BRIGHTNESS["day"]) + """, dusk: """ + str(WP_BRIGHTNESS["dusk"]) + """ };
+
+var h = new Date().getHours();
+var bucket;
+if (h >= 22 || h < 7)      { bucket = 'night'; }
+else if (h < 9)            { bucket = 'dawn';  }
+else if (h < 18)           { bucket = 'day';   }
+else                       { bucket = 'dusk';  }
+
+var level = B[bucket];
+// Re-publish when the bucket changes OR when we have not published in 30 min.
+// The periodic re-publish is deliberate self-healing: a retained message can be
+// dropped by a broker restart, and the tablet has no way to ask for it again.
+var prev = context.get('bucket');
+var last = context.get('lastPublish') || 0;
+var due = prev !== bucket || (Date.now() - last) > 30 * 60 * 1000;
+if (!due) { return null; }
+context.set('bucket', bucket);
+context.set('lastPublish', Date.now());
+
+msg.payload = JSON.stringify({ brightness: level });
+msg.topic = '""" + WP_CMD_TOPIC + """';
+return msg;"""),
+     "outputs": 1, "timeout": 0, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 450, "y": 520, "wires": [[nid("mqtt-out-brightness")]]})
+
+add({"id": nid("mqtt-out-brightness"), "type": "mqtt out", "z": T,
+     "name": "Brightness (retained)", "topic": WP_CMD_TOPIC, "qos": "1",
+     "retain": "true", "respTopic": "", "contentType": "",
+     "userProps": "", "correl": "", "expiry": "", "broker": nid("mqtt-broker"),
+     "x": 700, "y": 520, "wires": []})
+
+# repeat is REQUIRED for the schedule tick (see the Settings-tab note): a
+# one-shot inject fires only at deploy time and would leave the tablet at
+# whatever brightness it last held.
+add({"id": nid("inj-kiosk-sched"), "type": "inject", "z": T,
+     "name": "Schedule tick", "props": [{"p": "payload", "v": "", "vt": "str"}],
+     "repeat": "300", "crontab": "", "once": True, "onceDelay": 5.0,
+     "topic": "", "payload": "", "payloadType": "date",
+     "x": 160, "y": 520, "wires": [[nid("fn-kiosk-brightness")]]})
+
+# ---- Tablet state -> status widget ----------------------------------------
+add({"id": nid("fn-kiosk-state"), "type": "function", "z": T,
+     "name": "Tablet state", "func": (
+"""// WallPanel publishes application state to <base>/state as
+// {"currentUrl":..,"screenOn":bool,"brightness":N}.
+var p = msg.payload;
+if (typeof p === 'string') {
+    try { p = JSON.parse(p); } catch (e) { return null; }
+}
+if (!p || typeof p !== 'object') { return null; }
+
+var url = String(p.currentUrl || '');
+// Send only the tab portion: the full URL is long and wraps the widget.
+var m = url.match(/#!\\/(\\d+)/);
+var tab = m ? '#' + m[1] : (url ? url.slice(-28) : 'unknown');
+
+msg.payload = {
+    screenOn: p.screenOn === true,
+    brightness: (p.brightness === 0 || p.brightness) ? p.brightness : '?',
+    currentUrl: tab,
+    age: 'just now'
+};
+context.set('lastSeen', Date.now());
+return msg;"""),
+     "outputs": 1, "timeout": 0, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 420, "y": 640, "wires": [[nid("tpl-kiosk-status")]]})
+
+add({"id": nid("mqtt-in-state"), "type": "mqtt in", "z": T,
+     "name": "Tablet state", "topic": WP_STATE_TOPIC, "qos": "0",
+     "datatype": "json", "broker": nid("mqtt-broker"), "nl": False,
+     "rap": True, "rh": 0, "inputs": 0, "x": 150, "y": 640,
+     "wires": [[nid("fn-kiosk-state")]]})
+
 # ---------------------------------------------------------------- write files
 os.makedirs(OUT, exist_ok=True)
 files = {
@@ -2048,11 +2320,22 @@ labels = {
     nid("tab-syshealth"): "05-system-health.flow.json",
     nid("tab-settings"):"06-settings.flow.json",
     nid("tab-ha"):"07-home-assistant.flow.json",
+    nid("tab-kiosk"):"08-kiosk.flow.json",
 }
 written = []
 by_file = {}
 for tab_id, nodes in by_tab.items():
-    fname = labels.get(tab_id, "99-other.flow.json")
+    # Config nodes (mqtt-broker, tls-config, ...) are global and carry no `z`,
+    # so they all collide on the "orphan" bucket. Give them a predictable file
+    # instead of letting them land in 99-other, which is meant for unexpected
+    # nodes only. A stale 99-other.flow.json used to sit in the repo carrying an
+    # old copy of the HA tab; a test asserted against that dead file and passed
+    # while describing the wrong location. Regenerating 99-other with the broker
+    # exposed it.
+    if tab_id == "orphan":
+        fname = "00-config.flow.json"
+    else:
+        fname = labels.get(tab_id, "99-other.flow.json")
     by_file.setdefault(fname, []).extend(nodes)  # accumulate -- multiple
     # unlabeled tabs (e.g. Home Assistant, ui_base config) must all survive,
     # not clobber each other in a last-write-wins loop.
