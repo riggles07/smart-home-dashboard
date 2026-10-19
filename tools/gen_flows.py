@@ -10,6 +10,14 @@ inject/function/http-request/debug) -- not custom node-type definitions.
 
 Credentials are NEVER hardcoded: function nodes read them from env vars
 (PROXMOX_URL / PROXMOX_TOKEN / HUBITAT_* / UNIFI_*).
+
+# Visual hierarchy & progressive disclosure (2026-10-17 card t_b3218913):
+# Every monitored tab carries an "Alerts" group at order 1 -- collapse: False,
+# so the banner is the most prominent element on load and can never be hidden
+# behind a collapsed section. Secondary groups (host details, device/client
+# directories, Grafana embeds) are collapsible and start COLLAPSED via the
+# SHD_COLLAPSE_DEFAULTS script (the stock dashboard's `collapse:true` only
+# draws the caret; see the comment on that script below).
 """
 import json, os, hashlib, re
 
@@ -355,6 +363,363 @@ body.nr-dashboard-theme md-card th {
 
 """
 
+# ---------------------------------------------------------------- Visual hierarchy
+#
+# PROGRESSIVE DISCLOSURE -- the stock dashboard's `collapse: true` does NOT
+# collapse a group on load. Verified against the node-red-dashboard 3.6.6 dist
+# (ui-card-panel directive + template):
+#   o.collapsed = "true" == localStorage.getItem(r.id)   <- ONLY source of state
+#   config.collapse is consulted exclusively by ng-if on the caret <span>
+# The flag merely draws the expander affordance. Worse, the panel's `id`
+# attribute is the RAW interpolation text at link time, so every panel shares
+# one broken localStorage key and stored state can never round-trip per group.
+# Without help, every group renders expanded on every fresh load.
+#
+# THE STOCK CLICK PATH (what we drive):
+#   o.collapseCard() flips scope.collapsed, slideToggles the container,
+#   writes localStorage[r.id] (the shared broken key) and $emits "collapse".
+#   The stock restore path itself collapses a panel by triggering a click:
+#     e(function(){ a.find(".nr-dashboard-cardcarat").trigger("click") }, 20)
+#
+# TWO STOCK QUIRKS THE SCRIPT MUST NEUTRALISE (both verified in the dist):
+#   1. group `className` lands on the INNER .nr-dashboard-cardpanel div via
+#      ng-class -- the <ui-card-panel> host element never carries it. Select
+#      `.nr-dashboard-cardpanel.shd-collapsible` and walk up to the host for
+#      its node-id. A `ui-card-panel.shd-collapsible` selector matches
+#      NOTHING and fails silently.
+#   2. every carat click (including OURS) writes the shared literal key
+#      "{{group.header.id}}" = "true". On the next load EVERY panel then
+#      auto-restores COLLAPSED via the stock +20ms path -- including groups
+#      the user pinned open. The script scrubs that key after every click
+#      and re-opens user-pinned groups if the stock path collapsed them.
+#
+# The SHD_COLLAPSE_DEFAULTS script (a global ui_template, appended to <head>
+# on every page load exactly like the theme CSS -- the bundled jQuery 3.7.1
+# append path evaluates <script> tags via globalEval) applies per-group
+# defaults on every render of every tab (MutationObserver -- ng-repeat
+# re-creates panels on tab switch). It keeps its OWN per-group localStorage
+# keys ('shd_collapsed_<group-node-id>' -- real node ids, unlike the stock
+# shared key) so a group the user expanded stays expanded across reloads,
+# while fresh groups start collapsed: the acceptance criterion.
+SHD_COLLAPSE_DEFAULTS = """<script>
+/* shd-collapse-defaults: progressive disclosure (card t_b3218913).
+   Groups configured with className 'shd-collapsible' start collapsed; the
+   stock dashboard cannot do this itself (its localStorage key is shared by
+   every panel). Collapse by clicking the group's own caret -- the identical
+   code path the dashboard uses to restore a saved state -- so the caret icon
+   and scope state stay in sync. */
+(function () {
+  if (window.__shdCollapseDefaults) { return; }
+  window.__shdCollapseDefaults = true;
+  var PREFIX = 'shd_collapsed_';
+  var SHARED_KEY = '{{group.header.id}}';  /* the stock key: same literal text
+     for every panel (interpolation is unresolved at link time) */
+
+  function groupKey(host) {
+    var id = host.getAttribute('node-id') || '';
+    // Before interpolation resolves, the attribute holds the raw {{...}} text.
+    return id && id.indexOf('{') === -1 ? PREFIX + id : null;
+  }
+
+  function scrubShared() {
+    /* Our click made the stock write the shared key; if it is ever read at
+       link time again, EVERY panel auto-collapses on load. It must never
+       decide anything. */
+    try { localStorage.removeItem(SHARED_KEY); } catch (e) {}
+  }
+
+  function armCarat(host, carat) {
+    // Record the user's toggle in OUR namespace so choices survive reloads.
+    if (!carat || carat.getAttribute('data-shd-armed')) { return; }
+    carat.setAttribute('data-shd-armed', '1');
+    carat.addEventListener('click', function () {
+      var k = groupKey(host);
+      if (k) {
+        var cur = null;
+        try { cur = localStorage.getItem(k); } catch (e) {}
+        /* The click always TOGGLES, so the new state is the inverse of the
+           recorded one: 'false' (open) -> 'true'; anything else -> 'false'.
+           A null record means the panel was collapsed-by-default, so the
+           click opened it. */
+        try {
+          localStorage.setItem(k, cur === 'false' ? 'true' : 'false');
+        } catch (e) {}
+      }
+      scrubShared();
+    });
+  }
+
+  function armTitleBar(inner, host, carat) {
+    /* The stock binds ng-click on the CARAT SPAN ONLY -- a ~14x14px tap
+       target. The theme CSS enlarges the caret to the touch target and
+       makes the whole title <p> a 44px-high flex row; forward taps anywhere
+       on the row to the caret so the toggle area spans the full group
+       width (acceptance: touch-friendly expand/collapse). */
+    var title = inner.querySelector('.nr-dashboard-cardtitle');
+    if (!title || title.getAttribute('data-shd-armed')) { return; }
+    title.setAttribute('data-shd-armed', '1');
+    title.addEventListener('click', function (e) {
+      if (carat.contains(e.target)) { return; }  /* direct carat tap: the
+        carat's own ng-click + our carat listener already handled it */
+      carat.click();
+    });
+  }
+
+  function applyDefaults() {
+    /* className lives on the INNER .nr-dashboard-cardpanel div (ng-class in
+       the stock template) -- never on the <ui-card-panel> host. */
+    var inners = document.querySelectorAll(
+        '.nr-dashboard-cardpanel.shd-collapsible');
+    for (var i = 0; i < inners.length; i++) {
+      var inner = inners[i];
+      var host = inner.parentNode;             /* <ui-card-panel node-id=...> */
+      var carat = inner.querySelector('.nr-dashboard-cardcarat');
+      var container = inner.querySelector('.nr-dashboard-cardcontainer');
+      if (!host || host.nodeType !== 1 || !carat || !container) { continue; }
+
+      var k = groupKey(host);
+      if (!k) { continue; }                    /* id not interpolated yet */
+
+      // One action per render: a second click during the 150ms slideToggle
+      // animation would flip the panel back the other way. The marker dies
+      // with the panel element when the tab re-renders.
+      var done = host.getAttribute('data-shd-done');
+      if (!done) {
+        var stored = null;
+        try { stored = localStorage.getItem(k); } catch (e) {}
+        var isCollapsed = container.offsetParent === null;
+        var act = false;
+        if (stored === 'false') {
+          act = isCollapsed;      /* user pinned OPEN; the stock shared-key
+             restore may have collapsed it anyway -> re-open */
+        } else if (stored === 'true') {
+          act = !isCollapsed;     /* user pinned CLOSED; keep it closed */
+        } else {
+          act = !isCollapsed;     /* fresh visit: default-collapsed */
+        }
+        if (act) {
+          carat.click();
+          scrubShared();
+          host.setAttribute('data-shd-done', '1');
+        }
+      }
+      // Arm AFTER any programmatic click so our own click is never recorded
+      // as a user choice; both arms are idempotent per panel render.
+      armCarat(host, carat);
+      armTitleBar(inner, host, carat);
+    }
+  }
+
+  var scheduled = false;
+  function schedule() {
+    if (scheduled) { return; }
+    scheduled = true;
+    setTimeout(function () { scheduled = false; applyDefaults(); }, 100);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyDefaults);
+  } else {
+    applyDefaults();
+  }
+  setTimeout(applyDefaults, 500);
+  setTimeout(applyDefaults, 1500);
+  var observer = new MutationObserver(function (muts) {
+    for (var i = 0; i < muts.length; i++) {
+      if (muts[i].addedNodes.length) { schedule(); return; }
+    }
+  });
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener('DOMContentLoaded', function () {
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  }
+})();
+</script>"""
+
+
+# ---------------------------------------------------------------- Alert banners
+#
+# One "Alerts" group at order 1 on every monitored tab, disp: False (no group
+# chrome -- the banner stands alone), collapse: False -- so an alert can NEVER
+# be hidden behind a collapsed section (acceptance criterion 3). The banner is
+# a ui_template whose ng-class picks the severity class; the theme's
+# .alert-critical/.alert-warning/.alert-info/.alert-ok ladder does the visual
+# emphasis (critical: largest type, strongest contrast, pulse).
+TEMPLATE_ALERT = (
+    '<div ng-class="msg.payload.severity === \'critical\' ? \'alert-critical\' : '
+    'msg.payload.severity === \'warning\' ? \'alert-warning\' : '
+    'msg.payload.severity === \'info\' ? \'alert-info\' : \'alert-ok\'">'
+    '{{msg.payload.message}}</div>'
+)
+
+# Shared status line for the evaluators (node.status colour follows severity).
+_ALERT_STATUS = (
+    "node.status({fill: sev === 'ok' ? 'green' : "
+    "(sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\n"
+)
+
+
+def _alert_group(seed, tab_id, z_id, name):
+    """The order-1 Alerts group for a tab: never collapsible, no header.
+
+    `z` must be the FLOW TAB id (T) so the group lands in the same per-tab
+    flow file as its widgets; `tab` is the ui_tab the dashboard groups it
+    under. Mixing them up exiles the group to 99-other.flow.json and breaks
+    cross-file refs (caught by tools/validate_flows.py).
+    """
+    return {"id": nid(f"grp-alert-{seed}"), "type": "ui_group", "z": z_id,
+            "name": name, "tab": tab_id, "order": 1, "disp": False, "width": "12",
+            "collapse": False, "className": ""}
+
+
+def _alert_template(seed, group_id, tab_id, x, y):
+    """The banner widget for an Alerts group."""
+    return {"id": nid(f"tpl-alert-{seed}"), "type": "ui_template", "z": tab_id,
+            "name": "Alert Banner", "group": group_id, "order": 1,
+            "width": "12", "height": "2", "format": TEMPLATE_ALERT,
+            "storeOutMessages": True, "fwdInMessages": False,
+            "resendOnRefresh": True, "templateScope": "local",
+            "x": x, "y": y, "wires": [[]]}
+
+
+# Evaluator bodies. Classic per-message contract (return the outgoing message;
+# no on()/send() -- this Node-RED does not provide them; see
+# tests/test_flow_newline_guard.py). Thresholds live in the flow, not the
+# browser, so a banner updates on the same cadence as its data.
+#
+# Devices tab: TWO feeds hit this evaluator -- the control-result path
+# (Format result: 'OK (200)' / 'ERROR ...') and the 300s list poll (Format
+# device list: 'ERROR ...' on failure, or a device count on success). The
+# list poll is what keeps the banner honest about hub reachability when no
+# one is tapping controls; the control result reflects the command path.
+ALERT_EVAL_HOMELAB = (
+    "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n"
+    "// Split metrics attaches mem + uptime to its CPU (out0) message, so a\n"
+    "// single feed evaluates the whole tab state.\n"
+    "var cpu = (typeof msg.payload === 'number') ? msg.payload : -1;\n"
+    "var mem = (typeof msg.mem === 'number') ? msg.mem : 0;\n"
+    "var up = msg.uptime || '';\n"
+    "var sev = 'ok';\n"
+    "var parts = [];\n"
+    "if (cpu < 0) {\n"
+    "  sev = 'critical';\n"
+    "  parts.push('Proxmox data unavailable');\n"
+    "} else {\n"
+    "  if (cpu >= 90) { sev = 'critical'; parts.push('CPU ' + cpu + '%'); }\n"
+    "  else if (cpu >= 75) {\n"
+    "    sev = 'warning'; parts.push('CPU ' + cpu + '%');\n"
+    "  }\n"
+    "  if (mem >= 90) { sev = 'critical'; parts.push('Memory ' + mem + '%'); }\n"
+    "  else if (mem >= 75) {\n"
+    "    if (sev === 'ok') { sev = 'warning'; }\n"
+    "    parts.push('Memory ' + mem + '%');\n"
+    "  }\n"
+    "  if (sev === 'ok') { parts.push('Proxmox OK' + (up ? ' - up ' + up : '')); }\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: parts.join(' | ')};\n"
+    "return msg;"
+)
+
+ALERT_EVAL_HUBITAT = (
+    "// Devices alert banner. Two feeds arrive here:\n"
+    "//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n"
+    "//    config is missing) from Format result / Build Maker API call;\n"
+    "//  - the 300s list poll from Format device list: a device COUNT\n"
+    "//    (number) on success, 'ERROR ...' when the hub is unreachable.\n"
+    "var p = String(msg.payload || '');\n"
+    "var sev = 'ok';\n"
+    "var text;\n"
+    "if (typeof msg.payload === 'number') {\n"
+    "  // list poll succeeded: N devices reachable = hub is up\n"
+    "  text = msg.payload + ' devices reachable';\n"
+    "} else if (p.indexOf('ERROR') === 0) {\n"
+    "  sev = 'critical';\n"
+    "  text = p.slice(0, 120);\n"
+    "} else if (p.indexOf('Set HUBITAT') === 0) {\n"
+    "  sev = 'warning';\n"
+    "  text = 'Hubitat config missing: set HUBITAT_APP_ID / ACCESS_TOKEN / DEVICE_ID';\n"
+    "} else if (p.indexOf('OK') === 0) {\n"
+    "  text = 'Hubitat control OK';\n"
+    "} else {\n"
+    "  sev = 'info';\n"
+    "  text = p || 'Awaiting first result';\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: text};\n"
+    "return msg;"
+)
+
+
+ALERT_EVAL_NETWORK = (
+    "// Network alert banner: controller reachability + client-count anomaly.\n"
+    "// Split client data tags its count output with topic 'unifi/error' when\n"
+    "// the poll failed, so 'no clients' (warning) is distinguishable from an\n"
+    "// unreachable controller (critical).\n"
+    "var n = (typeof msg.payload === 'number') ? msg.payload : -1;\n"
+    "var sev = 'ok';\n"
+    "var text;\n"
+    "if (n < 0 || msg.topic === 'unifi/error') {\n"
+    "  sev = 'critical';\n"
+    "  text = 'UniFi controller unreachable' + (msg._error ? ' -- ' + String(msg._error).slice(0, 100) : '');\n"
+    "} else if (n === 0) {\n"
+    "  sev = 'warning';\n"
+    "  text = 'No clients online';\n"
+    "} else {\n"
+    "  text = n + ' clients online';\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: text};\n"
+    "return msg;"
+)
+
+ALERT_EVAL_HEALTH = (
+    "// System Health alert banner: Prometheus targets/probes + node pressure.\n"
+    "// Parse health summary attaches the full stat map to its first output,\n"
+    "// so one message evaluates the whole stack.\n"
+    "var m = msg.stats || {};\n"
+    "var cpu = m.pve_cpu, mem = m.pve_mem;\n"
+    "var tUp = m.targets_up, tTot = m.targets_total;\n"
+    "var pOk = m.probes_ok, pTot = m.probes_total;\n"
+    "function pct(v) { return Math.round(v * 10) / 10 + '%'; }\n"
+    "function escalate(s) {\n"
+    "  if (s === 'critical') { sev = 'critical'; }\n"
+    "  else if (s === 'warning' && sev !== 'critical') { sev = 'warning'; }\n"
+    "}\n"
+    "var sev = 'ok';\n"
+    "var parts = [];\n"
+    "if (!m || msg.payload === -1) {\n"
+    "  // Parse health summary marks total failure with payload:-1 (stats\n"
+    "  // null) or payload:-1 + empty stats (Prometheus up, nothing scraped).\n"
+    "  sev = 'critical';\n"
+    "  parts.push('Monitoring data unavailable');\n"
+    "} else {\n"
+    "if (typeof cpu === 'number') {\n"
+    "  if (cpu >= 90) { escalate('critical'); parts.push('CPU ' + pct(cpu)); }\n"
+    "  else if (cpu >= 75) { escalate('warning'); parts.push('CPU ' + pct(cpu)); }\n"
+    "}\n"
+    "if (typeof mem === 'number') {\n"
+    "  if (mem >= 90) { escalate('critical'); parts.push('Memory ' + pct(mem)); }\n"
+    "  else if (mem >= 75) { escalate('warning'); parts.push('Memory ' + pct(mem)); }\n"
+    "}\n"
+    "if (tTot > 0 && tUp < tTot) {\n"
+    "  escalate(tUp === 0 ? 'critical' : 'warning');\n"
+    "  parts.push('Targets ' + tUp + '/' + tTot);\n"
+    "}\n"
+    "if (pTot > 0 && pOk < pTot) {\n"
+    "  escalate(pOk === 0 ? 'critical' : 'warning');\n"
+    "  parts.push('Probes ' + pOk + '/' + pTot);\n"
+    "}\n"
+    "if (sev === 'ok') { parts.push('All monitored systems healthy'); }\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: parts.join(' | ')};\n"
+    "return msg;"
+)
+
 
 _theme_css = load_theme_css()
 T = nid("tab-homelab")
@@ -366,7 +731,8 @@ add({"id": _TG, "type": "ui_group", "z": T, "name": "Theme",
      "collapse": False})
 add({"id": nid("tpl-theme"), "type": "ui_template", "z": T, "name": "Mobile theme",
      "group": _TG, "order": 1, "width": "0", "height": "0",
-     "format": "<style>\n" + _theme_css + "\n" + THEME_OVERRIDE + "</style>",
+     "format": "<style>\n" + _theme_css + "\n" + THEME_OVERRIDE + "</style>"
+               + SHD_COLLAPSE_DEFAULTS,
      "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
      "templateScope": "global", "x": 130, "y": 900, "wires": [[]]})
 
@@ -424,9 +790,21 @@ T = nid("tab-homelab")
 add({"id": T, "type": "tab", "label": "Home Lab", "disabled": False, "info": ""})
 add({"id": nid("uitab-h"), "type": "ui_tab", "z": T, "name": "Home Lab",
      "icon": "dashboard", "order": 1, "disabled": False, "hidden": False})
+
+# ---- Alerts (order 1): most prominent element, NEVER collapsible ----------
+# The banner evaluates CPU/mem pressure from the same message that feeds the
+# CPU gauge, so it updates on the same 30s cadence.
+G_ALERT = _alert_group("homelab", nid("uitab-h"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("homelab", G_ALERT["id"], T, 1150, 40))
+add({"id": nid("fn-alert-h"), "type": "function", "z": T, "name": "Evaluate alerts",
+     "func": ALERT_EVAL_HOMELAB,
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 1150, "y": 120, "wires": [[nid("tpl-alert-homelab")]]})
+
 G = nid("grp-pve")
 add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Host",
-     "tab": nid("uitab-h"), "order": 1, "disp": True, "width": "12", "collapse": False})
+     "tab": nid("uitab-h"), "order": 2, "disp": True, "width": "12", "collapse": False})
 
 add({"id": nid("gg-cpu"), "type": "ui_gauge", "z": T, "name": "Proxmox CPU",
      "group": G, "order": 1, "width": "5", "height": "5", "gtype": "gage",
@@ -472,21 +850,28 @@ TEMPLATE_HOST = (
     "  </tbody>\n"
     "</table>"
 )
+# ---- Host details: secondary, collapsed by default ------------------------
+# The detail table + swap/disk/memory rows are reference material, not the
+# at-a-glance state -- progressive disclosure keeps the default view lean.
+G2 = nid("grp-hdet")
+add({"id": G2, "type": "ui_group", "z": T, "name": "Host Details",
+     "tab": nid("uitab-h"), "order": 3, "disp": True, "width": "12",
+     "collapse": True, "className": "shd-collapsible"})
 add({"id": nid("tpl-host"), "type": "ui_template", "z": T, "name": "Host Detail",
-     "group": G, "order": 5, "width": "7", "height": "5",
+     "group": G2, "order": 1, "width": "7", "height": "5",
      "format": TEMPLATE_HOST, "storeOutMessages": True, "fwdInMessages": True,
      "resendOnRefresh": True, "templateScope": "local",
      "x": 650, "y": 520, "wires": [[]]})
 add({"id": nid("txt-swap"), "type": "ui_text", "z": T, "name": "Swap",
-     "group": G, "order": 6, "width": "4", "height": "2",
+     "group": G2, "order": 2, "width": "4", "height": "2",
      "label": "Swap", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 620, "wires": []})
 add({"id": nid("txt-disk"), "type": "ui_text", "z": T, "name": "Disk (rootfs)",
-     "group": G, "order": 7, "width": "4", "height": "2",
+     "group": G2, "order": 3, "width": "4", "height": "2",
      "label": "Disk", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 700, "wires": []})
 add({"id": nid("txt-mem"), "type": "ui_text", "z": T, "name": "Memory Detail",
-     "group": G, "order": 8, "width": "4", "height": "2",
+     "group": G2, "order": 4, "width": "4", "height": "2",
      "label": "Memory", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 780, "wires": []})
 
@@ -523,7 +908,14 @@ add({"id": nid("json-h"), "type": "json", "z": T, "name": "Parse",
 add({"id": nid("fn-h-parse"), "type": "function", "z": T, "name": "Split metrics",
      "func": (
         "var d = (msg.payload && msg.payload.data) ? msg.payload.data : null;\n"
-        "if (!d) { node.status({fill:'red',shape:'ring',text:'no data'}); return null; }\n"
+        "if (!d) {\n"
+        "  node.status({fill:'red',shape:'ring',text:'no data'});\n"
+        "  // out0 feeds the alert evaluator: payload -1 is its 'data\n"
+        "  // unavailable' marker -> a CRITICAL banner instead of a blank one.\n"
+        "  // The gauge clamps -1 to its 0 floor (cosmetic; the banner is the\n"
+        "  // authoritative alert element).\n"
+        "  return [{payload: -1, mem: -1, uptime: ''}, null, null, null, null, null, null, null];\n"
+        "}\n"
         "var cpu = Math.round((d.cpu || 0) * 1000) / 10;\n"
         "var memUsed = (d.memory && d.memory.used) || 0;\n"
         "var memTot = (d.memory && d.memory.total) || 1;\n"
@@ -558,7 +950,7 @@ add({"id": nid("fn-h-parse"), "type": "function", "z": T, "name": "Split metrics
         "  + '  (' + gb(rootfs.avail || 0) + ' free)'};\n"
         "var mMem  = {payload: gb(mem2.used || 0) + ' of ' + gb(mem2.total || 0)\n"
         "  + '  (' + gb(mem2.available || 0) + ' avail)'};\n"
-        "var mCpu = {payload: cpu};\n"
+        "var mCpu = {payload: cpu, mem: mem, uptime: days + 'd ' + hrs + 'h'};\n"
         "var mMemG = {payload: mem};\n"
         "var mStat = {payload: 'Up ' + days + 'd ' + hrs + 'h' + "
         "(d.loadavg ? ' | load ' + (Math.round(d.loadavg[0]*100)/100) : '')};\n"
@@ -567,8 +959,9 @@ add({"id": nid("fn-h-parse"), "type": "function", "z": T, "name": "Split metrics
      ),
      "outputs": 8, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 900, "y": 120,
-     "wires": [[nid("gg-cpu")], [nid("gg-mem")], [nid("txt-status")], [nid("ch-cpu")],
-               [nid("tpl-host")], [nid("txt-swap")], [nid("txt-disk")], [nid("txt-mem")]]})
+     "wires": [[nid("gg-cpu"), nid("fn-alert-h")], [nid("gg-mem")], [nid("txt-status")],
+               [nid("ch-cpu")], [nid("tpl-host")], [nid("txt-swap")],
+               [nid("txt-disk")], [nid("txt-mem")]]})
 add({"id": nid("dbg-h"), "type": "debug", "z": T, "name": "Proxmox raw",
      "active": True, "tosidebar": True, "console": False, "tostatus": False,
      "complete": "payload", "targetType": "msg", "statusVal": "", "statusType": "auto",
@@ -579,9 +972,19 @@ T = nid("tab-devices")
 add({"id": T, "type": "tab", "label": "Devices", "disabled": False, "info": ""})
 add({"id": nid("uitab-d"), "type": "ui_tab", "z": T, "name": "Devices",
      "icon": "lightbulb-o", "order": 2, "disabled": False, "hidden": False})
+
+# ---- Alerts (order 1): control failures surface here, never collapsible ---
+G_ALERT = _alert_group("devices", nid("uitab-d"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("devices", G_ALERT["id"], T, 1150, 40))
+add({"id": nid("fn-alert-d"), "type": "function", "z": T, "name": "Evaluate alerts",
+     "func": ALERT_EVAL_HUBITAT,
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 990, "y": 170, "wires": [[nid("tpl-alert-devices")]]})
+
 G = nid("grp-devs")
 add({"id": G, "type": "ui_group", "z": T, "name": "Device Control",
-     "tab": nid("uitab-d"), "order": 1, "disp": True, "width": "6", "collapse": False})
+     "tab": nid("uitab-d"), "order": 2, "disp": True, "width": "6", "collapse": False})
 
 add({"id": nid("sw-power"), "type": "ui_switch", "z": T, "name": "Power",
      "label": "Power", "tooltip": "", "group": G, "order": 1, "width": "4", "height": "3",
@@ -617,14 +1020,19 @@ TEMPLATE_DEVICES = (
     "</table>"
 )
 add({"id": nid("txt-devcount"), "type": "ui_text", "z": T, "name": "Device Count",
-     "group": G, "order": 3, "width": "6", "height": "2",
+     "group": nid("grp-ddir"), "order": 1, "width": "6", "height": "2",
      "label": "Devices", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 400, "wires": []})
 add({"id": nid("tbl-devices"), "type": "ui_template", "z": T, "name": "Device List",
-     "group": G, "order": 5, "width": "12", "height": "10",
+     "group": nid("grp-ddir"), "order": 2, "width": "12", "height": "10",
      "format": TEMPLATE_DEVICES, "storeOutMessages": True, "fwdInMessages": True,
      "resendOnRefresh": True, "templateScope": "local",
      "x": 650, "y": 470, "wires": [[]]})
+
+# ---- Device Directory: secondary, collapsed by default --------------------
+add({"id": nid("grp-ddir"), "type": "ui_group", "z": T, "name": "Device Directory",
+     "tab": nid("uitab-d"), "order": 3, "disp": True, "width": "12",
+     "collapse": True, "className": "shd-collapsible"})
 
 # Build the list request. Separate from the control path above so a control
 # failure cannot blank the list, and vice versa.
@@ -639,12 +1047,15 @@ add({"id": nid("fn-d-list"), "type": "function", "z": T, "name": "Build device l
         "  return [null, msg];\n"
         "}\n"
         "msg.method = 'GET';\n"
-        "msg.url = base.replace(/\\/+$/,'') + '/apps/api/' + app + '/devices?access_token=' + tok;\n"
+        "msg.url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices?access_token=' + tok;\n"
         "node.status({fill:'blue',shape:'dot',text:'listing'});\n"
         "return [msg, null];"
      ),
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 360, "y": 560, "wires": [[nid("http-d-list")], [nid("tbl-devices"), nid("txt-devcount")]]})
+     # out1 (missing-config message) also feeds the alert evaluator so the
+     # banner shows the warning instead of only the Device Count widget.
+     "x": 360, "y": 560, "wires": [[nid("http-d-list")],
+             [nid("tbl-devices"), nid("txt-devcount"), nid("fn-alert-d")]]})
 add({"id": nid("http-d-list"), "type": "http request", "z": T, "name": "Hubitat device list",
      "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
      "persist": False, "proxy": "", "authType": "", "x": 590, "y": 560,
@@ -655,7 +1066,11 @@ add({"id": nid("fn-d-listfmt"), "type": "function", "z": T, "name": "Format devi
         "if (msg.error || !msg.statusCode) {\n"
         "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
         "  msg.payload = [];\n"
-        "  return [msg, msg];\n"
+        "  // out1 feeds Device Count AND the alert evaluator: an explicit\n"
+        "  // ERROR string makes the banner critical ('hub unreachable'),\n"
+        "  // which a count of 0 cannot distinguish from 'no devices'.\n"
+        "  var e = {payload: 'ERROR: Hubitat unreachable (' + (msg.error || 'no response') + ')'};\n"
+        "  return [msg, e];\n"
         "}\n"
         "if (typeof body === 'string') {\n"
         "  try { body = JSON.parse(body); } catch (e) { body = []; }\n"
@@ -667,7 +1082,8 @@ add({"id": nid("fn-d-listfmt"), "type": "function", "z": T, "name": "Format devi
         "return [msg, c];"
      ),
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 790, "y": 560, "wires": [[nid("tbl-devices")], [nid("txt-devcount")]]})
+     "x": 790, "y": 560, "wires": [[nid("tbl-devices")],
+             [nid("txt-devcount"), nid("fn-alert-d")]]})
 add({"id": nid("inj-d-list"), "type": "inject", "z": T, "name": "Load devices",
      "props": [{"p": "payload"}], "repeat": "300", "crontab": "", "once": True,
      "onceDelay": 1.5, "topic": "", "payload": "", "payloadType": "date",
@@ -698,7 +1114,10 @@ add({"id": nid("fn-d-cmd"), "type": "function", "z": T, "name": "Build Maker API
         "return [msg, null];"
      ),
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 360, "y": 170, "wires": [[nid("http-d")], [nid("txt-dev")]]})
+     # out1 (missing-config message) feeds both the Last Result widget and
+     # the alert evaluator so the banner carries the warning too.
+     "x": 360, "y": 170, "wires": [[nid("http-d")],
+             [nid("txt-dev"), nid("fn-alert-d")]]})
 add({"id": nid("http-d"), "type": "http request", "z": T, "name": "Hubitat Maker API",
      "method": "use", "ret": "txt", "paytoqs": "ignore", "url": "", "tls": "",
      "persist": False, "proxy": "", "authType": "", "x": 590, "y": 170,
@@ -709,7 +1128,7 @@ add({"id": nid("fn-d-result"), "type": "function", "z": T, "name": "Format resul
         "if (msg.error || !msg.statusCode) {\n"
         "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
         "  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n"
-        "  return msg;\n"
+        "  return [msg, msg];\n"
         "}\n"
         "if (msg.statusCode >= 200 && msg.statusCode < 300) {\n"
         "  node.status({fill:'green',shape:'dot',text:'ok'});\n"
@@ -719,10 +1138,10 @@ add({"id": nid("fn-d-result"), "type": "function", "z": T, "name": "Format resul
         "  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n"
         "  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n"
         "}\n"
-        "return msg;"
+        "return [msg, msg];"
      ),
-     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 790, "y": 170, "wires": [[nid("txt-dev")]]})
+     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 790, "y": 170, "wires": [[nid("txt-dev")], [nid("fn-alert-d")]]})
 
 
 # ---------------------------------------------------------------- Tab 7: Home Assistant
@@ -897,9 +1316,19 @@ T = nid("tab-network")
 add({"id": T, "type": "tab", "label": "Network", "disabled": False, "info": ""})
 add({"id": nid("uitab-u"), "type": "ui_tab", "z": T, "name": "Network",
      "icon": "wifi", "order": 3, "disabled": False, "hidden": False})
+
+# ---- Alerts (order 1): controller reachability, never collapsible ---------
+G_ALERT = _alert_group("network", nid("uitab-u"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("network", G_ALERT["id"], T, 1150, 40))
+add({"id": nid("fn-alert-u"), "type": "function", "z": T, "name": "Evaluate alerts",
+     "func": ALERT_EVAL_NETWORK,
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 1150, "y": 300, "wires": [[nid("tpl-alert-network")]]})
+
 G = nid("grp-net")
 add({"id": G, "type": "ui_group", "z": T, "name": "Network Overview",
-     "tab": nid("uitab-u"), "order": 1, "disp": True, "width": "12", "collapse": False})
+     "tab": nid("uitab-u"), "order": 2, "disp": True, "width": "12", "collapse": False})
 
 add({"id": nid("txt-clients"), "type": "ui_text", "z": T, "name": "Clients Online",
      "group": G, "order": 1, "width": "6", "height": "2",
@@ -927,10 +1356,15 @@ TEMPLATE_CARDS = (
 )
 
 add({"id": nid("tbl-clients"), "type": "ui_template", "z": T, "name": "Client List",
-     "group": G, "order": 2, "width": "12", "height": "8",
+     "group": nid("grp-cdir"), "order": 1, "width": "12", "height": "8",
      "format": TEMPLATE_CLIENTS, "storeOutMessages": True, "fwdInMessages": True,
      "resendOnRefresh": True, "templateScope": "local",
      "x": 650, "y": 220, "wires": [[]]})
+
+# ---- Client Directory: secondary, collapsed by default ---------------------
+add({"id": nid("grp-cdir"), "type": "ui_group", "z": T, "name": "Client Directory",
+     "tab": nid("uitab-u"), "order": 3, "disp": True, "width": "12",
+     "collapse": True, "className": "shd-collapsible"})
 
 add({"id": nid("inj-u"), "type": "inject", "z": T, "name": "Every 60s",
      "props": [{"p": "payload"}], "repeat": "60", "crontab": "", "once": True,
@@ -953,10 +1387,10 @@ add({"id": nid("fn-u-login"), "type": "function", "z": T, "name": "Build UniFi a
         "msg.headers = {'Accept': 'application/json'};\n"
         "if (!base) {\n"
         "  node.status({fill:'red',shape:'ring',text:'no UNIFI_URL'});\n"
-        "  return [null, {payload: [], topic: 'unifi/error', "
+        "  return [null, null, {payload: [], topic: 'unifi/error', "
         "_error: 'UNIFI_URL is not set. Use https://<host>/proxy/network for a UniFi OS console, or https://<host>:8443 for a self-hosted controller'}];\n"
         "}\n"
-        "base = base.replace(/\\/+$/, '');\n"
+        "base = base.replace(/\/+$/, '');\n"
         "msg.url_stat = base + '/api/s/' + site + '/stat/sta';\n"
         "if (key) {\n"
         "  node.status({fill:'green',shape:'dot',text:'api key'});\n"
@@ -968,11 +1402,11 @@ add({"id": nid("fn-u-login"), "type": "function", "z": T, "name": "Build UniFi a
         "  // parser, which then read the inject's Date payload instead of client\n"
         "  // data and always rendered 0 clients. Both auth routes converge on the\n"
         "  // same HTTP node; out0 only differs in that it needs a login first.\n"
-        "  return [null, msg];\n"
+        "  return [null, msg, null];\n"
         "}\n"
         "if (!user || !pass) {\n"
         "  node.status({fill:'red',shape:'ring',text:'no credentials'});\n"
-        "  return [null, {payload: [], topic: 'unifi/error', "
+        "  return [null, null, {payload: [], topic: 'unifi/error', "
         "_error: 'Set UNIFI_API_KEY, or UNIFI_USERNAME + UNIFI_PASSWORD, in the service environment'}];\n"
         "}\n"
         "// Pick the login endpoint. A UniFi OS console (base carries\n"
@@ -991,15 +1425,19 @@ add({"id": nid("fn-u-login"), "type": "function", "z": T, "name": "Build UniFi a
         "msg.payload = JSON.stringify({username: user, password: pass, remember: true});\n"
         "return [msg, null];"
      ),
-     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     # out0 (login required) -> the login HTTP node.
+     "outputs": 3, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     # out0 (login required) -> login HTTP node.
      # out1 (API key, request already built) -> the SAME stat HTTP node the
      # login path reaches after Capture session. It must NOT go to the parser
      # directly -- that skipped the request entirely and always rendered 0
      # clients. `msg.url` is already set on both routes, and the http request
      # node is method:"use", so it honours whatever the function set.
+     # out2 (config error) -> the PARSER directly: an http request node with
+     # no msg.url silently drops the message, and the banner would never
+     # learn the controller is unconfigured. The parser's error branch tags
+     # the count with topic 'unifi/error' so the banner goes critical.
      "x": 340, "y": 120,
-     "wires": [[nid("http-u-login")], [nid("http-u-stat")]]})
+     "wires": [[nid("http-u-login")], [nid("http-u-stat")], [nid("fn-u-parse")]]})
 
 add({"id": nid("http-u-login"), "type": "http request", "z": T, "name": "UniFi login",
      "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
@@ -1022,7 +1460,11 @@ add({"id": nid("fn-u-cookie"), "type": "function", "z": T, "name": "Capture sess
         "  msg.payload = [];\n"
         "  msg.topic = 'unifi/error';\n"
         "  msg._error = 'UniFi login returned no session cookie (HTTP ' + (msg.statusCode || '?') + ')';\n"
-        "  return msg;\n"
+        "  // Failed login -> the PARSER's error branch, not another stat\n"
+        "  // request with the login URL (bogus request, drops the real\n"
+        "  // error). The parser tags the count 'unifi/error' so the alert\n"
+        "  // banner reports the controller as unreachable (critical).\n"
+        "  return [msg, msg];\n"
         "}\n"
         "node.status({fill:'green',shape:'dot',text:'session ok'});\n"
         "msg.method = 'GET';\n"
@@ -1034,8 +1476,11 @@ add({"id": nid("fn-u-cookie"), "type": "function", "z": T, "name": "Capture sess
         "msg.headers['Cookie'] = cookie;\n"
         "return msg;"
      ),
-     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 730, "y": 60, "wires": [[nid("http-u-stat")]]})
+     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     # out0: stat request (normal path). out1: login failure -> parser's
+     # error branch directly (a second stat request with the login URL is
+     # bogus and would drop the real error).
+     "x": 730, "y": 60, "wires": [[nid("http-u-stat")], [nid("fn-u-parse")]]})
 
 add({"id": nid("http-u-stat"), "type": "http request", "z": T, "name": "UniFi clients",
      "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
@@ -1048,7 +1493,11 @@ add({"id": nid("fn-u-parse"), "type": "function", "z": T, "name": "Split client 
         "if (msg.topic === 'unifi/error' || msg._error) {\n"
         "  node.status({fill:'red',shape:'ring',text:'error'});\n"
         "  var errMsg = msg._error || String(msg.payload || '');\n"
-        "  return [ {payload: 0}, {payload: 'ERROR: ' + errMsg} ];\n"
+        "  // out0 feeds Clients Online + the alert evaluator. Keep the\n"
+        "  // error topic on the count so the banner says 'controller\n"
+        "  // unreachable' (critical), not 'no clients' (warning).\n"
+        "  return [ {payload: 0, topic: 'unifi/error', _error: errMsg},\n"
+        "           {payload: 'ERROR: ' + errMsg} ];\n"
         "}\n"
         "var data = (msg.payload && msg.payload.data) ? msg.payload.data : [];\n"
         "var rows = [];\n"
@@ -1060,7 +1509,7 @@ add({"id": nid("fn-u-parse"), "type": "function", "z": T, "name": "Split client 
         "return [ {payload: rows.length}, {payload: rows} ];"
      ),
      "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 900, "y": 300, "wires": [[nid("txt-clients")], [nid("tbl-clients")]]})
+     "x": 900, "y": 300, "wires": [[nid("txt-clients"), nid("fn-alert-u")], [nid("tbl-clients")]]})
 
 # ---------------------------------------------------------------- Tab 4: Kanban Board
 T = nid("tab-kanban")
@@ -1140,10 +1589,21 @@ add({"id": T, "type": "tab", "label": "System Health", "disabled": False, "info"
 add({"id": nid("uitab-sh"), "type": "ui_tab", "z": T, "name": "System Health",
      "icon": "heartbeat", "order": 5, "disabled": False, "hidden": False})
 
+# ---- Alerts (order 1): whole-stack severity, never collapsible ------------
+# Parse health summary attaches the full stat map to its CPU output, so the
+# banner evaluates targets/probes/cpu/mem in one message.
+G_ALERT = _alert_group("syshealth", nid("uitab-sh"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("syshealth", G_ALERT["id"], T, 1150, 40))
+add({"id": nid("fn-alert-sh"), "type": "function", "z": T, "name": "Evaluate alerts",
+     "func": ALERT_EVAL_HEALTH,
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 1020, "y": 120, "wires": [[nid("tpl-alert-syshealth")]]})
+
 # ---- Group 1: Health Summary (native widgets, no iframes) ----------------
 G = nid("grp-sh-sum")
 add({"id": G, "type": "ui_group", "z": T, "name": "Health Summary",
-     "tab": nid("uitab-sh"), "order": 1, "disp": True, "width": "12", "collapse": False})
+     "tab": nid("uitab-sh"), "order": 2, "disp": True, "width": "12", "collapse": False})
 add({"id": nid("gg-sh-cpu"), "type": "ui_gauge", "z": T, "name": "PVE CPU",
      "group": G, "order": 1, "width": "6", "height": "5", "gtype": "gage",
      "title": "PVE CPU", "label": "%", "format": "{{value}}", "min": 0, "max": "100",
@@ -1201,14 +1661,24 @@ add({"id": nid("fn-sh-parse"), "type": "function", "z": T, "name": "Parse health
         "var r = msg.payload;\n"
         "if (!r || r.status !== 'success' || !r.data || !Array.isArray(r.data.result)) {\n"
         "  node.status({fill:'red',shape:'ring',text:'no data'});\n"
-        "  return null;\n"
+        "  // out0 feeds the alert evaluator. An empty stat map would read as\n"
+        "  // 'everything healthy' there -- send stats: null so the banner\n"
+        "  // reports 'monitoring unavailable' (critical) instead of lying.\n"
+        "  var mFail = { payload: -1, stats: null };\n"
+        "  return [mFail, null, null, null, null];\n"
         "}\n"
         "var m = {};\n"
         "r.data.result.forEach(function (s) {\n"
         "  if (s.metric && s.metric.stat && s.value) { m[s.metric.stat] = parseFloat(s.value[1]); }\n"
         "});\n"
+        "// Prometheus reachable but zero stats scraped: same as down for\n"
+        "// alerting purposes -- the banner must not read it as 'healthy'.\n"
+        "if (!m.targets_total && !m.probes_total && !m.pve_cpu && !m.pve_mem) {\n"
+        "  var mNone = { payload: -1, stats: {} };\n"
+        "  return [mNone, null, null, null, null];\n"
+        "}\n"
         "function pct(v) { return isFinite(v) ? Math.round(v * 10) / 10 : 0; }\n"
-        "var mCpu = { payload: pct(m.pve_cpu) };\n"
+        "var mCpu = { payload: pct(m.pve_cpu), stats: m };\n"
         "var mMem = { payload: pct(m.pve_mem) };\n"
         "var mTgt = { payload: Math.round(m.targets_up || 0) + ' / ' + Math.round(m.targets_total || 0) + ' up' };\n"
         "var mPrb = { payload: Math.round(m.probes_ok || 0) + ' / ' + Math.round(m.probes_total || 0) + ' ok' };\n"
@@ -1217,14 +1687,15 @@ add({"id": nid("fn-sh-parse"), "type": "function", "z": T, "name": "Parse health
         "return [mCpu, mMem, mTgt, mPrb, mUp];"
      ),
      "outputs": 5, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 770, "y": 120, "wires": [[nid("gg-sh-cpu")], [nid("gg-sh-mem")],
+     "x": 770, "y": 120, "wires": [[nid("gg-sh-cpu"), nid("fn-alert-sh")], [nid("gg-sh-mem")],
                                    [nid("txt-sh-targets")], [nid("txt-sh-probes")],
                                    [nid("txt-sh-uptime")]]})
 
 # ---- Group 2: Proxmox Node Resources (Grafana embeds) ---------------------
 G = nid("grp-sh-pve")
 add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Node Resources",
-     "tab": nid("uitab-sh"), "order": 2, "disp": True, "width": "12", "collapse": False})
+     "tab": nid("uitab-sh"), "order": 3, "disp": True, "width": "12",
+     "collapse": True, "className": "shd-collapsible"})
 
 # WHY THE IFRAME src IS SET FROM THE <script> BLOCK, NOT ng-src (live-verified):
 # In Angular 1.8 (bundled in node-red-dashboard 3.6.6) an <iframe> src is a
@@ -1298,7 +1769,8 @@ add({"id": nid("tpl-sh-io"), "type": "ui_template", "z": T, "name": "Grafana: PV
 # ---- Group 3: LXC / VM Health (Grafana embed) ------------------------------
 G = nid("grp-sh-lxc")
 add({"id": G, "type": "ui_group", "z": T, "name": "LXC / VM Health",
-     "tab": nid("uitab-sh"), "order": 3, "disp": True, "width": "12", "collapse": False})
+     "tab": nid("uitab-sh"), "order": 4, "disp": True, "width": "12",
+     "collapse": True, "className": "shd-collapsible"})
 add({"id": nid("tpl-sh-health"), "type": "ui_template", "z": T, "name": "Grafana: Service Health",
      "group": G, "order": 1, "width": "12", "height": "8",
      "format": grafana_embed("health", "Service Health (LXC / VM / hosts)"),
@@ -1494,8 +1966,13 @@ labels = {
     nid("tab-settings"):"06-settings.flow.json",
 }
 written = []
+by_file = {}
 for tab_id, nodes in by_tab.items():
     fname = labels.get(tab_id, "99-other.flow.json")
+    by_file.setdefault(fname, []).extend(nodes)  # accumulate -- multiple
+    # unlabeled tabs (e.g. Home Assistant, ui_base config) must all survive,
+    # not clobber each other in a last-write-wins loop.
+for fname, nodes in by_file.items():
     with open(os.path.join(OUT, fname), "w") as fh:
         json.dump(nodes, fh, indent=2)
     written.append((fname, len(nodes)))
