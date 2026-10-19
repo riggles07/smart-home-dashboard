@@ -1211,29 +1211,52 @@ add({"id": nid("inj-ha"), "type": "inject", "z": T, "name": "Sync States",
      "x": 130, "y": 260, "wires": [[nid("fn-ha-ws")]]})
 
 TEMPLATE_HA_DEVICES = (
-    "<table class='table' style='width:100%'>\n"
-    "  <thead><tr><th>Device</th><th>Type</th><th>State</th><th></th></tr></thead>\n"
-    "  <tbody>\n"
-    "    <tr ng-repeat='d in msg.payload track by d.entityId'>\n"
-    "      <td>{{d.name}}</td>\n"
-    "      <td>{{d.domain}}</td>\n"
-    "      <td><span class='status-dot' ng-class=\"d.state === 'on' ? 'ok' : 'warning'\"></span>\n"
-    "          {{d.state}}</td>\n"
-    "      <td><button ng-if='d.controllable' class='shd-row-btn'"
-    " ng-click='haToggle(d)'>{{d.isOn ? 'Turn off' : 'Turn on'}}</button></td>\n"
-    "    </tr>\n"
-    "    <tr ng-if='!msg.payload || !msg.payload.length'>\n"
-    "      <td colspan='4'>{{msg.emptyText || 'No controllable entities yet'}}</td>\n"
-    "    </tr>\n"
-    "  </tbody>\n"
-    "</table>\n"
-    # The template's own scope gets `send()`, which is how a tap turns into a
-    # flow message. Row data carries domain+service so the shared HA control
-    # path (HA WebSocket Client out0 -> HA REST Controller) needs no per-domain
-    # branching here.
+    # Tile grid, not a table. The table was 96 rows on an 800px tablet -- several
+    # screens of scrolling to reach one light, and it never showed what was ON.
+    # Rendered as its own CSS grid so it can be 2 columns on the A7 Lite portrait
+    # and 4 on a desktop without touching the dashboard's 6-unit layout.
+    "<div class='shd-tiles' data-role='ha-tiles'>\n"
+    "  <div class='shd-tiles-bar'>\n"
+    "    <input type='search' class='shd-search' ng-model='q'\n"
+    "           placeholder='Search devices' aria-label='Search devices'/>\n"
+    "    <button class='shd-chip' ng-class=\"{on: !f}\" ng-click='f=\"\"'>All</button>\n"
+    "    <button class='shd-chip' ng-class=\"{on: f==='light'}\" ng-click='f=\"light\"'>Lights</button>\n"
+    "    <button class='shd-chip' ng-class=\"{on: f==='switch'}\" ng-click='f=\"switch\"'>Switches</button>\n"
+    "    <button class='shd-chip' ng-class=\"{on: f==='media_player'}\" ng-click='f=\"media_player\"'>Media</button>\n"
+    "    <button class='shd-chip' ng-class=\"{on: f==='cover'}\" ng-click='f=\"cover\"'>Doors</button>\n"
+    "    <button class='shd-chip' ng-class=\"{on: f==='lock'}\" ng-click='f=\"lock\"'>Locks</button>\n"
+    "  </div>\n"
+    "  <div class='shd-tile-grid'>\n"
+    "    <div class='shd-tile' ng-class='[\"d-\" + d.domain, d.isOn ? \"on\" : \"\"]'\n"
+    "         ng-repeat='d in (msg.payload | filter:{domain: f} | filter:q) track by d.entityId'>\n"
+    "      <div class='shd-tile-inner'>\n"
+    "        <svg class='shd-tile-icon' viewBox='0 0 24 24' aria-hidden='true'>\n"
+    "          <path ng-attr-d='{{d.iconPath}}'/>\n"
+    "        </svg>\n"
+    "        <button class='shd-tile-state' ng-click='haToggle(d)'\n"
+    "                ng-disabled='!d.controllable'\n"
+    "                ng-attr-aria-label='{{d.isOn ? \"Turn off \" : \"Turn on \"}}{{d.name}}'>\n"
+    "          <span class='shd-dot' ng-class=\"{live: d.isOn}\"></span>\n"
+    "          <span>{{d.isOn ? \"ON\" : (d.controllable ? \"OFF\" : \"N/A\")}}</span>\n"
+    "        </button>\n"
+    "      </div>\n"
+    "      <div class='shd-tile-name'>{{d.name}}</div>\n"
+    "    </div>\n"
+    "    <div class='shd-tiles-empty'\n"
+    "         ng-if='!(msg.payload | filter:{domain: f} | filter:q).length'>\n"
+    "      {{msg.payload && msg.payload.length ? \"No devices match that filter\" : (msg.emptyText || \"No controllable entities yet\")}}\n"
+    "    </div>\n"
+    "  </div>\n"
+    "</div>\n"
+    # The template scope gets send(), which turns a tap into a flow message. Row
+    # data carries domain+service so the shared HA control path needs no
+    # per-domain branching here.
     "<script>\n"
     "(function (scope) {\n"
+    "  scope.q = '';\n"
+    "  scope.f = '';\n"
     "  scope.haToggle = function (d) {\n"
+    "    if (!d.controllable) { return; }\n"
     "    scope.send({topic: 'ha/control', payload: {\n"
     "      entityId: d.entityId, domain: d.domain, service: d.isOn ? 'turn_off' : 'turn_on'\n"
     "    }});\n"
@@ -1269,6 +1292,20 @@ HA_STATES_BUILD = (
     "return [msg, null];"
 )
 
+# 24x24 Material paths, inline in the tile grid. Every domain colour below was
+# checked for >=3:1 against its own 14%-alpha tint over --shd-card (non-text
+# floor, WCAG 1.4.11) -- the reference's solid tiles put white on those colours
+# at 2.79-3.85:1, which fails, so the colour lives in the icon and the text
+# stays white on the tint.
+HA_ICON_PATHS = (
+    "var ICON_PATHS = {\n"
+    "  light: 'M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z',\n"
+    "  switch: 'M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z',\n"
+    "  media_player: 'M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z',\n"
+    "  cover: 'M20 2H4c-1.1 0-2 .9-2 2v16h2v-2h16v2h2V4c0-1.1-.9-2-2-2zM6 16H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V6h2v2zm12 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V6h2v2z',\n"
+    "  lock: 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'\n"
+    "};\n"
+)
 HA_STATES_FORMAT = (
     "// Shape /api/states into table rows + alert stats.\n"
     "if (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n"
@@ -1280,6 +1317,7 @@ HA_STATES_FORMAT = (
     "}\n"
     "var all = Array.isArray(msg.payload) ? msg.payload : [];\n"
     "var DOMAINS = " + HA_CONTROL_DOMAINS + ";\n"
+    + HA_ICON_PATHS +
     "var rows = [];\n"
     "var unavailable = 0;\n"
     "all.forEach(function (e) {\n"
@@ -1295,7 +1333,11 @@ HA_STATES_FORMAT = (
     "    domain: dom,\n"
     "    state: state,\n"
     "    isOn: state === 'on' || state === 'open' || state === 'playing',\n"
-    "    controllable: state !== 'unavailable'\n"
+    "    controllable: state !== 'unavailable',\n"
+    "    // Inline SVG per domain. NOT a ui icon name: this build resolves icon\n"
+    "    // names against a Material set where an unknown name silently renders a\n"
+    "    // '?' glyph (measured). A path in the data cannot fall back.\n"
+    "    iconPath: ICON_PATHS[dom] || ICON_PATHS.switch\n"
     "  });\n"
     "});\n"
     "rows.sort(function (x, y) { return x.name.localeCompare(y.name); });\n"
@@ -1340,11 +1382,18 @@ add({"id": nid("txt-ha-count"), "type": "ui_text", "z": T, "name": "Device Summa
      "group": G_DEV, "order": 1, "width": "6", "height": "2",
      "label": "Devices", "format": "{{msg.payload}}", "layout": "row-spread",
      "className": "", "x": 650, "y": 520, "wires": []})
+# WIRES ARE LOAD-BEARING. This template's `scope.send()` emits the toggle onto
+# the node's output, and the output was UNWIRED (`wires: [[]]`) -- so every
+# "Turn on" button in the previous 96-row table, and every tile now, silently did
+# nothing. Measured 2026-10-19: a real click on a tile produced no MQTT/HA traffic
+# and no state change after 17s. The template feeds the HA control path directly;
+# msg.topic='ha/control' + {entityId, domain, service} is exactly what the WS
+# client's control branch expects.
 add({"id": nid("tbl-ha-devices"), "type": "ui_template", "z": T, "name": "HA Device List",
-     "group": G_DEV, "order": 2, "width": "12", "height": "14",
+     "group": G_DEV, "order": 2, "width": "12", "height": "22",
      "format": TEMPLATE_HA_DEVICES, "storeOutMessages": True, "fwdInMessages": True,
      "resendOnRefresh": True, "templateScope": "local",
-     "x": 650, "y": 600, "wires": [[]]})
+     "x": 650, "y": 600, "wires": [[nid("fn-ha-ws")]]})
 
 add({"id": nid("inj-ha-list"), "type": "inject", "z": T, "name": "Refresh devices",
      "props": [{"p": "payload"}], "repeat": "30", "crontab": "", "once": True,
