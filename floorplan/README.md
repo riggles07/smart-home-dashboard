@@ -95,3 +95,33 @@ So one of these is needed before the floorplan can render:
    `tap_action` toggles and `state_action` to drive the room fill.
 5. Verify by tapping a room and watching the real device change — same standard
    applied to the kiosk MQTT work.
+
+
+## Room → entity mapping: measured, and partly MISSING
+
+`area_entities()` filtered to `light.*` / `switch.*`, one line per area:
+
+```
+living_room  L1  light.living_room_ceiling
+kitchen      L0  S1
+bedroom      L2  light.master_bedroom, light.bedroom_bedside          S4
+exterior     L3  light.h7060, light.exterior_gd_l                     S1
+basement     L3  light.basement_motion_light_1, light.basement_movie_dim  S9
+media        L8  light.m2, light.seat_v                               S5
+family_room  L1  light.family_room_family_room                        S3
+foyer        L3  light.foyer_candelabra_1, light.foyer_candelabra_2   S2
+laundry      L0  S3
+kids_rooms   L0  S2
+garage       L2  light.gdo_right_garage_light, light.gdo_left_garage_light  S7
+office       L1  light.a1_03919c471500682_chamber_light               S3
+outside      L1  light.outside_relay  /  virtual L0 S10
+```
+
+The traced floorplan has **Study, Kitchen, Dining room, Laundry, Bathroom,
+Corridor, Living room**. HA has **no `bathroom`, `study` or `dining_room` area at
+all**, and `laundry` owns zero lights (3 switches).
+
+So a straight id-for-name binding is impossible for four rooms. Bindings are
+written ONLY where a real area with real entities exists; the rest are left
+explicitly unbound rather than pointed at a guessed entity. A floorplan that
+silently toggles the wrong room's light is worse than one that does nothing.
