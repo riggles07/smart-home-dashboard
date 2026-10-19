@@ -1,0 +1,72 @@
+[
+  {
+    "room": "bathroom",
+    "class": "orange",
+    "area_px": 15352,
+    "centroid": [
+      665,
+      730
+    ],
+    "points": 13
+  },
+  {
+    "room": "corridor",
+    "class": "blue",
+    "area_px": 139357,
+    "centroid": [
+      883,
+      617
+    ],
+    "points": 17
+  },
+  {
+    "room": "dining_room",
+    "class": "teal",
+    "area_px": 61890,
+    "centroid": [
+      1056,
+      276
+    ],
+    "points": 8
+  },
+  {
+    "room": "kitchen",
+    "class": "orange",
+    "area_px": 119746,
+    "centroid": [
+      721,
+      280
+    ],
+    "points": 13
+  },
+  {
+    "room": "laundry",
+    "class": "gold",
+    "area_px": 13039,
+    "centroid": [
+      666,
+      579
+    ],
+    "points": 13
+  },
+  {
+    "room": "living_room",
+    "class": "gold",
+    "area_px": 27539,
+    "centroid": [
+      1036,
+      724
+    ],
+    "points": 22
+  },
+  {
+    "room": "study",
+    "class": "blue",
+    "area_px": 74870,
+    "centroid": [
+      298,
+      281
+    ],
+    "points": 6
+  }
+]
