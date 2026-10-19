@@ -11,7 +11,7 @@
     "type": "ui_tab",
     "z": "1743dae8afd71d46",
     "name": "Settings",
-    "icon": "cog",
+    "icon": "settings",
     "order": 6,
     "disabled": false,
     "hidden": false

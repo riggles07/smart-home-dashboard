@@ -11,7 +11,7 @@
     "type": "ui_tab",
     "z": "61550c749f923be9",
     "name": "System Health",
-    "icon": "heartbeat",
+    "icon": "favorite",
     "order": 5,
     "disabled": false,
     "hidden": false
