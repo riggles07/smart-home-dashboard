@@ -2219,7 +2219,13 @@ if (!on) { return null; }
 
 // wakeTime 180s: long enough to read the dashboard after walking up to it,
 // after which the app falls back to its screensaver on inactivity.
-msg.payload = JSON.stringify({ wake: true, wakeTime: 180 });
+//
+// Emit an OBJECT, not a JSON string: this feeds `Build kiosk command`, which is
+// the single place that stringifies. Handing it an already-stringified payload
+// meant its hasOwnProperty('wake') pass-through branch never matched (a string
+// has no own properties) and the wake command was silently dropped -- measured
+// 2026-10-19: the retained brightness publish worked, the motion wake did not.
+msg.payload = { wake: true, wakeTime: 180 };
 return msg;"""),
      "outputs": 1, "timeout": 0, "noerr": 0, "initialize": "", "finalize": "",
      "libs": [], "x": 430, "y": 400, "wires": [[nid("fn-kiosk-cmd")]]})
