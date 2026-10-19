@@ -555,11 +555,44 @@ TEMPLATE_ALERT = (
     '{{msg.payload.message}}</div>'
 )
 
+# Catch-node feed guard. Prepended to EVERY evaluator below.
+#
+# WHY: an `http request` node that fails (bad host, DNS, timeout, refused) does
+# not emit a normal message -- its failure goes to `msg.error` on the CATCH
+# path only. With no catch node in the graph the message dies silently and the
+# banner keeps whatever it last showed (its template default, "Awaiting first
+# result"). A dead integration then reads as "no data yet" instead of "broken",
+# which is exactly how the Hubitat tab sat empty on 2026-10-19 while UniFi and
+# Proxmox were healthy. One catch node per tab, wired into that tab's
+# evaluator, converts every swallowed failure into a critical banner.
+_ALERT_ERROR_GUARD = (
+    "// Catch-node feed: a node failure MUST surface as a critical banner.\n"
+    "if (msg.error) {\n"
+    "  var src = (msg.error.source && msg.error.source.name)\n"
+    "    ? msg.error.source.name : 'integration';\n"
+    "  var emsg = String(msg.error.message || 'failed').slice(0, 110);\n"
+    "  node.status({fill: 'red', shape: 'ring', text: 'node error'});\n"
+    "  msg.payload = {severity: 'critical', message: src + ' failed: ' + emsg};\n"
+    "  return msg;\n"
+    "}\n"
+)
+
 # Shared status line for the evaluators (node.status colour follows severity).
 _ALERT_STATUS = (
     "node.status({fill: sev === 'ok' ? 'green' : "
     "(sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\n"
 )
+
+
+def _catch_node(seed, tab_id, alert_fn_id, x, y):
+    """Catch every unhandled node error in this tab and feed the evaluator.
+
+    `scope: None` catches all nodes in the containing flow (tab), so a new
+    http/function node added later is covered without touching this list.
+    """
+    return {"id": nid(f"catch-{seed}"), "type": "catch", "z": tab_id,
+            "name": f"Catch failures ({seed})", "scope": None, "uncaught": False,
+            "x": x, "y": y, "wires": [[alert_fn_id]]}
 
 
 def _alert_group(seed, tab_id, z_id, name):
@@ -596,7 +629,8 @@ def _alert_template(seed, group_id, tab_id, x, y):
 # list poll is what keeps the banner honest about hub reachability when no
 # one is tapping controls; the control result reflects the command path.
 ALERT_EVAL_HOMELAB = (
-    "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n"
+    _ALERT_ERROR_GUARD
+    +     "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n"
     "// Split metrics attaches mem + uptime to its CPU (out0) message, so a\n"
     "// single feed evaluates the whole tab state.\n"
     "var cpu = (typeof msg.payload === 'number') ? msg.payload : -1;\n"
@@ -625,12 +659,19 @@ ALERT_EVAL_HOMELAB = (
 )
 
 ALERT_EVAL_HUBITAT = (
-    "// Devices alert banner. Two feeds arrive here:\n"
+    _ALERT_ERROR_GUARD
+    +     "// Devices alert banner. Two feeds arrive here:\n"
     "//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n"
     "//    config is missing) from Format result / Build Maker API call;\n"
     "//  - the 300s list poll from Format device list: a device COUNT\n"
     "//    (number) on success, 'ERROR ...' when the hub is unreachable.\n"
-    "var p = String(msg.payload || '');\n"
+    "// A deliberate, explained empty/refused state (_alert) outranks the\n"
+    "// raw payload: it is the difference between not-configured and no-data.\n"
+    "if (msg._alert) {\n"
+    "  node.status({fill: 'yellow', shape: 'dot', text: 'config'});\n"
+    "  msg.payload = {severity: 'warning', message: String(msg._alert).slice(0, 130)};\n"
+    "  return msg;\n"
+    "}\n"    "var p = String(msg.payload || '');\n"
     "var sev = 'ok';\n"
     "var text;\n"
     "if (typeof msg.payload === 'number') {\n"
@@ -655,7 +696,8 @@ ALERT_EVAL_HUBITAT = (
 
 
 ALERT_EVAL_NETWORK = (
-    "// Network alert banner: controller reachability + client-count anomaly.\n"
+    _ALERT_ERROR_GUARD
+    +     "// Network alert banner: controller reachability + client-count anomaly.\n"
     "// Split client data tags its count output with topic 'unifi/error' when\n"
     "// the poll failed, so 'no clients' (warning) is distinguishable from an\n"
     "// unreachable controller (critical).\n"
@@ -677,7 +719,8 @@ ALERT_EVAL_NETWORK = (
 )
 
 ALERT_EVAL_HEALTH = (
-    "// System Health alert banner: Prometheus targets/probes + node pressure.\n"
+    _ALERT_ERROR_GUARD
+    +     "// System Health alert banner: Prometheus targets/probes + node pressure.\n"
     "// Parse health summary attaches the full stat map to its first output,\n"
     "// so one message evaluates the whole stack.\n"
     "var m = msg.stats || {};\n"
@@ -801,6 +844,10 @@ add({"id": nid("fn-alert-h"), "type": "function", "z": T, "name": "Evaluate aler
      "func": ALERT_EVAL_HOMELAB,
      "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 1150, "y": 120, "wires": [[nid("tpl-alert-homelab")]]})
+# Every unhandled node error in this tab (http failures, thrown
+# exceptions) reaches the same evaluator, so a broken integration
+# shows a CRITICAL banner instead of silently keeping its default.
+add(_catch_node("homelab", T, nid("fn-alert-h"), 1200, 200))
 
 G = nid("grp-pve")
 add({"id": G, "type": "ui_group", "z": T, "name": "Proxmox Host",
@@ -981,6 +1028,10 @@ add({"id": nid("fn-alert-d"), "type": "function", "z": T, "name": "Evaluate aler
      "func": ALERT_EVAL_HUBITAT,
      "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 990, "y": 170, "wires": [[nid("tpl-alert-devices")]]})
+# Every unhandled node error in this tab (http failures, thrown
+# exceptions) reaches the same evaluator, so a broken integration
+# shows a CRITICAL banner instead of silently keeping its default.
+add(_catch_node("devices", T, nid("fn-alert-d"), 1200, 240))
 
 G = nid("grp-devs")
 add({"id": G, "type": "ui_group", "z": T, "name": "Device Control",
@@ -1015,6 +1066,10 @@ TEMPLATE_DEVICES = (
     "      <td>{{d.label || d.name}}</td>\n"
     "      <td>{{d.type}}</td>\n"
     "      <td>{{d.room}}</td>\n"
+    "    </tr>\n"    # An empty list is an ANSWER, not a blank area: without this the table
+    # renders a header-only shell and the tab reads as unfinished.
+    "    <tr ng-if='!msg.payload || !msg.payload.length'>\n"
+    "      <td colspan='3'>{{msg.emptyText || 'No devices returned yet'}}</td>\n"
     "    </tr>\n"
     "  </tbody>\n"
     "</table>"
@@ -1043,7 +1098,18 @@ add({"id": nid("fn-d-list"), "type": "function", "z": T, "name": "Build device l
         "var tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\n"
         "if (!base || !app || !tok) {\n"
         "  node.status({fill:'red',shape:'ring',text:'missing config'});\n"
+        "  // An empty payload alone is SILENT: the table drops to a header-only\n"
+        "  // shell and the banner falls through to its 'Awaiting first result'\n"
+        "  // default, so a missing .env looks identical to a hub that never\n"
+        "  // answered. Name the keys and carry the reason on _alert.\n"
+        "  var missing = [];\n"
+        "  if (!base) { missing.push('HUBITAT_URL'); }\n"
+        "  if (!app)  { missing.push('HUBITAT_APP_ID'); }\n"
+        "  if (!tok)  { missing.push('HUBITAT_ACCESS_TOKEN'); }\n"
         "  msg.payload = [];\n"
+        "  msg.emptyText = 'Hubitat not configured - missing ' + missing.join(', ');\n"
+        "  msg._alert = 'Hubitat not configured: set ' + missing.join(', ') +\n"
+        "    ' in /root/.node-red/.env and restart node-red';\n"
         "  return [null, msg];\n"
         "}\n"
         "msg.method = 'GET';\n"
@@ -1325,6 +1391,10 @@ add({"id": nid("fn-alert-u"), "type": "function", "z": T, "name": "Evaluate aler
      "func": ALERT_EVAL_NETWORK,
      "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 1150, "y": 300, "wires": [[nid("tpl-alert-network")]]})
+# Every unhandled node error in this tab (http failures, thrown
+# exceptions) reaches the same evaluator, so a broken integration
+# shows a CRITICAL banner instead of silently keeping its default.
+add(_catch_node("network", T, nid("fn-alert-u"), 1200, 380))
 
 G = nid("grp-net")
 add({"id": G, "type": "ui_group", "z": T, "name": "Network Overview",
@@ -1350,6 +1420,8 @@ TEMPLATE_CARDS = (
     "  <tbody>\n"
     "    <tr ng-repeat='c in msg.payload'>\n"
     "      <td>{{c.task}}</td><td>{{c.status}}</td>\n"
+    "    </tr>\n"    "    <tr ng-if='!msg.payload || !msg.payload.length'>\n"
+    "      <td colspan='2'>No cards yet - type a task below and tap Add</td>\n"
     "    </tr>\n"
     "  </tbody>\n"
     "</table>"
@@ -1539,9 +1611,15 @@ add({"id": nid("fn-k-add"), "type": "function", "z": T, "name": "Add card",
      "func": (
         "var task = (typeof msg.payload === 'string' ? msg.payload : '').trim();\n"
         "if (!task) { node.status({fill:'grey',shape:'ring',text:'empty'}); return null; }\n"
-        "var cards = flow.get('kanban_cards') || [];\n"
+        "var cards = null;\n"
+        "// Flow context is IN-MEMORY: every redeploy/restart wiped the board\n"
+        "// to an empty table -- that is why this tab always looked unpopulated.\n"
+        "// Prefer the file-backed store so cards survive a restart, then memory.\n"
+        "try { cards = flow.get('kanban_cards', 'file'); } catch (e) { cards = null; }\n"
+        "if (!cards) { cards = flow.get('kanban_cards') || []; }\n"
         "cards.push({task: task, status: 'todo'});\n"
         "flow.set('kanban_cards', cards);\n"
+        "try { flow.set('kanban_cards', cards, 'file'); } catch (e) {} \n"
         "node.status({fill:'green',shape:'dot',text:cards.length + ' cards'});\n"
         "msg.payload = cards;\n"
         "return [msg, msg];"
@@ -1551,7 +1629,12 @@ add({"id": nid("fn-k-add"), "type": "function", "z": T, "name": "Add card",
      "wires": [[nid("tbl-cards")], [nid("dbg-k")]]})
 add({"id": nid("fn-k-render"), "type": "function", "z": T, "name": "Render board",
      "func": (
-        "var cards = flow.get('kanban_cards') || [];\n"
+        "var cards = null;\n"
+        "// Flow context is IN-MEMORY: every redeploy/restart wiped the board\n"
+        "// to an empty table -- that is why this tab always looked unpopulated.\n"
+        "// Prefer the file-backed store so cards survive a restart, then memory.\n"
+        "try { cards = flow.get('kanban_cards', 'file'); } catch (e) { cards = null; }\n"
+        "if (!cards) { cards = flow.get('kanban_cards') || []; }\n"
         "node.status({fill:'blue',shape:'dot',text:cards.length + ' cards'});\n"
         "msg.payload = cards;\n"
         "return [msg, msg];"
@@ -1599,6 +1682,10 @@ add({"id": nid("fn-alert-sh"), "type": "function", "z": T, "name": "Evaluate ale
      "func": ALERT_EVAL_HEALTH,
      "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
      "x": 1020, "y": 120, "wires": [[nid("tpl-alert-syshealth")]]})
+# Every unhandled node error in this tab (http failures, thrown
+# exceptions) reaches the same evaluator, so a broken integration
+# shows a CRITICAL banner instead of silently keeping its default.
+add(_catch_node("syshealth", T, nid("fn-alert-sh"), 1070, 200))
 
 # ---- Group 1: Health Summary (native widgets, no iframes) ----------------
 G = nid("grp-sh-sum")

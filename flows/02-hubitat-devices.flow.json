@@ -53,7 +53,7 @@
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Evaluate alerts",
-    "func": "// Devices alert banner. Two feeds arrive here:\n//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n//    config is missing) from Format result / Build Maker API call;\n//  - the 300s list poll from Format device list: a device COUNT\n//    (number) on success, 'ERROR ...' when the hub is unreachable.\nvar p = String(msg.payload || '');\nvar sev = 'ok';\nvar text;\nif (typeof msg.payload === 'number') {\n  // list poll succeeded: N devices reachable = hub is up\n  text = msg.payload + ' devices reachable';\n} else if (p.indexOf('ERROR') === 0) {\n  sev = 'critical';\n  text = p.slice(0, 120);\n} else if (p.indexOf('Set HUBITAT') === 0) {\n  sev = 'warning';\n  text = 'Hubitat config missing: set HUBITAT_APP_ID / ACCESS_TOKEN / DEVICE_ID';\n} else if (p.indexOf('OK') === 0) {\n  text = 'Hubitat control OK';\n} else {\n  sev = 'info';\n  text = p || 'Awaiting first result';\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
+    "func": "// Catch-node feed: a node failure MUST surface as a critical banner.\nif (msg.error) {\n  var src = (msg.error.source && msg.error.source.name)\n    ? msg.error.source.name : 'integration';\n  var emsg = String(msg.error.message || 'failed').slice(0, 110);\n  node.status({fill: 'red', shape: 'ring', text: 'node error'});\n  msg.payload = {severity: 'critical', message: src + ' failed: ' + emsg};\n  return msg;\n}\n// Devices alert banner. Two feeds arrive here:\n//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n//    config is missing) from Format result / Build Maker API call;\n//  - the 300s list poll from Format device list: a device COUNT\n//    (number) on success, 'ERROR ...' when the hub is unreachable.\n// A deliberate, explained empty/refused state (_alert) outranks the\n// raw payload: it is the difference between not-configured and no-data.\nif (msg._alert) {\n  node.status({fill: 'yellow', shape: 'dot', text: 'config'});\n  msg.payload = {severity: 'warning', message: String(msg._alert).slice(0, 130)};\n  return msg;\n}\nvar p = String(msg.payload || '');\nvar sev = 'ok';\nvar text;\nif (typeof msg.payload === 'number') {\n  // list poll succeeded: N devices reachable = hub is up\n  text = msg.payload + ' devices reachable';\n} else if (p.indexOf('ERROR') === 0) {\n  sev = 'critical';\n  text = p.slice(0, 120);\n} else if (p.indexOf('Set HUBITAT') === 0) {\n  sev = 'warning';\n  text = 'Hubitat config missing: set HUBITAT_APP_ID / ACCESS_TOKEN / DEVICE_ID';\n} else if (p.indexOf('OK') === 0) {\n  text = 'Hubitat control OK';\n} else {\n  sev = 'info';\n  text = p || 'Awaiting first result';\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -64,6 +64,21 @@
     "wires": [
       [
         "16ca658d373e0d2a"
+      ]
+    ]
+  },
+  {
+    "id": "86c50f5649d718a5",
+    "type": "catch",
+    "z": "b30173dcd6d85862",
+    "name": "Catch failures (devices)",
+    "scope": null,
+    "uncaught": false,
+    "x": 1200,
+    "y": 240,
+    "wires": [
+      [
+        "0998871d434fa71c"
       ]
     ]
   },
@@ -179,7 +194,7 @@
     "order": 2,
     "width": "12",
     "height": "10",
-    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n      <td>{{d.label || d.name}}</td>\n      <td>{{d.type}}</td>\n      <td>{{d.room}}</td>\n    </tr>\n  </tbody>\n</table>",
+    "format": "<table class='table' style='width:100%'>\n  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n  <tbody>\n    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n      <td>{{d.label || d.name}}</td>\n      <td>{{d.type}}</td>\n      <td>{{d.room}}</td>\n    </tr>\n    <tr ng-if='!msg.payload || !msg.payload.length'>\n      <td colspan='3'>{{msg.emptyText || 'No devices returned yet'}}</td>\n    </tr>\n  </tbody>\n</table>",
     "storeOutMessages": true,
     "fwdInMessages": true,
     "resendOnRefresh": true,
@@ -207,7 +222,7 @@
     "type": "function",
     "z": "b30173dcd6d85862",
     "name": "Build device list call",
-    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  msg.payload = [];\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
+    "func": "var base = env.get('HUBITAT_URL') || '';\nvar app  = env.get('HUBITAT_APP_ID') || '';\nvar tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\nif (!base || !app || !tok) {\n  node.status({fill:'red',shape:'ring',text:'missing config'});\n  // An empty payload alone is SILENT: the table drops to a header-only\n  // shell and the banner falls through to its 'Awaiting first result'\n  // default, so a missing .env looks identical to a hub that never\n  // answered. Name the keys and carry the reason on _alert.\n  var missing = [];\n  if (!base) { missing.push('HUBITAT_URL'); }\n  if (!app)  { missing.push('HUBITAT_APP_ID'); }\n  if (!tok)  { missing.push('HUBITAT_ACCESS_TOKEN'); }\n  msg.payload = [];\n  msg.emptyText = 'Hubitat not configured - missing ' + missing.join(', ');\n  msg._alert = 'Hubitat not configured: set ' + missing.join(', ') +\n    ' in /root/.node-red/.env and restart node-red';\n  return [null, msg];\n}\nmsg.method = 'GET';\nmsg.url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices?access_token=' + tok;\nnode.status({fill:'blue',shape:'dot',text:'listing'});\nreturn [msg, null];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",

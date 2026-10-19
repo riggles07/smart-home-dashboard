@@ -85,6 +85,13 @@ jobs:
       - name: Verify System Health Grafana wiring
         run: python3 tests/test_system_health.py
 
+      # Alert layer: severity ladder applied to REAL widgets (not just defined
+      # in CSS), no collapsible Alerts group, a catch node per tab wired into
+      # that tab's evaluator, and AA contrast on every alert colour pair.
+      # Written after the first attempt shipped CSS that no widget used.
+      - name: Verify alert prioritization wiring
+        run: python3 tests/test_alerting.py
+
       - name: Run test suite
         run: |
           python -m pytest --cov=flows tests/ -q
