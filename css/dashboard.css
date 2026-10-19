@@ -90,8 +90,14 @@
 html { font-size: 16px; }
 
 body {
-  background: var(--shd-bg);
+  /* Painted from a DERIVED token: js/background.js composites the palette's
+     --shd-bg with the current time-of-day / severity tint and writes
+     --shd-bg-effective. Fallback keeps the palette colour when the engine has
+     not run (cold load, JS disabled). One property changes per transition --
+     no reflow, no layout shift. */
+  background-color: var(--shd-bg-effective, var(--shd-bg));
   color: var(--shd-text);
+  transition: background-color 0.8s ease;
   font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;   /* no grey flash on tap */
@@ -382,6 +388,17 @@ button {
     transition-duration: 0.01ms !important;
   }
   .pulse { animation: none; }
+}
+
+/* The background engine changes --shd-bg-effective on a 30s tick and on every
+   alert severity change. The transition above is what makes that a fade
+   rather than a jump; reduced-motion users already get transition-duration
+   0.01ms from the blanket rule above, so the state still updates instantly.
+   .shd-bg-animated marks surfaces that opt in to the same fade. */
+body.shd-bg-animated,
+.ui_card.shd-bg-animated,
+.ui_group.shd-bg-animated {
+  transition: background-color 0.8s ease, color 0.8s ease;
 }
 
 /* ---------- Print ---------- */

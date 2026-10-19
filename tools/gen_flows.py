@@ -95,6 +95,27 @@ def load_theme_manager_js(path=THEMES_JS_PATH):
     return src
 
 
+BACKGROUND_JS_PATH = os.path.join(_ROOT, "js", "background.js")
+
+
+def load_background_js(path=BACKGROUND_JS_PATH):
+    """Read js/background.js and guard it against breaking the head <script>.
+
+    THE ORPHAN TRAP: the previous attempt at this card shipped
+    js/background.js as a file NOTHING loaded -- grep for its name in the
+    generated flows returned zero hits, so the engine never ran in the browser
+    and the card was (correctly) failed. Inlining the file text into the theme
+    template is what makes it real; tests/test_background_engine.py asserts the
+    generated JSON actually contains a marker from this file.
+    """
+    with open(path) as fh:
+        src = fh.read()
+    if "</script" in src:
+        raise ValueError(f"{path} must not contain '</script' -- the whole "
+                         "file is inlined into a ui_template <script> block")
+    return src
+
+
 def parse_themes_js(path=THEMES_JS_PATH):
     """Extract {palette_id: label} from js/themes.js.
 
@@ -131,9 +152,17 @@ def parse_themes_js(path=THEMES_JS_PATH):
 # selectors that actually exist; the extra `body.nr-dashboard-theme` qualifier
 # also lifts specificity above Angular Material's own rules.
 THEME_OVERRIDE = """
+/* Painted from the DERIVED token, not the palette token. This rule is
+   specificity (0,1,1) and therefore BEATS the plain `body` rule in
+   css/dashboard.css -- verified live: with only the body rule changed, the
+   engine computed the right colour and the page still painted --shd-bg
+   (measured body background rgb(26,26,46) instead of the night rgb(13,14,28)).
+   js/background.js writes --shd-bg-effective; the fallback keeps the palette
+   colour whenever the engine has not run. */
 body.nr-dashboard-theme {
-  background: var(--shd-bg);
+  background-color: var(--shd-bg-effective, var(--shd-bg));
   color: var(--shd-text);
+  transition: background-color 0.8s ease;
 }
 
 /* ------------------------------------------------------------------
@@ -548,11 +577,23 @@ SHD_COLLAPSE_DEFAULTS = """<script>
 # a ui_template whose ng-class picks the severity class; the theme's
 # .alert-critical/.alert-warning/.alert-info/.alert-ok ladder does the visual
 # emphasis (critical: largest type, strongest contrast, pulse).
+# The banner is also the STATE-BASED trigger for the background engine: every
+# tab's evaluator already computes a severity, so the banner hands it to
+# window.SHDBackground instead of the engine needing its own polling path.
+# Guarded -- the engine lives in a global head template that may not exist yet
+# during a cold load, and a missing engine must never break the banner.
 TEMPLATE_ALERT = (
     '<div ng-class="msg.payload.severity === \'critical\' ? \'alert-critical\' : '
     'msg.payload.severity === \'warning\' ? \'alert-warning\' : '
     'msg.payload.severity === \'info\' ? \'alert-info\' : \'alert-ok\'">'
     '{{msg.payload.message}}</div>'
+    '<script>'
+    '(function (scope) {'
+    '  if (scope.msg && scope.msg.payload && window.SHDBackground) {'
+    '    window.SHDBackground.setSeverity(scope.msg.payload.severity);'
+    '  }'
+    '})(scope);'
+    '</script>'
 )
 
 # Catch-node feed guard. Prepended to EVERY evaluator below.
@@ -778,9 +819,15 @@ add({"id": nid("tpl-theme"), "type": "ui_template", "z": T, "name": "Mobile them
 # The live 3.6.6 client (dist/js/app.min.js, function O) was read before
 # choosing this delivery route.
 _theme_manager_js = load_theme_manager_js()
+_background_js = load_background_js()
 add({"id": nid("tpl-theme-manager"), "type": "ui_template", "z": T,
      "name": "Theme manager", "group": _TG, "order": 2, "width": "0", "height": "0",
-     "format": "<script>\n" + _theme_manager_js + "\nSHDThemeManager.init();\n</script>",
+     "format": ("<script>\n" + _theme_manager_js + "\nSHDThemeManager.init();\n"
+                # The background engine is a SEPARATE IIFE with its own public
+                # API (window.SHDBackground). It runs right after the theme
+                # manager so --shd-bg already exists when it derives
+                # --shd-bg-effective on first paint (no flash, no reflow).
+                + _background_js + "\n</script>"),
      "storeOutMessages": False, "fwdInMessages": False, "resendOnRefresh": True,
      "templateScope": "global", "x": 130, "y": 960, "wires": [[]]})
 # Palette ids/labels are PARSED out of js/themes.js -- the Settings picker

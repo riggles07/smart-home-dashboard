@@ -37,7 +37,7 @@
     "order": 1,
     "width": "12",
     "height": "2",
-    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div>",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div><script>(function (scope) {  if (scope.msg && scope.msg.payload && window.SHDBackground) {    window.SHDBackground.setSeverity(scope.msg.payload.severity);  }})(scope);</script>",
     "storeOutMessages": true,
     "fwdInMessages": false,
     "resendOnRefresh": true,
