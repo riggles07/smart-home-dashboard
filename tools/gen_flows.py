@@ -623,11 +623,6 @@ def _alert_template(seed, group_id, tab_id, x, y):
 # tests/test_flow_newline_guard.py). Thresholds live in the flow, not the
 # browser, so a banner updates on the same cadence as its data.
 #
-# Devices tab: TWO feeds hit this evaluator -- the control-result path
-# (Format result: 'OK (200)' / 'ERROR ...') and the 300s list poll (Format
-# device list: 'ERROR ...' on failure, or a device count on success). The
-# list poll is what keeps the banner honest about hub reachability when no
-# one is tapping controls; the control result reflects the command path.
 ALERT_EVAL_HOMELAB = (
     _ALERT_ERROR_GUARD
     +     "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n"
@@ -655,42 +650,6 @@ ALERT_EVAL_HOMELAB = (
     "}\n"
     + _ALERT_STATUS +
     "msg.payload = {severity: sev, message: parts.join(' | ')};\n"
-    "return msg;"
-)
-
-ALERT_EVAL_HUBITAT = (
-    _ALERT_ERROR_GUARD
-    +     "// Devices alert banner. Two feeds arrive here:\n"
-    "//  - control results ('OK (200)', 'ERROR ...', 'Set HUBITAT_...' when\n"
-    "//    config is missing) from Format result / Build Maker API call;\n"
-    "//  - the 300s list poll from Format device list: a device COUNT\n"
-    "//    (number) on success, 'ERROR ...' when the hub is unreachable.\n"
-    "// A deliberate, explained empty/refused state (_alert) outranks the\n"
-    "// raw payload: it is the difference between not-configured and no-data.\n"
-    "if (msg._alert) {\n"
-    "  node.status({fill: 'yellow', shape: 'dot', text: 'config'});\n"
-    "  msg.payload = {severity: 'warning', message: String(msg._alert).slice(0, 130)};\n"
-    "  return msg;\n"
-    "}\n"    "var p = String(msg.payload || '');\n"
-    "var sev = 'ok';\n"
-    "var text;\n"
-    "if (typeof msg.payload === 'number') {\n"
-    "  // list poll succeeded: N devices reachable = hub is up\n"
-    "  text = msg.payload + ' devices reachable';\n"
-    "} else if (p.indexOf('ERROR') === 0) {\n"
-    "  sev = 'critical';\n"
-    "  text = p.slice(0, 120);\n"
-    "} else if (p.indexOf('Set HUBITAT') === 0) {\n"
-    "  sev = 'warning';\n"
-    "  text = 'Hubitat config missing: set HUBITAT_APP_ID / ACCESS_TOKEN / DEVICE_ID';\n"
-    "} else if (p.indexOf('OK') === 0) {\n"
-    "  text = 'Hubitat control OK';\n"
-    "} else {\n"
-    "  sev = 'info';\n"
-    "  text = p || 'Awaiting first result';\n"
-    "}\n"
-    + _ALERT_STATUS +
-    "msg.payload = {severity: sev, message: text};\n"
     "return msg;"
 )
 
@@ -1013,202 +972,6 @@ add({"id": nid("dbg-h"), "type": "debug", "z": T, "name": "Proxmox raw",
      "active": True, "tosidebar": True, "console": False, "tostatus": False,
      "complete": "payload", "targetType": "msg", "statusVal": "", "statusType": "auto",
      "x": 740, "y": 200, "wires": []})
-
-# ---------------------------------------------------------------- Tab 2: Hubitat Devices
-T = nid("tab-devices")
-add({"id": T, "type": "tab", "label": "Devices", "disabled": False, "info": ""})
-add({"id": nid("uitab-d"), "type": "ui_tab", "z": T, "name": "Devices",
-     "icon": "lightbulb-o", "order": 2, "disabled": False, "hidden": False})
-
-# ---- Alerts (order 1): control failures surface here, never collapsible ---
-G_ALERT = _alert_group("devices", nid("uitab-d"), T, "Alerts")
-add(G_ALERT)
-add(_alert_template("devices", G_ALERT["id"], T, 1150, 40))
-add({"id": nid("fn-alert-d"), "type": "function", "z": T, "name": "Evaluate alerts",
-     "func": ALERT_EVAL_HUBITAT,
-     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 990, "y": 170, "wires": [[nid("tpl-alert-devices")]]})
-# Every unhandled node error in this tab (http failures, thrown
-# exceptions) reaches the same evaluator, so a broken integration
-# shows a CRITICAL banner instead of silently keeping its default.
-add(_catch_node("devices", T, nid("fn-alert-d"), 1200, 240))
-
-G = nid("grp-devs")
-add({"id": G, "type": "ui_group", "z": T, "name": "Device Control",
-     "tab": nid("uitab-d"), "order": 2, "disp": True, "width": "6", "collapse": False})
-
-add({"id": nid("sw-power"), "type": "ui_switch", "z": T, "name": "Power",
-     "label": "Power", "tooltip": "", "group": G, "order": 1, "width": "4", "height": "3",
-     "passthru": True, "decouple": "false", "topic": "hubitat/power", "topicType": "str",
-     "style": "", "onvalue": "true", "onvalueType": "bool", "onicon": "", "oncolor": "",
-     "offvalue": "false", "offvalueType": "bool", "officon": "", "offcolor": "",
-     "x": 130, "y": 120, "wires": [[nid("fn-d-cmd")]]})
-add({"id": nid("sl-level"), "type": "ui_slider", "z": T, "name": "Brightness",
-     "label": "Brightness", "tooltip": "", "group": G, "order": 2, "width": "4", "height": "3",
-     "passthru": True, "outs": "all", "topic": "hubitat/level", "topicType": "str",
-     "min": 0, "max": "100", "step": 1, "x": 130, "y": 220, "wires": [[nid("fn-d-cmd")]]})
-add({"id": nid("txt-dev"), "type": "ui_text", "z": T, "name": "Last Result",
-     "group": G, "order": 4, "width": "6", "height": "2",
-     "label": "Result", "format": "{{msg.payload}}", "layout": "row-spread",
-     "className": "", "x": 650, "y": 320, "wires": []})
-
-# Device list. Reads the Maker API list endpoint and renders every device.
-# Field names are NOT guessed -- they were read back from the live hub via
-# tools/probe_hubitat_devices.py, which reported the real keys:
-#   dni, id, label, name, notes, room, roomId, type, zigbeeId
-# (116 devices on the target hub). `label` is the user-facing name; `room` is
-# empty on this hub, so the column degrades to blank rather than lying.
-TEMPLATE_DEVICES = (
-    "<table class='table' style='width:100%'>\n"
-    "  <thead><tr><th>Device</th><th>Type</th><th>Room</th></tr></thead>\n"
-    "  <tbody>\n"
-    "    <tr ng-repeat='d in msg.payload | orderBy:\"label\" track by d.id'>\n"
-    "      <td>{{d.label || d.name}}</td>\n"
-    "      <td>{{d.type}}</td>\n"
-    "      <td>{{d.room}}</td>\n"
-    "    </tr>\n"    # An empty list is an ANSWER, not a blank area: without this the table
-    # renders a header-only shell and the tab reads as unfinished.
-    "    <tr ng-if='!msg.payload || !msg.payload.length'>\n"
-    "      <td colspan='3'>{{msg.emptyText || 'No devices returned yet'}}</td>\n"
-    "    </tr>\n"
-    "  </tbody>\n"
-    "</table>"
-)
-add({"id": nid("txt-devcount"), "type": "ui_text", "z": T, "name": "Device Count",
-     "group": nid("grp-ddir"), "order": 1, "width": "6", "height": "2",
-     "label": "Devices", "format": "{{msg.payload}}", "layout": "row-spread",
-     "className": "", "x": 650, "y": 400, "wires": []})
-add({"id": nid("tbl-devices"), "type": "ui_template", "z": T, "name": "Device List",
-     "group": nid("grp-ddir"), "order": 2, "width": "12", "height": "10",
-     "format": TEMPLATE_DEVICES, "storeOutMessages": True, "fwdInMessages": True,
-     "resendOnRefresh": True, "templateScope": "local",
-     "x": 650, "y": 470, "wires": [[]]})
-
-# ---- Device Directory: secondary, collapsed by default --------------------
-add({"id": nid("grp-ddir"), "type": "ui_group", "z": T, "name": "Device Directory",
-     "tab": nid("uitab-d"), "order": 3, "disp": True, "width": "12",
-     "collapse": True, "className": "shd-collapsible"})
-
-# Build the list request. Separate from the control path above so a control
-# failure cannot blank the list, and vice versa.
-add({"id": nid("fn-d-list"), "type": "function", "z": T, "name": "Build device list call",
-     "func": (
-        "var base = env.get('HUBITAT_URL') || '';\n"
-        "var app  = env.get('HUBITAT_APP_ID') || '';\n"
-        "var tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\n"
-        "if (!base || !app || !tok) {\n"
-        "  node.status({fill:'red',shape:'ring',text:'missing config'});\n"
-        "  // An empty payload alone is SILENT: the table drops to a header-only\n"
-        "  // shell and the banner falls through to its 'Awaiting first result'\n"
-        "  // default, so a missing .env looks identical to a hub that never\n"
-        "  // answered. Name the keys and carry the reason on _alert.\n"
-        "  var missing = [];\n"
-        "  if (!base) { missing.push('HUBITAT_URL'); }\n"
-        "  if (!app)  { missing.push('HUBITAT_APP_ID'); }\n"
-        "  if (!tok)  { missing.push('HUBITAT_ACCESS_TOKEN'); }\n"
-        "  msg.payload = [];\n"
-        "  msg.emptyText = 'Hubitat not configured - missing ' + missing.join(', ');\n"
-        "  msg._alert = 'Hubitat not configured: set ' + missing.join(', ') +\n"
-        "    ' in /root/.node-red/.env and restart node-red';\n"
-        "  return [null, msg];\n"
-        "}\n"
-        "msg.method = 'GET';\n"
-        "msg.url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices?access_token=' + tok;\n"
-        "node.status({fill:'blue',shape:'dot',text:'listing'});\n"
-        "return [msg, null];"
-     ),
-     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     # out1 (missing-config message) also feeds the alert evaluator so the
-     # banner shows the warning instead of only the Device Count widget.
-     "x": 360, "y": 560, "wires": [[nid("http-d-list")],
-             [nid("tbl-devices"), nid("txt-devcount"), nid("fn-alert-d")]]})
-add({"id": nid("http-d-list"), "type": "http request", "z": T, "name": "Hubitat device list",
-     "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
-     "persist": False, "proxy": "", "authType": "", "x": 590, "y": 560,
-     "wires": [[nid("fn-d-listfmt")]]})
-add({"id": nid("fn-d-listfmt"), "type": "function", "z": T, "name": "Format device list",
-     "func": (
-        "var body = msg.payload;\n"
-        "if (msg.error || !msg.statusCode) {\n"
-        "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
-        "  msg.payload = [];\n"
-        "  // out1 feeds Device Count AND the alert evaluator: an explicit\n"
-        "  // ERROR string makes the banner critical ('hub unreachable'),\n"
-        "  // which a count of 0 cannot distinguish from 'no devices'.\n"
-        "  var e = {payload: 'ERROR: Hubitat unreachable (' + (msg.error || 'no response') + ')'};\n"
-        "  return [msg, e];\n"
-        "}\n"
-        "if (typeof body === 'string') {\n"
-        "  try { body = JSON.parse(body); } catch (e) { body = []; }\n"
-        "}\n"
-        "var list = Array.isArray(body) ? body : (body && body.devices) || [];\n"
-        "node.status({fill:'green',shape:'dot',text:list.length + ' devices'});\n"
-        "msg.payload = list;\n"
-        "var c = {payload: list.length};\n"
-        "return [msg, c];"
-     ),
-     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 790, "y": 560, "wires": [[nid("tbl-devices")],
-             [nid("txt-devcount"), nid("fn-alert-d")]]})
-add({"id": nid("inj-d-list"), "type": "inject", "z": T, "name": "Load devices",
-     "props": [{"p": "payload"}], "repeat": "300", "crontab": "", "once": True,
-     "onceDelay": 1.5, "topic": "", "payload": "", "payloadType": "date",
-     "x": 140, "y": 560, "wires": [[nid("fn-d-list")]]})
-
-add({"id": nid("fn-d-cmd"), "type": "function", "z": T, "name": "Build Maker API call",
-     "func": (
-        "// Hubitat Maker API: GET /apps/api/<appId>/devices/<devId>/<cmd>/<value>?access_token=<tok>\n"
-        "var base = env.get('HUBITAT_URL') || 'http://hubitat.local';\n"
-        "var app  = env.get('HUBITAT_APP_ID') || '';\n"
-        "var tok  = env.get('HUBITAT_ACCESS_TOKEN') || env.get('HUBITAT_API_KEY') || '';\n"
-        "var dev  = env.get('HUBITAT_DEVICE_ID') || '';\n"
-        "if (!app || !tok || !dev) {\n"
-        "  node.status({fill:'red',shape:'ring',text:'missing config'});\n"
-        "  msg.payload = 'Set HUBITAT_APP_ID, HUBITAT_ACCESS_TOKEN and HUBITAT_DEVICE_ID in the LXC env';\n"
-        "  return [null, msg];\n"
-        "}\n"
-        "var cmd, val = null;\n"
-        "if (msg.topic === 'hubitat/power') { cmd = msg.payload ? 'on' : 'off'; }\n"
-        "else if (msg.topic === 'hubitat/level') { cmd = 'setLevel'; val = msg.payload; }\n"
-        "else { node.status({fill:'grey',shape:'ring',text:'ignored'}); return null; }\n"
-        "var url = base.replace(/\\/+$/, '') + '/apps/api/' + app + '/devices/' + dev + '/' + cmd;\n"
-        "if (val !== null) { url += '/' + val; }\n"
-        "url += '?access_token=' + tok;\n"
-        "msg.method = 'GET';\n"
-        "msg.url = url;\n"
-        "node.status({fill:'blue',shape:'dot',text:cmd});\n"
-        "return [msg, null];"
-     ),
-     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     # out1 (missing-config message) feeds both the Last Result widget and
-     # the alert evaluator so the banner carries the warning too.
-     "x": 360, "y": 170, "wires": [[nid("http-d")],
-             [nid("txt-dev"), nid("fn-alert-d")]]})
-add({"id": nid("http-d"), "type": "http request", "z": T, "name": "Hubitat Maker API",
-     "method": "use", "ret": "txt", "paytoqs": "ignore", "url": "", "tls": "",
-     "persist": False, "proxy": "", "authType": "", "x": 590, "y": 170,
-     "wires": [[nid("fn-d-result")]]})
-add({"id": nid("fn-d-result"), "type": "function", "z": T, "name": "Format result",
-     "func": (
-        "// http request sets msg.error on a transport failure.\n"
-        "if (msg.error || !msg.statusCode) {\n"
-        "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
-        "  msg.payload = 'ERROR: Hubitat unreachable (' + (msg.error || msg.payload || 'no response') + ')';\n"
-        "  return [msg, msg];\n"
-        "}\n"
-        "if (msg.statusCode >= 200 && msg.statusCode < 300) {\n"
-        "  node.status({fill:'green',shape:'dot',text:'ok'});\n"
-        "  msg.payload = 'OK (' + msg.statusCode + ')';\n"
-        "} else {\n"
-        "  node.status({fill:'red',shape:'ring',text:'http ' + msg.statusCode});\n"
-        "  var body = (typeof msg.payload === 'string') ? msg.payload : JSON.stringify(msg.payload);\n"
-        "  msg.payload = 'ERROR HTTP ' + msg.statusCode + ': ' + String(body).slice(0, 200);\n"
-        "}\n"
-        "return [msg, msg];"
-     ),
-     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
-     "x": 790, "y": 170, "wires": [[nid("txt-dev")], [nid("fn-alert-d")]]})
-
 
 # ---------------------------------------------------------------- Tab 7: Home Assistant
 T = nid("tab-ha")
@@ -2046,7 +1809,6 @@ for node in flows_all:
 
 labels = {
     nid("tab-homelab"): "01-home-lab-monitor.flow.json",
-    nid("tab-devices"): "02-hubitat-devices.flow.json",
     nid("tab-network"): "03-unifi-network.flow.json",
     nid("tab-kanban"):  "04-kanban-board.flow.json",
     nid("tab-syshealth"): "05-system-health.flow.json",

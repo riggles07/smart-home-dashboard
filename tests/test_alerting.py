@@ -39,8 +39,10 @@ def check(nodes):
              if n.get("type") == "function" and n.get("name") == "Evaluate alerts"}
     catches = [n for n in nodes if n.get("type") == "catch"]
 
-    if len(groups) < 4:
-        errors.append(f"expected an Alerts group on >=4 tabs, found {len(groups)}")
+    # 3 tabs carry alerts since the Hubitat Devices tab was removed during the
+    # Home Assistant migration (Home Lab, Network, System Health).
+    if len(groups) < 3:
+        errors.append(f"expected an Alerts group on >=3 tabs, found {len(groups)}")
 
     for g in groups:
         if g.get("collapse") is not False:
@@ -60,8 +62,8 @@ def check(nodes):
             if f"alert-{sev}" not in (b.get("format") or ""):
                 errors.append(f"banner {b['id']} never applies alert-{sev}")
 
-    if len(evals) < 4:
-        errors.append(f"expected >=4 alert evaluators, found {len(evals)}")
+    if len(evals) < 3:
+        errors.append(f"expected >=3 alert evaluators, found {len(evals)}")
     caught = set()
     for c in catches:
         if c.get("scope") is not None:
