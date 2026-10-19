@@ -389,3 +389,23 @@ button {
   body { background: #fff; color: #000; }
   .status-bar, .ui_tab { display: none; }
 }
+/* ---- Home Assistant device rows ------------------------------------------ */
+/* Per-row toggle in the HA device table. It is a real tap target on the A7
+   Lite, so it gets the same 44px floor as every other control -- a bare
+   <button> inside a table cell measures ~28px high. */
+.shd-row-btn {
+  min-height: var(--shd-touch-target);
+  min-width: var(--shd-touch-target);
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  border: 1px solid var(--shd-accent);
+  background: transparent;
+  color: var(--shd-text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.shd-row-btn:active {
+  background: var(--shd-accent);
+  color: var(--shd-bg);
+}

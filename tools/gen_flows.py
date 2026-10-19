@@ -654,6 +654,35 @@ ALERT_EVAL_HOMELAB = (
 )
 
 
+ALERT_EVAL_HA = (
+    _ALERT_ERROR_GUARD
+    + "// Home Assistant alert banner: API reachability + unavailable entities.\n"
+    "// Format HA states attaches {total, unavailable, controllable} on _stats.\n"
+    "if (msg.topic === 'ha/error' || msg._error) {\n"
+    "  node.status({fill: 'red', shape: 'ring', text: 'ha down'});\n"
+    "  msg.payload = {severity: 'critical',\n"
+    "    message: 'Home Assistant unreachable: ' + String(msg._error || msg.payload || '').slice(0, 100)};\n"
+    "  return msg;\n"
+    "}\n"
+    "var st = msg._stats;\n"
+    "var sev = 'ok';\n"
+    "var text;\n"
+    "if (st) {\n"
+    "  if (st.unavailable > 0) {\n"
+    "    sev = st.unavailable >= 3 ? 'warning' : 'info';\n"
+    "    text = st.unavailable + ' of ' + st.total + ' entities unavailable';\n"
+    "  } else {\n"
+    "    text = st.controllable + ' devices controllable, ' + st.total + ' entities tracked';\n"
+    "  }\n"
+    "} else {\n"
+    "  sev = 'info';\n"
+    "  text = String(msg.payload || 'Awaiting first result');\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: text};\n"
+    "return msg;"
+)
+
 ALERT_EVAL_NETWORK = (
     _ALERT_ERROR_GUARD
     +     "// Network alert banner: controller reachability + client-count anomaly.\n"
@@ -1134,11 +1163,169 @@ add({"id": nid("inj-ha"), "type": "inject", "z": T, "name": "Sync States",
      "onceDelay": 2, "topic": "", "payload": "", "payloadType": "date",
      "x": 130, "y": 260, "wires": [[nid("fn-ha-ws")]]})
 
+TEMPLATE_HA_DEVICES = (
+    "<table class='table' style='width:100%'>\n"
+    "  <thead><tr><th>Device</th><th>Type</th><th>State</th><th></th></tr></thead>\n"
+    "  <tbody>\n"
+    "    <tr ng-repeat='d in msg.payload track by d.entityId'>\n"
+    "      <td>{{d.name}}</td>\n"
+    "      <td>{{d.domain}}</td>\n"
+    "      <td><span class='status-dot' ng-class=\"d.state === 'on' ? 'ok' : 'warning'\"></span>\n"
+    "          {{d.state}}</td>\n"
+    "      <td><button ng-if='d.controllable' class='shd-row-btn'"
+    " ng-click='haToggle(d)'>{{d.isOn ? 'Turn off' : 'Turn on'}}</button></td>\n"
+    "    </tr>\n"
+    "    <tr ng-if='!msg.payload || !msg.payload.length'>\n"
+    "      <td colspan='4'>{{msg.emptyText || 'No controllable entities yet'}}</td>\n"
+    "    </tr>\n"
+    "  </tbody>\n"
+    "</table>\n"
+    # The template's own scope gets `send()`, which is how a tap turns into a
+    # flow message. Row data carries domain+service so the shared HA control
+    # path (HA WebSocket Client out0 -> HA REST Controller) needs no per-domain
+    # branching here.
+    "<script>\n"
+    "(function (scope) {\n"
+    "  scope.haToggle = function (d) {\n"
+    "    scope.send({topic: 'ha/control', payload: {\n"
+    "      entityId: d.entityId, domain: d.domain, service: d.isOn ? 'turn_off' : 'turn_on'\n"
+    "    }});\n"
+    "  };\n"
+    "})(scope);\n"
+    "</script>"
+)
+
+# /api/states returns EVERY entity (sensors, automations, zones...). Only these
+# domains are user-facing controls; the rest are noise in a device table.
+HA_CONTROL_DOMAINS = "['light','switch','fan','cover','climate','media_player','scene','script','lock','input_boolean']"
+
+HA_STATES_BUILD = (
+    "// Build GET /api/states. One call returns every entity, so a single\n"
+    "// message feeds the table, the summary and the alert evaluator.\n"
+    "var base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\n"
+    "var token = env.get('HA_TOKEN');\n"
+    "if (!base || !token) {\n"
+    "  node.status({fill:'red',shape:'ring',text:'missing HA_URL/HA_TOKEN'});\n"
+    "  var miss = [];\n"
+    "  if (!base) { miss.push('HA_URL'); }\n"
+    "  if (!token) { miss.push('HA_TOKEN'); }\n"
+    "  msg._error = 'missing ' + miss.join(', ') + ' in /root/.node-red/.env';\n"
+    "  msg.topic = 'ha/error';\n"
+    "  return [null, null, msg];\n"
+    "}\n"
+    "msg.method = 'GET';\n"
+    "msg.ret = 'obj';\n"
+    "msg.url = base + '/api/states';\n"
+    "msg.headers = {Authorization: 'Bearer ' + token};\n"
+    "msg.rejectUnauthorized = false;\n"
+    "node.status({fill:'blue',shape:'dot',text:'polling'});\n"
+    "return [msg, null];"
+)
+
+HA_STATES_FORMAT = (
+    "// Shape /api/states into table rows + alert stats.\n"
+    "if (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n"
+    "  node.status({fill:'red',shape:'ring',text:'unreachable'});\n"
+    "  msg._error = msg.error ? String(msg.error.message || msg.error)\n"
+    "    : ('HTTP ' + (msg.statusCode || '?'));\n"
+    "  msg.topic = 'ha/error';\n"
+    "  return [null, null, msg];\n"
+    "}\n"
+    "var all = Array.isArray(msg.payload) ? msg.payload : [];\n"
+    "var DOMAINS = " + HA_CONTROL_DOMAINS + ";\n"
+    "var rows = [];\n"
+    "var unavailable = 0;\n"
+    "all.forEach(function (e) {\n"
+    "  if (!e || !e.entity_id) { return; }\n"
+    "  var dom = e.entity_id.split('.')[0];\n"
+    "  if (DOMAINS.indexOf(dom) < 0) { return; }\n"
+    "  var a = e.attributes || {};\n"
+    "  var state = String(e.state || 'unknown');\n"
+    "  if (state === 'unavailable' || state === 'unknown') { unavailable++; }\n"
+    "  rows.push({\n"
+    "    entityId: e.entity_id,\n"
+    "    name: a.friendly_name || e.entity_id,\n"
+    "    domain: dom,\n"
+    "    state: state,\n"
+    "    isOn: state === 'on' || state === 'open' || state === 'playing',\n"
+    "    controllable: state !== 'unavailable'\n"
+    "  });\n"
+    "});\n"
+    "rows.sort(function (x, y) { return x.name.localeCompare(y.name); });\n"
+    "node.status({fill:'green',shape:'dot',text:rows.length + ' devices'});\n"
+    "var stats = {total: rows.length, unavailable: unavailable,\n"
+    "             controllable: rows.length - unavailable};\n"
+    "// out0 = table rows, out1 = summary STRING (a ui_text prints whatever it\n"
+    "// is given -- passing it the rows array rendered raw JSON), out2 = alert.\n"
+    "return [{payload: rows, emptyText:\n"
+    "          all.length ? 'No controllable entities (only sensors/reports)'\n"
+    "                     : 'Home Assistant returned no entities'},\n"
+    "        {payload: stats.controllable + ' of ' + stats.total + ' ready', _stats: stats},\n"
+    "        null];"
+)
+
 # -- HA entity control widget ----------------------------------------------
 add({"id": nid("sw-ha"), "type": "ui_switch", "z": T, "name": "Light Control",
      "group": G, "order": 1, "width": "6", "height": "4",
-     "label": "Kitchen Light", "tooltip": "",
+     "label": "Primary Light", "tooltip": "Bound to HA_ENTITY_ID (see .env)",
      "x": 130, "y": 340, "wires": [[nid("fn-ha-ws")]]})
+
+# ---- Alerts (order 1): HA unreachable / entities unavailable --------------
+G_ALERT = _alert_group("ha", nid("uitab-ha"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("ha", G_ALERT["id"], T, 1150, 40))
+add({"id": nid("fn-alert-ha"), "type": "function", "z": T, "name": "Evaluate alerts",
+     "func": ALERT_EVAL_HA, "outputs": 1, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 1080, "y": 300, "wires": [[nid("tpl-alert-ha")]]})
+# Unhandled node errors (REST failures, thrown exceptions) become CRITICAL.
+add(_catch_node("ha", T, nid("fn-alert-ha"), 1250, 300))
+
+# ---- Device list: REST /api/states -> searchable, tappable table ----------
+# WHY REST AND NOT THE WEBSOCKET CLIENT: the WS client maintains its own state
+# map inside `context`, which no template can read. /api/states is one GET that
+# returns every entity, so the table can render from a single message on a
+# timer -- and it works even if the socket is down.
+G_DEV = nid("grp-ha-dev")
+add({"id": G_DEV, "type": "ui_group", "z": T, "name": "Devices",
+     "tab": nid("uitab-ha"), "order": 2, "disp": True, "width": "12", "collapse": False})
+
+add({"id": nid("txt-ha-count"), "type": "ui_text", "z": T, "name": "Device Summary",
+     "group": G_DEV, "order": 1, "width": "6", "height": "2",
+     "label": "Devices", "format": "{{msg.payload}}", "layout": "row-spread",
+     "className": "", "x": 650, "y": 520, "wires": []})
+add({"id": nid("tbl-ha-devices"), "type": "ui_template", "z": T, "name": "HA Device List",
+     "group": G_DEV, "order": 2, "width": "12", "height": "14",
+     "format": TEMPLATE_HA_DEVICES, "storeOutMessages": True, "fwdInMessages": True,
+     "resendOnRefresh": True, "templateScope": "local",
+     "x": 650, "y": 600, "wires": [[]]})
+
+add({"id": nid("inj-ha-list"), "type": "inject", "z": T, "name": "Refresh devices",
+     "props": [{"p": "payload"}], "repeat": "30", "crontab": "", "once": True,
+     "onceDelay": 2.5, "topic": "", "payload": "", "payloadType": "date",
+     "x": 150, "y": 520, "wires": [[nid("fn-ha-listbuild")]]})
+
+add({"id": nid("fn-ha-listbuild"), "type": "function", "z": T, "name": "Build HA states call",
+     "func": HA_STATES_BUILD, "outputs": 3, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 380, "y": 520,
+     "wires": [[nid("http-ha-list")], [], [nid("fn-alert-ha")]]})
+add({"id": nid("http-ha-list"), "type": "http request", "z": T, "name": "HA states",
+     "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "",
+     "persist": False, "proxy": "", "authType": "", "x": 620, "y": 520,
+     "wires": [[nid("fn-ha-listfmt")]]})
+add({"id": nid("fn-ha-listfmt"), "type": "function", "z": T, "name": "Format HA states",
+     "func": HA_STATES_FORMAT, "outputs": 3, "noerr": 0, "initialize": "", "finalize": "",
+     "libs": [], "x": 850, "y": 520,
+     "wires": [[nid("tbl-ha-devices")], [nid("txt-ha-count"), nid("fn-alert-ha")],
+               [nid("fn-alert-ha")]]})
+
+# After a service call, re-poll so the table shows the NEW state (~1 message
+# later). The service response doubles as the refresh trigger -- no delay node.
+add({"id": nid("fn-ha-after"), "type": "function", "z": T, "name": "Trigger refresh",
+     "func": ("// Any completed service call re-polls the entity list.\n"
+              "msg.payload = Date.now();\n"
+              "return msg;"),
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 850, "y": 240, "wires": [[nid("fn-ha-listbuild")]]})
 
 # ---------------------------------------------------------------- Tab 3: UniFi Network
 T = nid("tab-network")
@@ -1813,6 +2000,7 @@ labels = {
     nid("tab-kanban"):  "04-kanban-board.flow.json",
     nid("tab-syshealth"): "05-system-health.flow.json",
     nid("tab-settings"):"06-settings.flow.json",
+    nid("tab-ha"):"07-home-assistant.flow.json",
 }
 written = []
 by_file = {}
