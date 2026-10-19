@@ -157,7 +157,7 @@
     "type": "function",
     "z": "7021a0b2d35572fb",
     "name": "Evaluate alerts",
-    "func": "// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n// Split metrics attaches mem + uptime to its CPU (out0) message, so a\n// single feed evaluates the whole tab state.\nvar cpu = (typeof msg.payload === 'number') ? msg.payload : -1;\nvar mem = (typeof msg.mem === 'number') ? msg.mem : 0;\nvar up = msg.uptime || '';\nvar sev = 'ok';\nvar parts = [];\nif (cpu < 0) {\n  sev = 'critical';\n  parts.push('Proxmox data unavailable');\n} else {\n  if (cpu >= 90) { sev = 'critical'; parts.push('CPU ' + cpu + '%'); }\n  else if (cpu >= 75) {\n    sev = 'warning'; parts.push('CPU ' + cpu + '%');\n  }\n  if (mem >= 90) { sev = 'critical'; parts.push('Memory ' + mem + '%'); }\n  else if (mem >= 75) {\n    if (sev === 'ok') { sev = 'warning'; }\n    parts.push('Memory ' + mem + '%');\n  }\n  if (sev === 'ok') { parts.push('Proxmox OK' + (up ? ' - up ' + up : '')); }\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: parts.join(' | ')};\nreturn msg;",
+    "func": "// Catch-node feed: a node failure MUST surface as a critical banner.\nif (msg.error) {\n  var src = (msg.error.source && msg.error.source.name)\n    ? msg.error.source.name : 'integration';\n  var emsg = String(msg.error.message || 'failed').slice(0, 110);\n  node.status({fill: 'red', shape: 'ring', text: 'node error'});\n  msg.payload = {severity: 'critical', message: src + ' failed: ' + emsg};\n  return msg;\n}\n// Home Lab alert banner: CPU/memory pressure on the Proxmox host.\n// Split metrics attaches mem + uptime to its CPU (out0) message, so a\n// single feed evaluates the whole tab state.\nvar cpu = (typeof msg.payload === 'number') ? msg.payload : -1;\nvar mem = (typeof msg.mem === 'number') ? msg.mem : 0;\nvar up = msg.uptime || '';\nvar sev = 'ok';\nvar parts = [];\nif (cpu < 0) {\n  sev = 'critical';\n  parts.push('Proxmox data unavailable');\n} else {\n  if (cpu >= 90) { sev = 'critical'; parts.push('CPU ' + cpu + '%'); }\n  else if (cpu >= 75) {\n    sev = 'warning'; parts.push('CPU ' + cpu + '%');\n  }\n  if (mem >= 90) { sev = 'critical'; parts.push('Memory ' + mem + '%'); }\n  else if (mem >= 75) {\n    if (sev === 'ok') { sev = 'warning'; }\n    parts.push('Memory ' + mem + '%');\n  }\n  if (sev === 'ok') { parts.push('Proxmox OK' + (up ? ' - up ' + up : '')); }\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: parts.join(' | ')};\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -168,6 +168,21 @@
     "wires": [
       [
         "db7c1893ad9ad437"
+      ]
+    ]
+  },
+  {
+    "id": "9dc9670dcef5730c",
+    "type": "catch",
+    "z": "7021a0b2d35572fb",
+    "name": "Catch failures (homelab)",
+    "scope": null,
+    "uncaught": false,
+    "x": 1200,
+    "y": 200,
+    "wires": [
+      [
+        "9c40c848f77ef14b"
       ]
     ]
   },

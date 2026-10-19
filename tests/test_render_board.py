@@ -227,9 +227,20 @@ class TestRenderBoardBody:
             f"{RENDER_NAME} body has only {real} real newline(s); a 4-statement "
             "body needs at least 3 separators"
         )
-        assert len(body.splitlines()) == 4, (
-            f"{RENDER_NAME} body is {len(body.splitlines())} line(s), expected the "
-            "4-statement body"
+        # The body gained card-persistence lines (file-backed context so the
+        # board survives a redeploy), so the exact 4-line pin no longer holds.
+        # Pin the PROPERTY instead: a short, readable body that still returns
+        # the card array, and prove the persistence call is actually present.
+        assert len(body.splitlines()) >= 4, (
+            f"{RENDER_NAME} body is {len(body.splitlines())} line(s), expected at "
+            "least the 4-statement body"
+        )
+        assert "return [msg, msg];" in body, (
+            f"{RENDER_NAME} no longer returns the card array on both outputs"
+        )
+        assert "flow.get('kanban_cards', 'file')" in body, (
+            f"{RENDER_NAME} stopped reading the file-backed context -- cards would "
+            "vanish from the board on every restart"
         )
         assert not body.lstrip().startswith("//"), (
             f"{RENDER_NAME} body starts with a comment -- if the body is one line, "
