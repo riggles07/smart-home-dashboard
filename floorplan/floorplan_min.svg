@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1048" width="1280" height="1048">
-  <path id="bathroom" class="room orange" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="corridor" class="room blue" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="dining_room" class="room teal" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="kitchen" class="room orange" d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="laundry" class="room gold" d="M 586,533 L 586,555 L 602,560 L 609,571 L 606,586 L 597,593 L 586,595 L 586,622 L 744,622 L 743,547 L 704,546 L 700,544 L 696,532 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="living_room" class="room gold" d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
-  <path id="study" class="room blue" d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z" fill-opacity="0.55" stroke="#ffffff" stroke-width="1.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="118 100 1086 802" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <!-- Traced from a Roborock map; viewBox cropped to the plan itself.
+       Room ids are what ha-floorplan binds to. -->
+  <rect x="118" y="100" width="1086" height="802" fill="#101a26" pointer-events="none"/>
+  <path id="bathroom" class="room orange" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z"/>
+  <path id="corridor" class="room blue" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/>
+  <path id="dining_room" class="room teal" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/>
+  <path id="kitchen" class="room orange" d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/>
+  <path id="laundry" class="room gold" d="M 586,533 L 586,555 L 602,560 L 609,571 L 606,586 L 597,593 L 586,595 L 586,622 L 744,622 L 743,547 L 704,546 L 700,544 L 696,532 Z"/>
+  <path id="living_room" class="room gold" d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/>
+  <path id="study" class="room blue" d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/>
+  <text x="665" y="730" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
+  <text x="883" y="617" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Corridor</text>
+  <text x="1056" y="276" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Dining Room</text>
+  <text x="721" y="280" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Kitchen</text>
+  <text x="666" y="579" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Laundry</text>
+  <text x="1036" y="724" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Living Room</text>
+  <text x="298" y="281" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Study</text>
 </svg>
