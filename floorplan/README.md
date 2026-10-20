@@ -616,3 +616,17 @@ living_room   33802 / 44073          12.34
 
 Weight after adding both: 711 kB for seven rooms (was 8.85 MB for five).
 Dashboard `?v=10`. 533 tests pass.
+
+### Reproducibility fix: pass-through rooms must be COPIED, not re-encoded
+
+`level_rooms.py` initially re-saved the five untouched rooms at quality 96 so the
+output dir held all seven. That is a lossy round-trip through a file that had
+already been encoded: the second-generation source then produced *different*
+downscaled bytes at the same file size (study: max per-channel diff 22, mean 0.58),
+so `rooms_small/` no longer matched what HA was serving, and re-running the pipeline
+changed files that should have been identical forever.
+
+Fixed with `shutil.copy2` for pass-through rooms. The whole chain is now
+reproducible from the pristine originals: `level_rooms.py` -> `downscale_rooms.py`
+reproduces the seven committed files byte-for-byte, and all seven md5-match the
+live `/local/floorplan/rooms/`.
