@@ -33,6 +33,7 @@ Usage:
     python3 level_rooms.py <src-dir> <dst-dir>
 """
 import os
+import shutil
 import sys
 
 from PIL import Image
@@ -60,8 +61,12 @@ def main(src, dst):
         out = os.path.join(dst, name)
 
         if room not in CROP:
-            im.save(out, "JPEG", quality=96)     # untouched rooms pass through
-            print(f"{room}: pass-through")
+            # byte-for-byte copy, NOT re-encoded: a lossy round-trip here changes
+            # every pixel of the untouched rooms by a little, which makes the
+            # output of the whole pipeline irreproducible and silently differs
+            # from what is already on HA.
+            shutil.copy2(os.path.join(src, name), out)
+            print(f"{room}: copied unchanged")
             continue
 
         im = im.crop(CROP[room])
