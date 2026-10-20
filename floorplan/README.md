@@ -155,3 +155,48 @@ the dashboard is being created through the HA UI instead. Registry writes
 (device/entity/area) and `lovelace/dashboards/create` + `lovelace/config/save` had
 all worked earlier, so the capability exists -- it is just not reliable enough to
 build on unattended.
+
+
+## COMPLETE -- dashboard created (2026-10-19)
+
+All assets verified served by HTTP GET against HA:
+
+```
+/local/floorplan/floorplan.svg          200  1774 b  image/svg+xml
+/local/floorplan/floorplan.css          200  1554 b  text/css
+/local/floorplan/floorplan.yaml         200  3855 b  application/yaml
+/hacsfiles/ha-floorplan/floorplan.js    200  268026 b  (HACS install, also at
+                                                       /local/community/ha-floorplan/)
+```
+
+Dashboard `floor-plan` ("Floor Plan", icon `mdi:home-floor-0`, in sidebar) created
+over the WebSocket API with `lovelace/dashboards/create` +
+`lovelace/config/save`. Readback confirms:
+
+```
+views=1  cards=1  type=custom:floorplan-card
+```
+
+### The workaround that made it work
+
+`lovelace/dashboards/list` was the call that hung. `dashboards/list` loads every
+dashboard's config to enumerate them -- including `by-room`, which is configured
+with the auto-generating **areas strategy**. So the most likely cause was that
+listing had to instantiate the very strategy dashboard created earlier in the
+session, and blocked doing so.
+
+Fix: **don't list.** Call `lovelace/dashboards/create` directly and treat an
+"already exists" error as the exists-check. The create/save/readback sequence then
+completed first try. Same capability, without the enumeration step that was
+wedging.
+
+### Still unverified (needs a logged-in browser)
+
+Rendering and tap behaviour cannot be confirmed from here -- viewing a Lovelace
+dashboard requires an interactive HA login, which this agent does not have. What
+must be checked by eye:
+
+- rooms render at all, and fills track light state
+- tap on study / corridor / living_room / laundry changes the real device
+- kitchen, dining_room, bathroom are inert (no pointer cursor, no tap)
+- the four hazard entities are still unbound
