@@ -1158,15 +1158,28 @@ if (!base) { node.status({fill:'red', shape:'ring', text:'no HA_URL'}); return n
 var body = {entity_id: req.entityId};
 if (req.serviceData) { for (var k in req.serviceData) { body[k] = req.serviceData[k]; } }
 node.status({fill:'blue', shape:'dot', text:req.service});
-return [{payload: {url: base + '/api/services/' + req.domain + '/' + req.service,
-                   method: 'POST', body: body},
+// url/method/body go at the TOP LEVEL of the message because that is what
+// HA REST Controller reads (msg.url / msg.method / msg.body). They used to be
+// nested under msg.payload, so the controller hit its `if (!msg.url)` guard and
+// returned null -- a silent drop. The dashboard tiles looked wired and did
+// nothing. Measured 2026-10-19 with an output tap: the template emitted
+// {topic:'ha/control', payload:{entityId,domain,service}} and nothing happened.
+return [{url: base + '/api/services/' + req.domain + '/' + req.service,
+         method: 'POST', body: body,
          topic: 'ha/control'}, null];
 """
 
 HA_REST_FUNC = r"""// Format a Home Assistant service call for the HTTP request node.
 // Classic function node: the body runs per message and returns what to emit.
 // Guard the url so a stray state message cannot throw on msg.url.replace().
-if (!msg.url) { node.status({fill:'grey', shape:'ring', text:'no url'}); return null; }
+// Tolerate either shape: the canonical flat msg.url/body, or an older
+// payload-wrapped {payload:{url,body}}. Without this the mismatch is invisible --
+// the node reports 'no url' and drops the message with no error anywhere.
+var src = (msg.payload && msg.payload.url) ? msg.payload : msg;
+if (!src.url) { node.status({fill:'grey', shape:'ring', text:'no url'}); return null; }
+msg.url = src.url;
+if (src.body !== undefined) { msg.body = src.body; }
+if (src.method) { msg.method = src.method; }
 msg.headers = {
   'Authorization': 'Bearer ' + (env.get('HA_TOKEN') || ''),
   'Content-Type': 'application/json'
