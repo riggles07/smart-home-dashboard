@@ -167,11 +167,21 @@
   <clipPath id="clip_kitchen"><path d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/></clipPath>
   <clipPath id="clip_living_room"><path d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/></clipPath>
   <clipPath id="clip_study"><path d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/></clipPath>
-  <image class="room-photo" x="585" y="429" width="577" height="455" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_corridor)" href="/local/floorplan/rooms/corridor.jpg?v=1"/>
-  <image class="room-photo" x="920" y="119" width="266" height="320" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_dining_room)" href="/local/floorplan/rooms/dining_room.jpg?v=1"/>
-  <image class="room-photo" x="456" y="119" width="458" height="334" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_kitchen)" href="/local/floorplan/rooms/kitchen.jpg?v=1"/>
-  <image class="room-photo" x="980" y="591" width="113" height="293" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_living_room)" href="/local/floorplan/rooms/living_room.jpg?v=1"/>
-  <image class="room-photo" x="136" y="118" width="337" height="317" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_study)" href="/local/floorplan/rooms/study.jpg?v=1"/>
+  <g clip-path="url(#clip_corridor)">
+    <image class="room-photo" x="646" y="368" width="455" height="577" transform="rotate(-90 873.5 656.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/corridor.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_dining_room)">
+    <image class="room-photo" x="893" y="146" width="320" height="266" transform="rotate(-90 1053 279)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/dining_room.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_kitchen)">
+    <image class="room-photo" x="518" y="57" width="334" height="458" transform="rotate(-90 685 286)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/kitchen.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_living_room)">
+    <image class="room-photo" x="890" y="681" width="293" height="113" transform="rotate(-90 1036.5 737.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/living_room.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_study)">
+    <image class="room-photo" x="146" y="108" width="317" height="337" transform="rotate(-90 304.5 276.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/study.jpg?v=1"/>
+  </g>
   <path id="bathroom" class="room orange" fill="#a8542f" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z"/>
   <path id="corridor" class="room blue has-photo" fill="#2f6ea8" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/>
   <path id="dining_room" class="room teal has-photo" fill="#177a74" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/>

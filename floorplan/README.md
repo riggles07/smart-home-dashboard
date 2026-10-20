@@ -435,3 +435,35 @@ behind the tint, in a shadow root, after the class attribute has been wiped.
 Note: the five room photos are 1.6-2.3 MB each (~9 MB total). They are cached
 after first load, but they are worth downscaling to ~100 kB each if the kiosk
 ever feels sluggish.
+
+## Photo orientation -- north-up photos, north-left plan (2026-10-20)
+
+Reported: "all photos were taken with north up being to the left of the dashboard,
+each one needs rotated with this orientation."
+
+Mapping: the photo's up vector is north; the plan has north to the **left**; so the
+photo must turn **counter-clockwise 90 degrees**. SVG `rotate()` is
+clockwise-positive, so the transform is `rotate(-90 cx cy)`:
+
+```
+(0,-1) --rotate(-90)--> (-1,0)     photo-up  ->  left      (north-up == plan-left)
+```
+
+Two details that make this not break anything else:
+
+- **The clip moved to a wrapper `<g>`.** A `clip-path` is resolved in the element's
+  own (already transformed) user space, so a clip sitting on a rotated `<image>`
+  would rotate with the pixels and the photo would spill out of its room. The `<g>`
+  holds the clip, the `<image>` turns inside it.
+- **The image box is pre-swapped (w<->h) about the same centre**, so the -90 turn
+  maps it exactly back onto the room polygon's bbox. `preserveAspectRatio="slice"`
+  therefore crops the same way before and after; nothing is stretched and no other
+  element on the plan moves.
+
+Only the SVG changed -- the five JPEGs on HA are untouched, no re-upload of binary
+assets. `--rotate N --out /tmp/x.svg` renders any orientation from the same code,
+which is how the four-way comparison was produced.
+
+`tests/test_floorplan_assets.py` now asserts that *every* photo carries the same
+`PHOTO_ROTATE` angle (one unrotated room is the likely future bug) and that the
+turned box lands within 1 unit of the room bbox on all four edges.
