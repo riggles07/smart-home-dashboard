@@ -518,3 +518,39 @@ stairs does nothing (tests pin both).
 `geometry.py`. It still inlines `floorplan.css`, keeps the `fill=""` attribute on
 every path, keeps the `rotate(-90)` photo transform and the wrapper `<g>` clip.
 Dashboard bumped to `?v=8`. 531 tests pass (6 new for the normalisation).
+
+## Photo weight: 8.85 MB -> 567 kB (2026-10-20)
+
+The five originals came straight off a phone: 3072x4080, 1.6-2.3 MB each. The plan
+never shows them larger than ~300 CSS px of room width, and `floorplan.css` blurs
+them 5 px before drawing, so almost all of that is unshowable.
+
+`downscale_rooms.py` rewrites them to 828x1100, quality 78 (dropping only if a file
+exceeds a 120 kB budget -- the kitchen needed q=60), progressive, 4:2:0, no EXIF.
+Output goes to `floorplan/rooms_small/` under the same filenames, so the plan only
+needs a cache-busting bump, not a rename.
+
+```
+corridor.jpg     1806 kB -> 120 kB   (93.4%)
+dining_room.jpg  1767 kB -> 113 kB   (93.6%)
+kitchen.jpg      2271 kB -> 116 kB   (94.9%)   q=60
+living_room.jpg  1572 kB -> 108 kB   (93.1%)
+study.jpg        1643 kB -> 111 kB   (93.3%)
+TOTAL            8.85 MB -> 567 kB   (93.7%)
+```
+
+Verified by running both through the card's **exact** pipeline (rotate -90 -> slice
+crop to the room box -> resize to the rendered width -> 5 px blur -> 42% tint) and
+comparing at 590 px (desktop card) and 300 px (phone):
+
+```
+worst PSNR across 5 rooms x 2 sizes: 53.1 dB      (>40 dB is visually identical)
+mean absolute channel difference:    0.17-0.30 / 255
+```
+
+So the swap is invisible. `PHOTO_V = 2` in `render_floorplan.py` bumps the `?v=` on
+every `rooms/*.jpg` href -- the filenames stay the same, but the URL must change or
+the 31-day `/local/` cache keeps serving the 2 MB originals.
+
+Upload target: `/config/www/floorplan/rooms/` (the five files, same names), plus the
+new `floorplan.svg`. Dashboard is on `?v=9`.
