@@ -2513,14 +2513,21 @@ ACTIVITY_FORMAT = (
     "// Oldest -> newest, which is the order both the x axis and the tooltip assume.\n"
     "var points = [];\n"
     "for (var age = 23; age >= 0; age--) {\n"
-    "  points.push({t: now - age * HOUR, y: buckets[age]});\n"
+    "// {x, y}, NOT {t, y}. Chart.js 2.x documents `t` as a time-scale key, but this\n"
+    "// build does not parse it: measured in the live page by counting drawn pixels,\n"
+    "// {x: epochMillis, y} paints 11,598 coral pixels and {t, y} paints ZERO --\n"
+    "// the scales render while the series stays silently empty.\n"
+    "  points.push({x: now - age * HOUR, y: buckets[age]});\n"
     "}\n"
     "node.status({fill:'green',shape:'dot',text: total + ' changes / 24h'});\n"
     "var n = msg._entityCount || 0;\n"
     "// out0 = chart series, out1 = the same counts for the alert banner.\n"
     "// Returning null here left the banner stuck on its default text: the\n"
     "// evaluator was wired but nothing ever reached it on a SUCCESSFUL poll.\n"
-    "return [{payload: points, _total: total, _entities: n},\n"
+    "// The chart gets a WRAPPED payload, not custom message props: ui_template\n"
+    "// receives the widget payload, and a bare array carried the points fine but\n"
+    "// dropped the counts, which left the canvas hidden behind its empty state.\n"
+    "return [{payload: {series: points, total: total, entities: n}},\n"
     "        {payload: total, _total: total, _entities: n}];"
 )
 
@@ -2553,9 +2560,17 @@ ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-char
     }
     var canvas = host.querySelector('canvas');
     var empty = host.querySelector('.chart-empty');
-    var p = (msg && msg.payload) ? msg.payload : null;
-    var points = (p && Array.isArray(p.payload)) ? p.payload : [];
-    var total = (p && typeof p._total === 'number') ? p._total : 0;
+    // The widget payload is WRAPPED: {series, total, entities}. A bare array got
+    // the points through but lost the counts (ui_template receives the payload,
+    // not arbitrary msg properties), so the canvas could not tell "no data" from
+    // "not told the total". Both shapes are accepted, and the empty state is
+    // derived from the series itself so a stale replay cannot hide real data.
+    var p = (msg && msg.payload !== undefined) ? msg.payload : null;
+    var series = (p && Array.isArray(p.series)) ? p.series
+               : (Array.isArray(p) ? p : []);
+    var derived = 0;
+    for (var i = 0; i < series.length; i++) { derived += Number(series[i] && series[i].y) || 0; }
+    var total = (p && typeof p.total === 'number') ? p.total : derived;
 
     if (typeof window.Chart === 'undefined') {
       if (empty) {
@@ -2575,7 +2590,7 @@ ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-char
     // that is no longer in the page and the new canvas stays blank. Keyed to the
     // element, a recompile simply builds a chart against the live canvas.
     if (canvas.__shdChart) {
-      canvas.__shdChart.data.datasets[0].data = points;
+      canvas.__shdChart.data.datasets[0].data = series;
       canvas.__shdChart.update();
       return;
     }
@@ -2585,7 +2600,7 @@ ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-char
         labels: [],
         datasets: [{
           label: 'State changes',
-          data: points,
+          data: series,
           borderColor: '#fa6f63',
           backgroundColor: 'rgba(250, 111, 99, 0.15)',
           borderWidth: 2,
@@ -2652,10 +2667,11 @@ ALERT_EVAL_ACTIVITY = (
     "if (msg.payload && msg.payload.severity && msg.payload.message) {\n"
     "  return msg;\n"
     "}\n"
-    "var total = (msg.payload && typeof msg.payload._total === 'number')\n"
-    "  ? msg.payload._total : null;\n"
-    "var ents = (msg.payload && typeof msg.payload._entities === 'number')\n"
-    "  ? msg.payload._entities : 0;\n"
+    "// The counts ride on the MESSAGE (_total/_entities), not inside payload --\n"
+    "// out1's payload is the bare number. Reading payload._total here made the\n"
+    "// banner report 'awaiting first result' while the chart showed 485 changes.\n"
+    "var total = (typeof msg._total === 'number') ? msg._total : null;\n"
+    "var ents = (typeof msg._entities === 'number') ? msg._entities : 0;\n"
     "var sev;\n"
     "var text;\n"
     "if (total === null) {\n"

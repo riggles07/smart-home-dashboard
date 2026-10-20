@@ -125,9 +125,9 @@ def test_hour_buckets_are_counted_from_a_per_entity_response(activity):
     src = fn["func"]
     assert "perEntity" in src and "Array.isArray(series)" in src
     assert "last_changed" in src
-    assert "points.push({t:" in src and "y: buckets" in src, (
-        "Chart.js 2.x needs {t, y} points"
-    )
+    # {x, y}, not {t, y}: this build's time scale does not parse `t` and the
+    # series then draws zero pixels while the axes still render.
+    assert "points.push({x:" in src and "y: buckets" in src
 
 
 def test_chart_template_is_chartjs_v2_not_v3(activity):
@@ -144,6 +144,18 @@ def test_chart_template_is_chartjs_v2_not_v3(activity):
     assert "type: 'time'" in src, "hourly axis needs the v2 time scale"
     # a zero series must be described in words, not drawn as a flat line
     assert "chart-empty" in src
+
+
+def test_chart_template_reads_the_shape_the_formatter_emits(activity):
+    """out0 is a WRAPPED payload {series, total, entities}. A bare array carried the
+    points but not the counts, so the canvas could not tell "no data" from "not
+    told the total" and stayed hidden behind its empty state."""
+    tpl = _by_name(activity, "Activity Area Chart")["format"]
+    fmt = _by_name(activity, "Count changes per hour")["func"]
+    assert "{payload: {series: points, total: total" in fmt
+    assert "Array.isArray(p.series)" in tpl
+    # the empty state is derived from the series, so a stale replay cannot hide data
+    assert "typeof p.total === 'number'" in tpl
 
 
 def test_poll_interval_is_five_minutes(activity):
