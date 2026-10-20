@@ -318,3 +318,42 @@ worth doing does not need either.
 - **Animation: CSS, driven by entity state.** The glow/pulse already present is the
   mechanism; it can be made richer (breathing glow on ON, warm flicker) with zero
   new assets and no performance risk.
+
+
+## Room photos + label correction (2026-10-20)
+
+Five photos uploaded: study, kitchen, dining_room, corridor, living_room.
+Missing: laundry, bathroom (still flat colour, as expected).
+
+### The photos are not overhead shots
+
+Measured by looking at each one, not by trusting the filenames:
+
+- **living_room.jpg** -- standing height, ~50 degree angle, and the photographer's
+  bare leg fills the bottom third.
+- **corridor.jpg** -- eye level at the TOP OF THE STAIRS, feet and socks in frame.
+- **kitchen.jpg** -- genuinely overhead, but the photographer's legs, arm and head
+  are in the bottom of the frame, and the island is very cluttered.
+
+So they cannot be pasted in as room fills: stretched across a polygon they read as
+a wall at the top and a floor at the bottom, which looks broken.
+
+### What makes them usable anyway
+
+- `preserveAspectRatio="xMidYMid slice"` on `<image>` -- crops to fill the polygon
+  instead of stretching it, so portrait phone photos are not distorted.
+- `filter: blur(5px) saturate(.85) brightness(.5)` -- removes the perspective and
+  the clutter; the photo becomes texture.
+- the room's own fill at reduced opacity ON TOP (`.room.has-photo`), so light state
+  still reads over the photo.
+- each image is clipped to exactly its own room polygon with `<clipPath>`. This is
+  what fixes "the living room photo flows into foyer": the living-room photo *does*
+  contain the open-plan foyer, but a clip path cannot bleed, so the foyer only ever
+  shows its own photo.
+
+### Labels changed, ids deliberately left alone
+
+The visible text is now **Family Room** (was Study) and **Foyer** (was Corridor).
+The SVG ids stay `study` and `corridor`, because `floorplan.yaml` binds every rule
+by id -- renaming an id silently breaks that room's tap. The label was wrong, the
+id is just a key.

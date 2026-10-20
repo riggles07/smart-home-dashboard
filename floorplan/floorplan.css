@@ -91,3 +91,32 @@
 @media (prefers-reduced-motion: reduce) {
   .room { transition: none; }
 }
+
+
+/* ---- photo layer (added 2026-10-20) --------------------------------------
+ * The uploaded photos are WALKING-THROUGH phone shots, not overhead shots: the
+ * corridor one is eye-level at the top of the stairs, the living-room one is
+ * angled with the photographer's bare leg in frame. Stretched across a room
+ * polygon they would look wrong, so the image is pushed through
+ *   - preserveAspectRatio="slice"  (crop, never stretch -- set on the <image>)
+ *   - blur + brightness            (kills the perspective and the clutter)
+ *   - the room's own fill at partial opacity on top (state still reads)
+ * The result reads as a warm photographic floor rather than a picture pasted in.
+ */
+.room-photo {
+  filter: blur(5px) saturate(0.85) brightness(0.5);
+}
+
+/* Where a photo exists, the room fill becomes a TINT over it, not a cover. */
+.room.has-photo {
+  fill-opacity: 0.42;
+  stroke-opacity: 0.35;
+}
+
+.room.has-photo.room-on {
+  fill-opacity: 0.55;
+}
+
+.room.has-photo.room-off {
+  fill-opacity: 0.5;
+}
