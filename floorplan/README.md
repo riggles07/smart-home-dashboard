@@ -467,3 +467,54 @@ which is how the four-way comparison was produced.
 `tests/test_floorplan_assets.py` now asserts that *every* photo carries the same
 `PHOTO_ROTATE` angle (one unrotated room is the likely future bug) and that the
 turned box lands within 1 unit of the room bbox on all four edges.
+
+## Normalisation: hand-set geometry replaces the trace (2026-10-20, third pass)
+
+Asked for: "normalize the floor plan from our initial rough generation; stairs
+should show in the top right corner of foyer and living room should fill out the
+square area."
+
+The trace was a colour segmentation of a Roborock screenshot, so it had two
+classes of defect that no amount of CSS could fix:
+
+1. **Jigsaw notches** wherever the vacuum's floor colour bled into a doorway --
+   kitchen/dining wall, laundry's left side, the bathroom's left side, the
+   kitchen's bottom edge, the study's bottom-right.
+2. **Two rectangular holes punched through the living room** by the app's own
+   "90 deg" and "layers" buttons, which the tracer masked out. The room was left
+   as a 113-unit-wide strip instead of filling its 206 x 294 rectangle.
+
+`floorplan/geometry.py` is now the source of truth: hand-set, rectilinear, and
+**re-measured off `source-map-flat.jpg` by colour segmentation** (per-row min/max
+of the orange/teal/gold/blue masks), not invented. The numbers are in that file's
+docstring. Normalisation rules:
+
+- every edge axis-aligned (test: `test_every_room_is_rectilinear`);
+- no two rooms overlap (test samples a 4-unit grid and requires <= 1 hit per point);
+- neighbours share one wall coordinate so no black sliver shows between them --
+  kitchen.right == dining.left == 915, and the foyer body's east wall IS the
+  living room's west wall at 980 (test: `test_neighbours_share_one_wall_coordinate`);
+- the living room is a plain rectangle, right edge flush with the dining room
+  (1186), bottom flush with the foyer (884);
+- labels come from the polygon **area centroid** (shoelace), so they stay inside
+  the room when geometry moves -- no hand-maintained label table any more.
+
+Small steps remain where the house really has them (the kitchen's bottom-left
+jog, the dining room's bottom-left step, the study's bottom-right return). Those
+are rectilinear and measured; they are the plan, not tracer noise.
+
+### Stairs
+
+Never in the robot's map -- a vacuum cannot climb them -- so they are drawn:
+two strings plus 8 evenly spaced treads inside the foyer's right arm
+(x 986..1156, y 444..584, a 6-unit inset on all four sides), plus a chevron for
+the direction of travel. Stroked, not tinted, so they read as an architectural
+element rather than as photo texture, and `pointer-events: none` so a tap on the
+stairs does nothing (tests pin both).
+
+### What replaced what
+
+`render_floorplan.py` no longer reads its own output or the raw trace; it imports
+`geometry.py`. It still inlines `floorplan.css`, keeps the `fill=""` attribute on
+every path, keeps the `rotate(-90)` photo transform and the wrapper `<g>` clip.
+Dashboard bumped to `?v=8`. 531 tests pass (6 new for the normalisation).

@@ -115,6 +115,20 @@
   filter: drop-shadow(0 0 10px rgba(160, 200, 255, 0.45));
 }
 
+/* ---- Stairs: a plan feature, drawn over the foyer fill -----------------
+ * They were never in the robot's map (a vacuum cannot climb stairs), so they are
+ * stroked rather than tinted: crisp white-ish lines that read as an architectural
+ * element instead of as photo texture. Never a tap target. */
+.stairs {
+  fill: none;
+  stroke: #dfe9f5;
+  stroke-opacity: 0.55;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 /* ---- Unbound rooms: kitchen, dining_room, bathroom --------------------
  * These keep their HUE -- kitchen is orange, dining teal -- because colour means
  * "which room is this", not "is it controllable". Greying them out was worse than
