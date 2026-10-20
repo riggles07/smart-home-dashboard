@@ -2516,9 +2516,12 @@ ACTIVITY_FORMAT = (
     "  points.push({t: now - age * HOUR, y: buckets[age]});\n"
     "}\n"
     "node.status({fill:'green',shape:'dot',text: total + ' changes / 24h'});\n"
-    "return [{payload: points, _total: total,\n"
-    "         _entities: (msg._entityCount || 0)},\n"
-    "        null];"
+    "var n = msg._entityCount || 0;\n"
+    "// out0 = chart series, out1 = the same counts for the alert banner.\n"
+    "// Returning null here left the banner stuck on its default text: the\n"
+    "// evaluator was wired but nothing ever reached it on a SUCCESSFUL poll.\n"
+    "return [{payload: points, _total: total, _entities: n},\n"
+    "        {payload: total, _total: total, _entities: n}];"
 )
 
 # Chart.js 2.x is a global on this dashboard build, and the time scale needs
@@ -2530,11 +2533,24 @@ ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-char
 </div>
 <script>
 (function (scope) {
-  var started = false;
+  // Chart.js ON THIS DASHBOARD IS v2.x, NOT v3 -- every option below was executed
+  // live against /ui before being written here:
+  //   * `data.labels` is MANDATORY. Omitting it (legal in v3) throws
+  //     TypeError: can't access property 'length', a is undefined -- and the
+  //     canvas stays blank. This is what broke the first port.
+  //   * scales are ARRAYS: `scales.xAxes[] / scales.yAxes[]`. The v3 object form
+  //     `scales: {x: {...}}` is silently ignored on this build.
+  //   * tooltip config is `options.tooltips` (plural) and reads `item.yLabel`.
+  //   * legend is `options.legend`; grid styling is `gridLines`.
+  var HOUR = 3600000;
 
   function paint(msg) {
     var host = document.querySelector('[data-role="activity-chart"]');
-    if (!host) { return; }
+    if (!host) {
+      // The template may be watched before Angular has appended it.
+      setTimeout(function () { paint(msg); }, 50);
+      return;
+    }
     var canvas = host.querySelector('canvas');
     var empty = host.querySelector('.chart-empty');
     var p = (msg && msg.payload) ? msg.payload : null;
@@ -2548,64 +2564,77 @@ ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-char
       }
       return;
     }
-    // A zero series is drawn by Chart.js as a flat line on the baseline, which
-    // reads as "everything is zero" rather than "no data yet". Say it in words.
+    // A zero series drawn by Chart.js is a flat line on the baseline, which reads
+    // as "everything is zero" rather than "no data yet". Say it in words instead.
     if (empty) { empty.style.display = total ? 'none' : 'flex'; }
     canvas.style.opacity = total ? '1' : '0';
 
-    if (window.__shdActivityChart) {
-      window.__shdActivityChart.data.datasets[0].data = points;
-      window.__shdActivityChart.update();
+    // The chart instance is keyed to the CANVAS NODE, not to a global. A Node-RED
+    // redeploy (or any Angular recompile) replaces the template's DOM, and a
+    // global instance then points at a detached canvas: updates draw into a node
+    // that is no longer in the page and the new canvas stays blank. Keyed to the
+    // element, a recompile simply builds a chart against the live canvas.
+    if (canvas.__shdChart) {
+      canvas.__shdChart.data.datasets[0].data = points;
+      canvas.__shdChart.update();
       return;
     }
-    window.__shdActivityChart = new window.Chart(canvas.getContext('2d'), {
+    canvas.__shdChart = new window.Chart(canvas.getContext('2d'), {
       type: 'line',
-      data: { datasets: [{ label: 'State changes', data: points,
-                           borderColor: '#fa6f63',
-                           backgroundColor: 'rgba(250, 111, 99, 0.15)',
-                           borderWidth: 2, fill: true,
-                           pointRadius: 0, pointHoverRadius: 4, tension: 0.3 }] },
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'State changes',
+          data: points,
+          borderColor: '#fa6f63',
+          backgroundColor: 'rgba(250, 111, 99, 0.15)',
+          borderWidth: 2,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.3
+        }]
+      },
       options: {
         responsive: false,
         maintainAspectRatio: false,
         animation: false,
-        scales: {
-          x: { type: 'time',
-               time: { unit: 'hour', displayFormats: { hour: 'HH' },
-                       tooltipFormat: 'HH:mm' },
-               grid: { color: 'rgba(255,255,255,0.06)' },
-               ticks: { color: '#9fb0c6', maxTicksLimit: 6 } },
-          y: { beginAtZero: true,
-               grid: { color: 'rgba(255,255,255,0.06)' },
-               ticks: { color: '#9fb0c6', precision: 0, maxTicksLimit: 5 } }
-        },
-        plugins: { legend: { display: false } },
-        tooltip: {
-          backgroundColor: 'rgba(36,58,84,0.95)', titleColor: '#eef3f8',
-          bodyColor: '#eef3f8', borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1, cornerRadius: 8, displayColors: false,
+        legend: { display: false },
+        tooltips: {
+          backgroundColor: 'rgba(36,58,84,0.95)',
+          titleFontColor: '#eef3f8',
+          bodyFontColor: '#eef3f8',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          cornerRadius: 8,
+          displayColors: false,
           callbacks: {
-            label: function (ctx) {
-              var y = (ctx.raw && typeof ctx.raw.y === 'number') ? ctx.raw.y : 0;
-              return y + (y === 1 ? ' change' : ' changes');
+            label: function (item) {
+              var v = (typeof item.yLabel === 'number') ? item.yLabel : 0;
+              return v + (v === 1 ? ' change' : ' changes');
             }
           }
+        },
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: { unit: 'hour', displayFormats: { hour: 'HH' }, tooltipFormat: 'HH:mm' },
+            gridLines: { color: 'rgba(255,255,255,0.06)', zeroLineColor: 'rgba(255,255,255,0.06)' },
+            ticks: { fontColor: '#9fb0c6', maxTicksLimit: 6 }
+          }],
+          yAxes: [{
+            ticks: { beginAtZero: true, precision: 0, maxTicksLimit: 5, fontColor: '#9fb0c6' },
+            gridLines: { color: 'rgba(255,255,255,0.06)', zeroLineColor: 'rgba(255,255,255,0.06)' }
+          }]
         }
       }
     });
   }
 
-  scope.$watch(function () { return scope.msg; }, function (m) {
-    // First paint only once the template has actually rendered into the DOM.
-    if (!started) {
-      started = true;
-      setTimeout(function () { paint(m); }, 0);
-      return;
-    }
-    paint(m);
-  });
+  scope.$watch(function () { return scope.msg; }, paint);
 })(scope);
-</script>"""
+</script>
+"""
 
 ALERT_EVAL_ACTIVITY = (
     _ALERT_ERROR_GUARD

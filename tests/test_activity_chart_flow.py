@@ -130,12 +130,18 @@ def test_hour_buckets_are_counted_from_a_per_entity_response(activity):
     )
 
 
-def test_chart_template_reads_y_not_payload(activity):
+def test_chart_template_is_chartjs_v2_not_v3(activity):
+    """This dashboard ships Chart.js 2.x. v3 syntax is silently ignored or throws
+    -- every assertion here was verified by executing the config live in /ui."""
     tpl = _by_name(activity, "Activity Area Chart")
     src = tpl["format"]
-    assert "typeof ctx.raw.y" in src or "ctx.raw.y" in src
     assert "new window.Chart" in src
-    assert "type: 'time'" in src, "hourly axis needs the Chart.js time scale"
+    assert "labels: []" in src, "v2 throws TypeError when data.labels is absent"
+    assert "xAxes:" in src and "yAxes:" in src, "v2 scales are arrays, not {x:...}"
+    assert "scales: {\n          x:" not in src, "v3 object-form scales do nothing here"
+    assert "tooltips:" in src, "v2 option is options.tooltips (plural)"
+    assert "item.yLabel" in src
+    assert "type: 'time'" in src, "hourly axis needs the v2 time scale"
     # a zero series must be described in words, not drawn as a flat line
     assert "chart-empty" in src
 

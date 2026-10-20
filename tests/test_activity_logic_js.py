@@ -73,6 +73,8 @@ out.total = r2[0]._total;
 out.first = series[0];
 out.last = series[series.length - 1];
 out.allHaveTY = series.every(p => typeof p.t === 'number' && typeof p.y === 'number');
+// out1 must carry the same counts, or the alert banner never updates on success
+out.out1 = r2[1] ? { total: r2[1]._total, entities: r2[1]._entities } : null;
 
 // ---- 3. failure paths feed the alert evaluator, not the chart ------------
 const r3 = run(funcs.count, { statusCode: 500, payload: {} }, ENV);
@@ -141,6 +143,12 @@ def test_formatter_counts_changes_in_the_right_bucket(result):
 
 def test_horizon_drops_events_older_than_24h(result):
     assert result["total"] == 4, "the 30h-old event must not be counted"
+
+
+def test_a_successful_poll_also_feeds_the_alert_banner(result):
+    """out1 was wired to the evaluator but emitted null, so the banner sat on its
+    default text forever while the chart updated."""
+    assert result["out1"] == {"total": 4, "entities": 3}
 
 
 def test_a_http_failure_reaches_the_alert_evaluator(result):
