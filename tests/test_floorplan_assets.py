@@ -127,12 +127,54 @@ def test_every_room_path_carries_its_own_fill():
 
 
 def test_photos_are_clipped_and_tinted():
-    images = re.findall(r'<image class="room-photo"[^>]*clip-path="url\(#clip_(\w+)\)"', SVG)
-    assert sorted(images) == ["corridor", "dining_room", "kitchen", "living_room", "study"]
-    for room in ROOMS:
-        if room in images:
-            assert f'id="clip_{room}"' in SVG, f"{room} photo is not clipped"
+    """Each photo must be clipped to its own room, and the clip must be on the
+    WRAPPER: a clip-path is resolved in the element's own transformed space, so a
+    clip on a rotated <image> would rotate with the pixels and bleed."""
+    groups = re.findall(r'<g clip-path="url\(#clip_(\w+)\)">\s*(<image[^>]*>)', SVG)
+    assert sorted(g[0] for g in groups) == ["corridor", "dining_room", "kitchen",
+                                            "living_room", "study"]
+    for room, img in groups:
+        assert f'id="clip_{room}"' in SVG, f"{room} photo is not clipped"
+        assert "clip-path" not in img, f"{room}: clip belongs on the <g>, not the <image>"
     assert ".room-photo" in CSS and "blur(" in CSS
+
+
+def test_every_photo_is_rotated_the_same_way():
+    """'Each one needs rotated' -- one unrotated room is the bug to catch."""
+    want = re.search(r"PHOTO_ROTATE = (-?\d+)", PY_SRC).group(1)
+    imgs = re.findall(r"<image class=\"room-photo\"[^>]*>", SVG)
+    assert len(imgs) == 5
+    angles = []
+    for img in imgs:
+        m = re.search(r'transform="rotate\((-?\d+) ', img)
+        assert m, f"photo missing rotation: {img[:90]}"
+        angles.append(m.group(1))
+    assert set(angles) == {want}, f"rotations {set(angles)} != PHOTO_ROTATE {want}"
+
+
+def test_rotation_keeps_the_photo_inside_the_room_box():
+    """Turn about the box centre with w/h swapped, or the crop drifts off the room.
+
+    Checks the turned box lands EXACTLY back on the room polygon's bbox -- that is
+    what makes `slice` crop the same way before and after the rotation.
+    """
+    groups = re.findall(r'<g clip-path="url\(#clip_(\w+)\)">\s*(<image[^>]*>)', SVG)
+    for room, img in groups:
+        d = re.search(rf'<clipPath id="clip_{room}"><path d="([^"]+)"', SVG).group(1)
+        pts = [(float(a), float(b)) for a, b in
+               re.findall(r'(-?[\d.]+),(-?[\d.]+)', d)]
+        rx0, ry0 = min(p[0] for p in pts), min(p[1] for p in pts)
+        rx1, ry1 = max(p[0] for p in pts), max(p[1] for p in pts)
+        w = float(re.search(r'width="([\d.]+)"', img).group(1))
+        h = float(re.search(r'height="([\d.]+)"', img).group(1))
+        ang, cx, cy = (float(v) for v in
+                       re.search(r"rotate\((-?\d+) ([\-\d.]+) ([\-\d.]+)\)", img).groups())
+        swap = int(ang) % 180 != 0
+        bw, bh = (h, w) if swap else (w, h)
+        assert abs((cx - bw / 2) - rx0) < 1.0, f"{room}: left edge off by {abs((cx-bw/2)-rx0):.2f}"
+        assert abs((cy - bh / 2) - ry0) < 1.0, f"{room}: top edge off by {abs((cy-bh/2)-ry0):.2f}"
+        assert abs((cx + bw / 2) - rx1) < 1.0, f"{room}: right edge off"
+        assert abs((cy + bh / 2) - ry1) < 1.0, f"{room}: bottom edge off"
 
 
 def test_labels_never_intercept_a_tap():

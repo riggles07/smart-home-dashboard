@@ -33,11 +33,19 @@ second run.
 """
 import json
 import re
+import sys
 
 SRC = "floorplan_traced_raw.svg"
 OUT = "floorplan.svg"
 OUT_MIN = "floorplan_min.svg"
 CSS = "floorplan.css"
+
+# build-time override, used to render the orientation preview from the same code
+_args = sys.argv[1:]
+_rot = int(_args[_args.index("--rotate") + 1]) if "--rotate" in _args else None
+if "--out" in _args:
+    OUT = _args[_args.index("--out") + 1]
+    OUT_MIN = OUT
 
 ROOMS = json.load(open("rooms.json"))
 
@@ -70,6 +78,17 @@ PHOTOS = {
     "corridor":    "corridor.jpg",
     "living_room": "living_room.jpg",
 }
+
+# ---- photo orientation ---------------------------------------------------
+# Every photo was shot with NORTH UP. On this plan north points LEFT (the
+# Roborock trace is rotated 90 deg from the house's north). SVG rotate() is
+# CLOCKWISE-positive, so a -90 turn sends the photo's up vector to the left:
+#   (0,-1) -- rotate(-90) --> (-1,0)      up -> left
+# Rotating the <image> itself keeps its own x/y/width/height box, so the box is
+# pre-swapped (w<->h) about the same centre and the -90 turn maps it exactly onto
+# the room bbox -- no distortion, and nothing else on the plan moves.
+# Override at build time for the orientation preview: --rotate 90 --out /tmp/x.svg
+PHOTO_ROTATE = -90 if _rot is None else _rot
 # Base hue per room, also written as a fill="" attribute on the path. The
 # attribute is the belt to the CSS's braces: it survives ANY class change,
 # including the one below.
@@ -122,6 +141,12 @@ for room, _cls, d in sorted(paths):
 
 # photos sit UNDER the room path. preserveAspectRatio="slice" crops to fill the
 # polygon instead of stretching it, so a portrait phone photo does not distort.
+#
+# The clip lives on a wrapper <g>, NOT on the <image>: a clip-path is resolved in
+# the element's own (already transformed) user space, so putting it on the image
+# would rotate the clip along with the pixels and the photo would bleed out of
+# its room. With the <g> holding the clip and the <image> turning inside it, the
+# crop stays welded to the room and only the pixels rotate.
 for room, _cls, d in sorted(paths):
     if room not in PHOTOS:
         continue
@@ -129,10 +154,22 @@ for room, _cls, d in sorted(paths):
     ys_ = [int(n) for n in re.findall(r',(-?\d+)', d)]
     x0, y0 = min(xs_), min(ys_)
     w, h = max(xs_) - x0, max(ys_) - y0
-    lines.append(
-        f'  <image class="room-photo" x="{x0}" y="{y0}" width="{w}" height="{h}" '
-        f'preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_{room})" '
-        f'href="/local/floorplan/rooms/{PHOTOS[room]}?v=1"/>')
+    href = f'href="/local/floorplan/rooms/{PHOTOS[room]}?v=1"'
+    lines.append(f'  <g clip-path="url(#clip_{room})">')
+    if PHOTO_ROTATE % 360 == 0:
+        lines.append(
+            f'    <image class="room-photo" x="{x0}" y="{y0}" width="{w}" height="{h}" '
+            f'preserveAspectRatio="xMidYMid slice" {href}/>')
+    else:
+        cx, cy = x0 + w / 2, y0 + h / 2
+        # lay the image out in a box that the turn maps exactly onto the room bbox
+        rw, rh = (h, w) if PHOTO_ROTATE % 180 else (w, h)
+        lines.append(
+            f'    <image class="room-photo" x="{cx - rw / 2:g}" y="{cy - rh / 2:g}" '
+            f'width="{rw}" height="{rh}" '
+            f'transform="rotate({PHOTO_ROTATE} {cx:g} {cy:g})" '
+            f'preserveAspectRatio="xMidYMid slice" {href}/>')
+    lines.append('  </g>')
 
 for room, cls, d in sorted(paths):
     cls = " ".join(dict.fromkeys(cls.split()))   # regex capture already has "room"

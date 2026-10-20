@@ -14,7 +14,7 @@ sys.path.insert(0, "/root/.hermes/tools")
 from ha_ws import HA
 
 URL_PATH = "floor-plan"
-NEW_V = 6
+NEW_V = 7
 
 with HA() as ha:
     cfg = ha.call("lovelace/config", url_path=URL_PATH)
