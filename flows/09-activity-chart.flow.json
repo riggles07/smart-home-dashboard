@@ -1,0 +1,158 @@
+[
+  {
+    "id": "3a1f8e2c9d4b5a6c",
+    "type": "tab",
+    "label": "Activity Area Chart",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "7b2c9d3e4f5a6b7c",
+    "type": "ui_tab",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Activity Chart",
+    "icon": "chart",
+    "order": 9,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "8c3d4e5f6a7b8c9d",
+    "type": "ui_group",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Activity Area",
+    "tab": "7b2c9d3e4f5a6b7c",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "9d4e5f6a7b8c9d0e",
+    "type": "ui_template",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Activity Area Chart",
+    "group": "8c3d4e5f6a7b8c9d",
+    "order": 1,
+    "width": "12",
+    "height": "8",
+    "format": "<div class='shd-activity-chart' data-role='activity-chart'>\n  <canvas id='activityChart' width='800' height='240'></canvas>\n</div>\n<script>\n(function(scope) {\n  var canvas = null;\n  var chart = null;\n  var data = [];\n  var lastUpdate = 0;\n  var refreshTimer = null;\n\n  scope.$watch(\n    function() { return scope.msg && scope.msg.p && scope.msg.p.payload; },\n    function(payload) {\n      if (!payload || !Array.isArray(payload)) { return; }\n      data = payload;\n      updateChart();\n      if (refreshTimer) { clearTimeout(refreshTimer); }\n      refreshTimer = setTimeout(updateChart, 2000);\n    });\n\n  function updateChart() {\n    if (!canvas) { return; }\n    try {\n      chart = new Chart(canvas.getContext('2d'), {\n        type: 'line',\n        data: {\n          datasets: [{\n            label: 'Entity State Changes',\n            data: data,\n            borderColor: '#fa6f63',\n            backgroundColor: 'rgba(250, 111, 99, 0.15)',\n            borderWidth: 2,\n            fill: true,\n            pointRadius: 0,\n            pointHoverRadius: 4,\n            tension: 0.3\n          }]\n        },\n        options: {\n          responsive: false,\n          maintainAspectRatio: false,\n          animation: false,\n          scales: {\n            x: {\n              type: 'time',\n              time: {\n                unit: 'hour',\n                displayFormats: { hour: 'HH' }\n              },\n              grid: {\n                color: 'rgba(255,255,255,0.06)'\n              },\n              ticks: {\n                color: '#9fb0c6',\n                maxTicksLimit: 5\n              }\n            },\n            y: {\n              beginAtZero: true,\n              max: 5000,\n              grid: {\n                color: 'rgba(255,255,255,0.06)'\n              },\n              ticks: {\n                color: '#9fb0c6',\n                callback: function(value) {\n                  return value + ' changes';\n                }\n              }\n            }\n          },\n          plugins: {\n            legend: {\n              display: false\n            },\n            tooltip: {\n              backgroundColor: 'rgba(36,58,84,0.95)',\n              titleColor: '#eef3f8',\n              bodyColor: '#eef3f8',\n              borderColor: 'rgba(255,255,255,0.1)',\n              borderWidth: 1,\n              cornerRadius: 8,\n              displayColors: false,\n              callbacks: {\n                label: function(context) {\n                  return context.dataset.label + ': ' + context.raw.payload + ' changes at ' + new Date(context.raw.t).toLocaleTimeString();\n                }\n              }\n            }\n          }\n        }\n      });\n    } catch (e) {\n      console.error('Activity chart error:', e);\n    }\n  }\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 200,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "0e5f6a7b8c9d0e1f",
+    "type": "inject",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Query HA history",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 100,
+    "y": 400,
+    "wires": [
+      [
+        "1f6a7b8c9d0e1f2a"
+      ]
+    ]
+  },
+  {
+    "id": "1f6a7b8c9d0e1f2a",
+    "type": "function",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Build history query",
+    "func": "// Query HA history API for state changes over the last 24 hours.\n// Returns events sorted by last_changed descending, limited to 5000 entries.\nvar base = (env.get('HA_URL') || 'http://homeassistant.local:8123').replace(/\\\\/+$/, '');\nvar token = env.get('HA_TOKEN');\nif (!base || !token) {\n  node.status({fill:'red',shape:'ring',text:'missing HA_URL/HA_TOKEN'});\n  var miss = [];\n  if (!base) { miss.push('HA_URL'); }\n  if (!token) { miss.push('HA_TOKEN'); }\n  msg._error = 'missing ' + miss.join(', ') + ' in /root/.node-red/.env';\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nmsg.method = 'GET';\nmsg.ret = 'obj';\n// Format: last_changed=2026-10-19T00:00:00.000000+00:00&entities=light.*&limit=5000&sort_order=desc\nvar since = new Date(Date.now() - 24 * 60 * 60 * 1000);\nvar sinceStr = since.toISOString().slice(0, 19).replace('T', ' ');\nmsg.url = base + '/api/history/events?last_changed=' + encodeURIComponent(sinceStr) + '&entities=light.*,switch.*,media_player.*,cover.*,lock.*&limit=5000&sort_order=desc';\nmsg.headers = {Authorization: 'Bearer ' + token};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'blue',shape:'dot',text:'polling history'});\nreturn [msg, null];\n",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 400,
+    "wires": [
+      [
+        "2a7b8c9d0e1f2a3b"
+      ],
+      [],
+      [
+        "0dcfaa4d9add8abd"
+      ]
+    ]
+  },
+  {
+    "id": "2a7b8c9d0e1f2a3b",
+    "type": "http request",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "HA history API",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 600,
+    "y": 400,
+    "wires": [
+      [
+        "3b8c9d0e1f2a3b4c"
+      ]
+    ]
+  },
+  {
+    "id": "3b8c9d0e1f2a3b4c",
+    "type": "function",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Format activity data",
+    "func": "// Shape history events into chart data: [{t: timestamp, payload: count}]\nif (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n  node.status({fill:'red',shape:'ring',text:'unreachable'});\n  msg._error = msg.error ? String(msg.error.message || msg.error)\n    : ('HTTP ' + (msg.statusCode || '?'));\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nvar events = Array.isArray(msg.payload) ? msg.payload : [];\nvar byHour = {};\nvar now = Date.now();\nvar hourBucket = 3600000;\n\n// Count changes per hour, last 24h\nfor (var i = 0; i < events.length; i++) {\n  var e = events[i];\n  if (!e || !e.event_id || !e.last_changed) { continue; }\n  var ts = new Date(e.last_changed);\n  if (isNaN(ts.getTime())) { continue; }\n  // Only count controllable domains\n  var domain = e.entity_id.split('.')[0];\n  if (!['light','switch','media_player','cover','lock'].indexOf(domain) >= 0) { continue; }\n  if (e.event_type !== 'state_changed') { continue; }\n  var bucket = Math.floor((now - ts.getTime()) / hourBucket);\n  if (bucket < 0 || bucket >= 24) { continue; }\n  byHour[bucket] = (byHour[bucket] || 0) + 1;\n}\n\n// Build time-series data with 1-hour resolution\nvar result = [];\nfor (var h = 23; h >= 0; h--) {\n  var ts = new Date(now - h * hourBucket);\n  var count = byHour[23 - h] || 0;\n  result.push({\n    t: ts,\n    payload: count\n  });\n}\n\nnode.status({fill:'green',shape:'dot',text:'chart ready'});\nreturn [result, null];\n",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 850,
+    "y": 400,
+    "wires": [
+      [
+        "9d4e5f6a7b8c9d0e"
+      ],
+      [],
+      [
+        "0dcfaa4d9add8abd"
+      ]
+    ]
+  },
+  {
+    "id": "0dcfaa4d9add8abd",
+    "type": "ui_template",
+    "z": "3a1f8e2c9d4b5a6c",
+    "name": "Alert Banner",
+    "group": "8c3d4e5f6a7b8c9d",
+    "order": 0,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div><script>(function (scope) {  if (scope.msg && scope.msg.payload && window.SHDBackground) {    window.SHDBackground.setSeverity(scope.msg.payload.severity);  }})(scope);</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": []
+  }
+]

@@ -873,6 +873,27 @@ body md-list-item.nr-menu-item-active .md-button {
   width: 100%;
   height: 100%;
 }
+/* ==================================================================== */
+/* NexusHome P3 — Activity Area Chart & Recently Changed Strip        */
+/* docs/DESIGN_REVIEW_NEXUSHOME_PLAN.md phase 3                         */
+/* ==================================================================== */
+
+/* Activity chart container: flat card, same radius/border as other widgets */
+.shd-activity-chart {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  border-radius: var(--shd-radius);
+  overflow: hidden;
+  background: var(--shd-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shd-activity-chart canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 
 /* Tooltip injected by JS */
 div[style*="position:absolute"] {
@@ -884,3 +905,152 @@ div[style*="position:absolute"] {
 .shd-energy-chart {
   min-height: 280px;
 }
+/* Chart empty state — must say "no data", never render as a flat zero line */
+.shd-activity-chart .chart-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shd-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Recently Changed Strip — replaces "Top Consumer" leaderboard */
+.shd-recently-changed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--shd-card);
+  border-radius: var(--shd-radius);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shd-recently-changed h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--shd-text);
+}
+
+.shd-recently-changed .shd-rc-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: background 0.15s ease;
+}
+
+.shd-recently-changed .shd-rc-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shd-rc-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.shd-rc-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--shd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shd-rc-domain {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Domain colours for recently changed strip */
+.shd-rc-domain.d-light        { background: rgba(250, 111,  99, 0.14); color: #fa6f63; }
+.shd-rc-domain.d-switch       { background: rgba( 77, 208, 225, 0.14); color: #4dd0e1; }
+.shd-rc-domain.d-media_player { background: rgba(100, 181, 246, 0.14); color: #64b5f6; }
+.shd-rc-domain.d-cover        { background: rgba(126, 184, 255, 0.14); color: #7eb8ff; }
+.shd-rc-domain.d-lock         { background: rgba(255, 200,  87, 0.14); color: #ffc857; }
+
+/* Now Playing Media Card — degrades cleanly when nothing is playing */
+.shd-now-playing {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+  border-radius: var(--shd-radius);
+  overflow: hidden;
+  background: var(--shd-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shd-now-playing .np-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px;
+  gap: 6px;
+  transition: opacity 0.2s ease;
+}
+
+.shd-now-playing .np-content.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shd-now-playing .np-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--shd-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shd-now-playing .np-artist {
+  font-size: 12px;
+  color: var(--shd-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shd-now-playing .np-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.shd-now-playing .np-progress-bar {
+  height: 100%;
+  background: var(--shd-accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s linear;
+}
+
+/* Empty now-playing state */
+.shd-now-playing .np-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shd-muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ==================================================================== */
+/* END P3 — Activity Chart & Recently Changed Strip                    */
+/* ==================================================================== */
