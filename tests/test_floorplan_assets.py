@@ -276,3 +276,26 @@ def test_stairs_are_drawn_and_inert():
     block = SVG.split('class="stairs"')[1].split("</g>")[0]
     assert 'pointer-events="none"' in block, "stairs must not be a tap target"
     assert ".stairs" in CSS and "pointer-events: none" in CSS.split(".stairs")[1][:300]
+
+
+# ------------------------------------------------------------------ photo weight
+def test_photo_urls_are_cache_busted():
+    """/local/ caches for 31 days; replacing a JPEG in place is invisible without this."""
+    v = re.search(r"PHOTO_V = (\d+)", PY_SRC).group(1)
+    hrefs = re.findall(r"rooms/(\w+)\.jpg\?v=(\d+)", SVG)
+    assert len(hrefs) == 5, hrefs
+    assert {h[1] for h in hrefs} == {v}, f"photo versions {hrefs} != PHOTO_V {v}"
+
+
+def test_downscaled_photos_exist_and_are_small():
+    """The originals are 1.6-2.3 MB each -- 9 MB the kiosk re-checks by URL."""
+    d = os.path.join(FP, "rooms_small")
+    names = sorted(os.listdir(d))
+    assert names == ["corridor.jpg", "dining_room.jpg", "kitchen.jpg",
+                     "living_room.jpg", "study.jpg"], names
+    total = 0
+    for n in names:
+        size = os.path.getsize(os.path.join(d, n))
+        total += size
+        assert size <= 130 * 1024, f"{n} is {size / 1024:.0f} kB, over the 130 kB budget"
+    assert total <= 700 * 1024, f"rooms_small totals {total / 1024:.0f} kB"

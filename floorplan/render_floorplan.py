@@ -75,6 +75,12 @@ PHOTOS = {
 # Override at build time for the orientation preview: --rotate 90 --out /tmp/x.svg
 PHOTO_ROTATE = -90 if _rot is None else _rot
 
+# Cache-buster for the JPEGs. /local/ is served with max-age=2678400 (31 days), so
+# replacing a photo in place is invisible until the URL changes. Bump this whenever
+# the files behind rooms/ are replaced -- the filename stays the same on purpose,
+# so the SVG is the only thing that has to be re-uploaded alongside them.
+PHOTO_V = 2
+
 # Base hue per room, also written as a fill="" attribute on the path. The
 # attribute is the belt to the CSS's braces: it survives ANY class change,
 # including the one floorplan.class_set performs.
@@ -156,7 +162,7 @@ for rid in order:
     ys = [p[1] for p in ROOMS[rid]]
     x0, y0 = min(xs), min(ys)
     w, h = max(xs) - x0, max(ys) - y0
-    href = f'href="/local/floorplan/rooms/{PHOTOS[rid]}?v=1"'
+    href = f'href="/local/floorplan/rooms/{PHOTOS[rid]}?v={PHOTO_V}"'
     lines.append(f'  <g clip-path="url(#clip_{rid})">')
     if PHOTO_ROTATE % 360 == 0:
         lines.append(
