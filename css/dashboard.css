@@ -732,3 +732,155 @@ body md-list-item.nr-menu-item-active .md-button {
 .shd-tile.on {
   border-color: rgba(255, 255, 255, 0.20);
 }
+/* ========================================================================
+   Phase 5 — Thermostat & Energy widgets (task t_073eb9fc)
+   ---------------------------------------------------------------------- */
+
+.shd-thermostat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--shd-card);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-sizing: border-box;
+}
+
+.shd-thermostat-icon {
+  font-size: 24px;
+  line-height: 1;
+  user-select: none;
+}
+
+.shd-thermostat-dial {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--shd-card);
+  border: 2px solid rgba(255,255,255,0.12);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  box-sizing: border-box;
+  /* 44px minimum touch target verified: 120px diameter */
+}
+
+.shd-thermostat-dial:active {
+  cursor: grabbing;
+}
+
+.shd-thermostat-dial svg {
+  width: 90px;
+  height: 90px;
+  transform: rotate(-90deg);
+}
+
+.shd-thermostat-dial svg line {
+  stroke-linecap: round;
+}
+
+.shd-thermostat-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shd-thermostat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--shd-text);
+  line-height: 1;
+  user-select: none;
+}
+
+.shd-thermostat-unit {
+  font-size: 14px;
+  color: var(--shd-muted);
+  user-select: none;
+}
+
+.shd-energy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--shd-card);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-sizing: border-box;
+}
+
+.shd-energy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shd-energy-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--shd-text);
+  user-select: none;
+}
+
+.shd-energy-time-range {
+  display: flex;
+  gap: 6px;
+}
+
+.shd-time-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--shd-muted);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 34px;
+  min-width: 34px;
+  touch-action: manipulation;
+}
+
+.shd-time-btn:hover {
+  color: var(--shd-text);
+  border-color: var(--shd-accent);
+}
+
+.shd-time-btn.active {
+  color: var(--shd-on-accent);
+  background: var(--shd-accent);
+  border-color: var(--shd-accent);
+}
+
+.shd-energy-chart {
+  flex: 1;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+}
+
+.shd-energy-chart canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Tooltip injected by JS */
+div[style*="position:absolute"] {
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+
+/* Ensure chart canvas has touch target */
+.shd-energy-chart {
+  min-height: 280px;
+}
