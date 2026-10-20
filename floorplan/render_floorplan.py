@@ -62,6 +62,10 @@ PHOTOS = {
     "dining_room": "dining_room.jpg",
     "corridor":    "corridor.jpg",
     "living_room": "living_room.jpg",
+    # added 2026-10-20: both shot looking in from their doorway, levelled and
+    # cropped by level_rooms.py (no perspective warp -- see that file's docstring)
+    "bathroom":    "bathroom.jpg",
+    "laundry":     "laundry.jpg",
 }
 
 # ---- photo orientation ---------------------------------------------------

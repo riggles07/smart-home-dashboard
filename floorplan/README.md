@@ -554,3 +554,65 @@ the 31-day `/local/` cache keeps serving the 2 MB originals.
 
 Upload target: `/config/www/floorplan/rooms/` (the five files, same names), plus the
 new `floorplan.svg`. Dashboard is on `?v=9`.
+
+## Bathroom + laundry photos, levelled and cropped (2026-10-20)
+
+Both rooms were shot looking in from their doorway, so both are now photographic.
+Every one of the seven rooms has a photo.
+
+### Why this is "level + crop" and not a perspective warp
+
+"Rectify" needs four known corners, and neither frame has them:
+
+- **laundry** -- the left jamb is behind the open door, the sill is out of frame
+- **bathroom** -- the shower curtain covers the back wall's lower-left corner
+
+The standard fallback is to measure the room's **vertical vanishing point** from
+detected edges. Tried, and rejected on these two images:
+
+```
+bathroom   1786 "vertical" segments -> vp 79 px below the bottom edge
+           i.e. a 40 deg convergence, which no handheld room shot has.
+           The wood-floor grain and the door leaf dominated the fit;
+           applying it smeared the frame into streaks.
+```
+
+The per-line roll estimates then disagreed with each other by ~20 deg:
+
+```
+bathroom   Hough roll median -9.99     head line -28.99 (a sloping soffit, junk)
+laundry    Hough roll median +9.02     head line -11.00
+                    eye on a rotation strip: bathroom +6, laundry -6
+```
+
+So `level_rooms.py` uses **angles chosen by eye** from a rendered rotation strip --
+the only guesses in the whole pipeline, isolated in one table. A wrong rotation
+looks worse than none, and a "derived" number here would be invented precision.
+
+What it does do, and what is measured:
+
+- **crop** to the room and drop the door leaf, casing and threshold
+  (bathroom `(1150,100,2760,4080)`, laundry `(430,760,2440,4080)`, source pixels);
+- **level** by `+6.0` / `-6.0` deg, then trim 6% off each side to remove the
+  rotation wedges;
+- then the normal pipeline: rotate -90 for the plan, downscale, blur, 42% tint.
+
+### Verified
+
+A controlled pixel experiment at 1400 px render width (screenshot with the photo
+layer, screenshot with `.room-photo{display:none}` injected into the shadow root,
+per-room diff):
+
+```
+room         pixels changed        mean |d|
+study         57340 / 77220          10.79
+kitchen       98143 / 109056         14.85
+dining_room   50646 / 62832          13.66
+corridor     148902 / 185856         11.12
+laundry        5880 / 11178           9.48   <- new
+bathroom       8288 / 13013          12.25   <- new
+living_room   33802 / 44073          12.34
+```
+
+Weight after adding both: 711 kB for seven rooms (was 8.85 MB for five).
+Dashboard `?v=10`. 533 tests pass.

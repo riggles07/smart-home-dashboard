@@ -75,7 +75,9 @@
 #corridor,
 #kitchen,
 #dining_room,
-#living_room {
+#living_room,
+#laundry,
+#bathroom {
   fill-opacity: 0.42;
   stroke-opacity: 0.35;
 }
@@ -88,7 +90,7 @@
   stroke-opacity: 0.18;
 }
 #laundry.room-off {
-  fill-opacity: 0.55;
+  fill-opacity: 0.5;      /* photo underneath: same tint as the other lit rooms */
   stroke-opacity: 0.18;
 }
 
@@ -105,7 +107,7 @@
 #study.room-on,
 #corridor.room-on { fill: #63b3ff; fill-opacity: 0.55; }   /* blue  */
 #living_room.room-on { fill: #ffd75e; fill-opacity: 0.55; } /* gold  */
-#laundry.room-on { fill: #ffd75e; fill-opacity: 1; }        /* no photo */
+#laundry.room-on { fill: #ffd75e; fill-opacity: 0.55; }      /* photo underneath */
 
 /* Interactive rooms only (those with a rule). */
 #study,
@@ -180,6 +182,8 @@
   <clipPath id="clip_kitchen"><path d="M 457,118 L 915,118 L 915,453 L 690,453 L 690,428 L 478,428 L 478,384 L 457,384 Z"/></clipPath>
   <clipPath id="clip_dining_room"><path d="M 915,118 L 1186,118 L 1186,438 L 1058,438 L 1058,423 L 915,423 Z"/></clipPath>
   <clipPath id="clip_corridor"><path d="M 585,428 L 690,428 L 690,453 L 915,453 L 915,438 L 1162,438 L 1162,590 L 980,590 L 980,884 L 748,884 L 748,533 L 585,533 Z"/></clipPath>
+  <clipPath id="clip_laundry"><path d="M 586,533 L 744,533 L 744,622 L 586,622 Z"/></clipPath>
+  <clipPath id="clip_bathroom"><path d="M 579,680 L 744,680 L 744,782 L 579,782 Z"/></clipPath>
   <clipPath id="clip_living_room"><path d="M 980,590 L 1186,590 L 1186,884 L 980,884 Z"/></clipPath>
   <g clip-path="url(#clip_study)">
     <image class="room-photo" x="146" y="108" width="318" height="338" transform="rotate(-90 305 277)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/study.jpg?v=2"/>
@@ -193,6 +197,12 @@
   <g clip-path="url(#clip_corridor)">
     <image class="room-photo" x="645.5" y="367.5" width="456" height="577" transform="rotate(-90 873.5 656)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/corridor.jpg?v=2"/>
   </g>
+  <g clip-path="url(#clip_laundry)">
+    <image class="room-photo" x="620.5" y="498.5" width="89" height="158" transform="rotate(-90 665 577.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/laundry.jpg?v=2"/>
+  </g>
+  <g clip-path="url(#clip_bathroom)">
+    <image class="room-photo" x="610.5" y="648.5" width="102" height="165" transform="rotate(-90 661.5 731)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/bathroom.jpg?v=2"/>
+  </g>
   <g clip-path="url(#clip_living_room)">
     <image class="room-photo" x="936" y="634" width="294" height="206" transform="rotate(-90 1083 737)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/living_room.jpg?v=2"/>
   </g>
@@ -200,8 +210,8 @@
   <path id="kitchen" class="room orange has-photo" fill="#a8542f" d="M 457,118 L 915,118 L 915,453 L 690,453 L 690,428 L 478,428 L 478,384 L 457,384 Z"/>
   <path id="dining_room" class="room teal has-photo" fill="#177a74" d="M 915,118 L 1186,118 L 1186,438 L 1058,438 L 1058,423 L 915,423 Z"/>
   <path id="corridor" class="room blue has-photo" fill="#2f6ea8" d="M 585,428 L 690,428 L 690,453 L 915,453 L 915,438 L 1162,438 L 1162,590 L 980,590 L 980,884 L 748,884 L 748,533 L 585,533 Z"/>
-  <path id="laundry" class="room gold" fill="#8a6d1f" d="M 586,533 L 744,533 L 744,622 L 586,622 Z"/>
-  <path id="bathroom" class="room orange" fill="#a8542f" d="M 579,680 L 744,680 L 744,782 L 579,782 Z"/>
+  <path id="laundry" class="room gold has-photo" fill="#8a6d1f" d="M 586,533 L 744,533 L 744,622 L 586,622 Z"/>
+  <path id="bathroom" class="room orange has-photo" fill="#a8542f" d="M 579,680 L 744,680 L 744,782 L 579,782 Z"/>
   <path id="living_room" class="room gold has-photo" fill="#8a6d1f" d="M 980,590 L 1186,590 L 1186,884 L 980,884 Z"/>
   <!-- Stair flight in the top-right corner of the foyer. Drawn in plan
        view: two strings + evenly spaced treads. Not a tap target. -->

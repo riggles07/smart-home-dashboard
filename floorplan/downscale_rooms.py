@@ -16,7 +16,7 @@ import shutil
 
 from PIL import Image
 
-SRC = "/tmp/fpprev/local/floorplan/rooms"          # copies pulled from HA
+SRC = os.environ.get("ROOMS_SRC", "/tmp/rooms_orig")   # originals are NOT in the repo
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rooms_small")
 MAX_EDGE = 1100
 QUALITY = 78

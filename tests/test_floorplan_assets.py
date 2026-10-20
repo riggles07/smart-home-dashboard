@@ -134,8 +134,8 @@ def test_photos_are_clipped_and_tinted():
     WRAPPER: a clip-path is resolved in the element's own transformed space, so a
     clip on a rotated <image> would rotate with the pixels and bleed."""
     groups = re.findall(r'<g clip-path="url\(#clip_(\w+)\)">\s*(<image[^>]*>)', SVG)
-    assert sorted(g[0] for g in groups) == ["corridor", "dining_room", "kitchen",
-                                            "living_room", "study"]
+    assert sorted(g[0] for g in groups) == ["bathroom", "corridor", "dining_room",
+                                            "kitchen", "laundry", "living_room", "study"]
     for room, img in groups:
         assert f'id="clip_{room}"' in SVG, f"{room} photo is not clipped"
         assert "clip-path" not in img, f"{room}: clip belongs on the <g>, not the <image>"
@@ -146,7 +146,7 @@ def test_every_photo_is_rotated_the_same_way():
     """'Each one needs rotated' -- one unrotated room is the bug to catch."""
     want = re.search(r"PHOTO_ROTATE = (-?\d+)", PY_SRC).group(1)
     imgs = re.findall(r"<image class=\"room-photo\"[^>]*>", SVG)
-    assert len(imgs) == 5
+    assert len(imgs) == 7
     angles = []
     for img in imgs:
         m = re.search(r'transform="rotate\((-?\d+) ', img)
@@ -283,7 +283,7 @@ def test_photo_urls_are_cache_busted():
     """/local/ caches for 31 days; replacing a JPEG in place is invisible without this."""
     v = re.search(r"PHOTO_V = (\d+)", PY_SRC).group(1)
     hrefs = re.findall(r"rooms/(\w+)\.jpg\?v=(\d+)", SVG)
-    assert len(hrefs) == 5, hrefs
+    assert len(hrefs) == 7, hrefs
     assert {h[1] for h in hrefs} == {v}, f"photo versions {hrefs} != PHOTO_V {v}"
 
 
@@ -291,11 +291,11 @@ def test_downscaled_photos_exist_and_are_small():
     """The originals are 1.6-2.3 MB each -- 9 MB the kiosk re-checks by URL."""
     d = os.path.join(FP, "rooms_small")
     names = sorted(os.listdir(d))
-    assert names == ["corridor.jpg", "dining_room.jpg", "kitchen.jpg",
-                     "living_room.jpg", "study.jpg"], names
+    assert names == ["bathroom.jpg", "corridor.jpg", "dining_room.jpg", "kitchen.jpg",
+                     "laundry.jpg", "living_room.jpg", "study.jpg"], names
     total = 0
     for n in names:
         size = os.path.getsize(os.path.join(d, n))
         total += size
         assert size <= 130 * 1024, f"{n} is {size / 1024:.0f} kB, over the 130 kB budget"
-    assert total <= 700 * 1024, f"rooms_small totals {total / 1024:.0f} kB"
+    assert total <= 800 * 1024, f"rooms_small totals {total / 1024:.0f} kB"
