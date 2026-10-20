@@ -42,6 +42,24 @@ print(f"bbox {maxx-minx}x{maxy-miny} -> viewBox {vb[2]}x{vb[3]} "
 
 cent = {r["room"]: r["centroid"] for r in ROOMS}
 
+# Room photos, measured 2026-10-20. Filenames as uploaded to
+# /config/www/floorplan/rooms/. laundry + bathroom have none yet.
+PHOTOS = {
+    "study":       "study.jpg",
+    "kitchen":     "kitchen.jpg",
+    "dining_room": "dining_room.jpg",
+    "corridor":    "corridor.jpg",
+    "living_room": "living_room.jpg",
+}
+# Visible names. The SVG ids are deliberately NOT renamed: floorplan.yaml binds
+# rules by id, and renaming an id silently breaks every tap on that room.
+# Only the text changes -- Study actually IS the family room, and the corridor
+# IS the foyer, so the label was wrong, not the id.
+LABELS = {
+    "study": "Family Room",
+    "corridor": "Foyer",
+}
+
 lines = [
     f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb[0]} {vb[1]} {vb[2]} {vb[3]}" '
     f'width="100%" height="100%" preserveAspectRatio="xMidYMid meet">',
@@ -51,15 +69,38 @@ lines = [
     f'  <rect x="{vb[0]}" y="{vb[1]}" width="{vb[2]}" height="{vb[3]}" '
     f'fill="#101a26" pointer-events="none"/>',
 ]
+# clip paths first: each photo is clipped to exactly its own room polygon, so it
+# cannot bleed into a neighbour -- which is what happens when a living-room photo
+# contains the open-plan foyer behind it.
+for room, _cls, d in sorted(paths):
+    if room in PHOTOS:
+        lines.append(f'  <clipPath id="clip_{room}"><path d="{d}"/></clipPath>')
+
+# photos sit UNDER the room path. preserveAspectRatio="slice" crops to fill the
+# polygon instead of stretching it, so a portrait phone photo does not distort.
+for room, _cls, d in sorted(paths):
+    if room not in PHOTOS:
+        continue
+    xs_ = [int(n) for n in re.findall(r'(-?\d+),', d)]
+    ys_ = [int(n) for n in re.findall(r',(-?\d+)', d)]
+    x0, y0 = min(xs_), min(ys_)
+    w, h = max(xs_) - x0, max(ys_) - y0
+    lines.append(
+        f'  <image class="room-photo" x="{x0}" y="{y0}" width="{w}" height="{h}" '
+        f'preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_{room})" '
+        f'href="/local/floorplan/rooms/{PHOTOS[room]}?v=1"/>')
+
 for room, cls, d in sorted(paths):
     cls = " ".join(dict.fromkeys(cls.split()))   # regex capture already has "room"
+    if room in PHOTOS:
+        cls += " has-photo"
     lines.append(f'  <path id="{room}" class="{cls}" d="{d}"/>')
 # labels last => drawn on top, but never clickable
 for room, cls, _d in sorted(paths):
     c = cent.get(room)
     if not c:
         continue
-    label = room.replace("_", " ").title()
+    label = LABELS.get(room, room.replace("_", " ").title())
     lines.append(
         f'  <text x="{c[0]}" y="{c[1]}" class="room-label" '
         f'text-anchor="middle" dominant-baseline="middle" '
