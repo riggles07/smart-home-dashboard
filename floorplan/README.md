@@ -269,3 +269,52 @@ reading the saved config back: `image=...svg?v=3`, `cache=False`,
 
 **Bump `?v=` whenever a floorplan asset changes**, or the same stale-cache symptom
 returns and looks exactly like a broken upload.
+
+
+## Palette v3 -- "still black and grey" (2026-10-19)
+
+Second feedback round. Root cause was my own v2 decision, twice over:
+
+1. v2 replaced every room colour with ONE muted slate (`#2b3f57`). Slate is
+   blue-grey; on a phone it reads as grey. The Roborock colours were doing real
+   work -- they let you find a room without reading a label.
+2. Then the unbound rooms (kitchen, dining) were forced to grey `#38414d` to signal
+   "inert". Those are the two LARGEST rooms on the plan, so grey dominated the
+   whole view.
+
+v3 rule: **colour encodes WHICH room it is; interactivity is encoded separately**
+(cursor + dashed stroke + absence of glow). So:
+
+| class | rooms | base | lit |
+|---|---|---|---|
+| blue | study, corridor | `#2f6ea8` | `#63b3ff` |
+| orange | kitchen, bathroom | `#a8542f` | `#ff8f5a` |
+| teal | dining room | `#177a74` | `#3fe0d0` |
+| gold | laundry, living room | `#8a6d1f` | `#ffd75e` |
+
+ON = brighter version of the room's OWN hue plus
+`drop-shadow(0 0 14px rgba(255,214,140,.65))`. Off = same hue at 0.55 alpha.
+Unbound = own hue at 0.45 with a dashed stroke and no glow.
+
+Verified in the preview: all seven rooms colour-coded, Study+Corridor glowing,
+reads as a floorplan rather than a grey diagram.
+
+## Animated / photo-realistic rooms -- what is actually possible
+
+The question was whether room photos or videos can make rooms look animated.
+Short answer: **photos yes, video no (not as room fills)**, and the animation
+worth doing does not need either.
+
+- **Photos: yes.** SVG can embed rasters with `<image href>`, clipped to a room
+  with `<clipPath>`. So each room polygon can be filled with a photo of that room.
+  Requirements: roughly top-down, consistent orientation, no people, and the room
+  crop must match the polygon's aspect or it stretches. Same 31-day cache rule --
+  each new image needs a `?v=` bump.
+- **Video: not recommended.** It needs `<foreignObject><video muted playsinline>`;
+  N simultaneously decoding videos on an A7 Lite destroys battery and frame rate,
+  autoplay policies are unreliable, and a perspective video cannot align with a
+  2-D plan. If a video is the only asset, extract a frame (`ffmpeg -ss`) and use it
+  as a still -- same result, none of the cost.
+- **Animation: CSS, driven by entity state.** The glow/pulse already present is the
+  mechanism; it can be made richer (breathing glow on ON, warm flicker) with zero
+  new assets and no performance risk.
