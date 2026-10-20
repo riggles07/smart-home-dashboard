@@ -125,3 +125,33 @@ So a straight id-for-name binding is impossible for four rooms. Bindings are
 written ONLY where a real area with real entities exists; the rest are left
 explicitly unbound rather than pointed at a guessed entity. A floorplan that
 silently toggles the wrong room's light is worse than one that does nothing.
+
+
+## Live serving state (verified 2026-10-19)
+
+Checked by HTTP GET against HA, which is the only honest way to know what the
+frontend can actually load:
+
+```
+/local/floorplan/floorplan.svg   200  1774 b   image/svg+xml   <- uploaded
+/local/floorplan/floorplan.css   404
+/local/floorplan/floorplan.yaml  404
+```
+
+`/local/` maps to `/config/www/`, so a 200 proves the file is on disk AND served.
+HACS is installed by the user; the card is not yet on any dashboard.
+
+## Why the dashboard was NOT created via API
+
+`lovelace/*` WebSocket commands became flaky mid-session: auth succeeds
+(`auth_ok`), then `lovelace/resources` and `lovelace/dashboards/list` are sent and
+never answered -- no result, no error, socket stays open. The same two commands
+had succeeded minutes earlier, so it is intermittent, not a permissions problem.
+
+Instrumenting the function with an immediate `prog()` write proved where it
+stalls (`stage: listing-dashboards`), which is the only way to distinguish "HA
+refused" from "HA never replied". Rather than hammer a live system with retries,
+the dashboard is being created through the HA UI instead. Registry writes
+(device/entity/area) and `lovelace/dashboards/create` + `lovelace/config/save` had
+all worked earlier, so the capability exists -- it is just not reliable enough to
+build on unattended.
