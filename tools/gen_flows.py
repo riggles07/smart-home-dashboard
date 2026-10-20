@@ -2158,7 +2158,7 @@ T = nid("tab-kiosk")
 add({"id": T, "type": "tab", "label": "Kiosk", "disabled": False,
      "info": "WallPanel PRO tablet control over MQTT"})
 add({"id": nid("uitab-kiosk"), "type": "ui_tab", "z": T, "name": "Kiosk",
-     "icon": "tablet", "order": 8, "disabled": False, "hidden": False})
+     "icon": "tablet", "order": 9, "disabled": False, "hidden": False})
 
 # ---- Broker config ---------------------------------------------------------
 add({"id": nid("mqtt-broker"), "type": "mqtt-broker", "name": "SHD MQTT",
@@ -2386,6 +2386,338 @@ add({"id": nid("mqtt-in-state"), "type": "mqtt in", "z": T,
      "rap": True, "rh": 0, "inputs": 0, "x": 150, "y": 640,
      "wires": [[nid("fn-kiosk-state")]]})
 
+# ---------------------------------------------------------------- Tab: Activity (P3)
+# WHY THIS SECTION EXISTS (follow-up to card t_c2217a3c):
+# P3's worker shipped `flows/09-activity-chart.flow.json` as a HAND-WRITTEN file.
+# This generator builds `all-flows.flow.json` -- the deploy bundle -- from its own
+# node list, so a hand-written flow file is in no bundle: the chart's nodes were
+# never deployed while its CSS shipped inside the theme template. Dead styles.
+# Ported here, the chart is emitted as its own per-tab file AND into the bundle.
+#
+# Four defects were fixed in the port, each verified rather than assumed:
+#   1. ENDPOINT. The worker queried `/api/history/events?last_changed=...`, which is
+#      not a Home Assistant REST endpoint. The documented call is
+#      `GET /api/history/period/<ISO8601>[?filter_entity_id=..&minimal_response]`
+#      (HA REST docs; also in emhass's client, which is where the exact URL form
+#      was read).
+#   2. RESPONSE SHAPE. That endpoint returns ONE ARRAY PER ENTITY, not a flat list
+#      of events, so counting has to walk entity -> states.
+#   3. DOMAIN FILTER. The worker wrote `if (!ARR.indexOf(d) >= 0) continue;`, which
+#      JS parses as `(!idx) >= 0`: it SKIPPED `light` (index 0) and KEPT every other
+#      domain. Now an explicit `indexOf(d) < 0`.
+#   4. CHART DATA SHAPE. Chart.js 2.x is bundled in the dashboard (verified in the
+#      live /ui/js/app.min.js: `window.Chart` and `window.moment` are exposed and
+#      the time scale is registered) and needs points as `{t, y}`. The worker
+#      emitted `{t, payload}`, i.e. every point had no y. The hard `max: 5000` is
+#      gone too -- it flattened any series below the cap into a flat line.
+#
+# Poll interval is 300s, not 60s: each pass is two GETs and up to 5000 history rows.
+ACTIVITY_BUILD_STATES = (
+    "// Step 1: discover which entities to count. filter_entity_id takes explicit\n"
+    "// ids -- the REST history endpoint does NOT accept wildcards -- so the ids\n"
+    "// come from /api/states, the same call the HA tab already makes.\n"
+    "var base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\n"
+    "var token = env.get('HA_TOKEN');\n"
+    "if (!base || !token) {\n"
+    "  node.status({fill:'red',shape:'ring',text:'missing HA_URL/HA_TOKEN'});\n"
+    "  var miss = [];\n"
+    "  if (!base) { miss.push('HA_URL'); }\n"
+    "  if (!token) { miss.push('HA_TOKEN'); }\n"
+    "  msg._error = 'missing ' + miss.join(', ') + ' in /root/.node-red/.env';\n"
+    "  msg.topic = 'ha/error';\n"
+    "  return [null, null, msg];\n"
+    "}\n"
+    "msg.method = 'GET';\n"
+    "msg.ret = 'obj';\n"
+    "msg.url = base + '/api/states';\n"
+    "msg.headers = {Authorization: 'Bearer ' + token};\n"
+    "msg.rejectUnauthorized = false;\n"
+    "node.status({fill:'blue',shape:'dot',text:'listing entities'});\n"
+    "return [msg, null];"
+)
+
+ACTIVITY_HISTORY_URL = (
+    "// Step 2: turn the states list into a 24h history query.\n"
+    "if (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n"
+    "  node.status({fill:'red',shape:'ring',text:'states unreachable'});\n"
+    "  msg._error = msg.error ? String(msg.error.message || msg.error)\n"
+    "    : ('HTTP ' + (msg.statusCode || '?'));\n"
+    "  msg.topic = 'ha/error';\n"
+    "  return [null, null, msg];\n"
+    "}\n"
+    "var DOMAINS = ['light','switch','media_player','cover','lock','climate','fan'];\n"
+    "var all = Array.isArray(msg.payload) ? msg.payload : [];\n"
+    "var ids = [];\n"
+    "for (var i = 0; i < all.length; i++) {\n"
+    "  var e = all[i];\n"
+    "  if (!e || !e.entity_id) { continue; }\n"
+    "  var dom = e.entity_id.split('.')[0];\n"
+    "  // Explicit membership test. The worker's `!(indexOf) >= 0` inverted this.\n"
+    "  if (DOMAINS.indexOf(dom) < 0) { continue; }\n"
+    "  if (e.state === 'unavailable' || e.state === 'unknown') { continue; }\n"
+    "  ids.push(e.entity_id);\n"
+    "}\n"
+    "if (ids.length === 0) {\n"
+    "  node.status({fill:'yellow',shape:'ring',text:'no controllable entities'});\n"
+    "  msg.payload = {severity: 'warning',\n"
+    "                 message: 'Activity: no controllable entities to count'};\n"
+    "  return [null, null, msg];\n"
+    "}\n"
+    "// Cap the id list so the query string stays well under any proxy limit.\n"
+    "ids = ids.slice(0, 120);\n"
+    "var base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\n"
+    "var since = new Date(Date.now() - 24 * 3600 * 1000)\n"
+    "  .toISOString().slice(0, 19) + 'Z';\n"
+    "msg.method = 'GET';\n"
+    "msg.ret = 'obj';\n"
+    "msg.url = base + '/api/history/period/' + since\n"
+    "  + '?filter_entity_id=' + encodeURIComponent(ids.join(','))\n"
+    "  + '&minimal_response&no_attributes&significant_changes_only=0';\n"
+    "msg.headers = {Authorization: 'Bearer ' + (env.get('HA_TOKEN') || '')};\n"
+    "msg.rejectUnauthorized = false;\n"
+    "msg._entityCount = ids.length;\n"
+    "node.status({fill:'blue',shape:'dot',text:ids.length + ' entities'});\n"
+    "return [msg, null];"
+)
+
+ACTIVITY_FORMAT = (
+    "// Step 3: count state changes into 24 hourly buckets.\n"
+    "// /api/history/period returns one array PER ENTITY (time-ordered states).\n"
+    "if (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n"
+    "  node.status({fill:'red',shape:'ring',text:'history unreachable'});\n"
+    "  msg._error = msg.error ? String(msg.error.message || msg.error)\n"
+    "    : ('HTTP ' + (msg.statusCode || '?'));\n"
+    "  msg.topic = 'ha/error';\n"
+    "  return [null, msg];\n"
+    "}\n"
+    "var perEntity = Array.isArray(msg.payload) ? msg.payload : [];\n"
+    "var now = Date.now();\n"
+    "var HOUR = 3600000;\n"
+    "var buckets = [];\n"
+    "for (var b = 0; b < 24; b++) { buckets.push(0); }\n"
+    "var total = 0;\n"
+    "for (var i = 0; i < perEntity.length; i++) {\n"
+    "  var series = perEntity[i];\n"
+    "  if (!Array.isArray(series)) { continue; }\n"
+    "  for (var j = 0; j < series.length; j++) {\n"
+    "    var st = series[j];\n"
+    "    if (!st || !st.last_changed) { continue; }\n"
+    "    var t = new Date(st.last_changed).getTime();\n"
+    "    if (isNaN(t)) { continue; }\n"
+    "    var age = Math.floor((now - t) / HOUR);   // 0 = the current hour\n"
+    "    if (age < 0 || age > 23) { continue; }\n"
+    "    buckets[age] += 1;\n"
+    "    total += 1;\n"
+    "  }\n"
+    "}\n"
+    "// Oldest -> newest, which is the order both the x axis and the tooltip assume.\n"
+    "var points = [];\n"
+    "for (var age = 23; age >= 0; age--) {\n"
+    "  points.push({t: now - age * HOUR, y: buckets[age]});\n"
+    "}\n"
+    "node.status({fill:'green',shape:'dot',text: total + ' changes / 24h'});\n"
+    "return [{payload: points, _total: total,\n"
+    "         _entities: (msg._entityCount || 0)},\n"
+    "        null];"
+)
+
+# Chart.js 2.x is a global on this dashboard build, and the time scale needs
+# moment -- both are in /ui/js/app.min.js (checked on the live tablet build).
+# Points are {t, y}; the tooltip reads context.raw.y for the same reason.
+ACTIVITY_TEMPLATE = r"""<div class="shd-activity-chart" data-role="activity-chart">
+  <canvas id="activityChart" width="800" height="240"></canvas>
+  <div class="chart-empty" style="display:none">No state changes in the last 24 hours</div>
+</div>
+<script>
+(function (scope) {
+  var started = false;
+
+  function paint(msg) {
+    var host = document.querySelector('[data-role="activity-chart"]');
+    if (!host) { return; }
+    var canvas = host.querySelector('canvas');
+    var empty = host.querySelector('.chart-empty');
+    var p = (msg && msg.payload) ? msg.payload : null;
+    var points = (p && Array.isArray(p.payload)) ? p.payload : [];
+    var total = (p && typeof p._total === 'number') ? p._total : 0;
+
+    if (typeof window.Chart === 'undefined') {
+      if (empty) {
+        empty.textContent = 'Chart.js is not loaded on this dashboard';
+        empty.style.display = 'flex';
+      }
+      return;
+    }
+    // A zero series is drawn by Chart.js as a flat line on the baseline, which
+    // reads as "everything is zero" rather than "no data yet". Say it in words.
+    if (empty) { empty.style.display = total ? 'none' : 'flex'; }
+    canvas.style.opacity = total ? '1' : '0';
+
+    if (window.__shdActivityChart) {
+      window.__shdActivityChart.data.datasets[0].data = points;
+      window.__shdActivityChart.update();
+      return;
+    }
+    window.__shdActivityChart = new window.Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: { datasets: [{ label: 'State changes', data: points,
+                           borderColor: '#fa6f63',
+                           backgroundColor: 'rgba(250, 111, 99, 0.15)',
+                           borderWidth: 2, fill: true,
+                           pointRadius: 0, pointHoverRadius: 4, tension: 0.3 }] },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: { type: 'time',
+               time: { unit: 'hour', displayFormats: { hour: 'HH' },
+                       tooltipFormat: 'HH:mm' },
+               grid: { color: 'rgba(255,255,255,0.06)' },
+               ticks: { color: '#9fb0c6', maxTicksLimit: 6 } },
+          y: { beginAtZero: true,
+               grid: { color: 'rgba(255,255,255,0.06)' },
+               ticks: { color: '#9fb0c6', precision: 0, maxTicksLimit: 5 } }
+        },
+        plugins: { legend: { display: false } },
+        tooltip: {
+          backgroundColor: 'rgba(36,58,84,0.95)', titleColor: '#eef3f8',
+          bodyColor: '#eef3f8', borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1, cornerRadius: 8, displayColors: false,
+          callbacks: {
+            label: function (ctx) {
+              var y = (ctx.raw && typeof ctx.raw.y === 'number') ? ctx.raw.y : 0;
+              return y + (y === 1 ? ' change' : ' changes');
+            }
+          }
+        }
+      }
+    });
+  }
+
+  scope.$watch(function () { return scope.msg; }, function (m) {
+    // First paint only once the template has actually rendered into the DOM.
+    if (!started) {
+      started = true;
+      setTimeout(function () { paint(m); }, 0);
+      return;
+    }
+    paint(m);
+  });
+})(scope);
+</script>"""
+
+ALERT_EVAL_ACTIVITY = (
+    _ALERT_ERROR_GUARD
+    + "// Activity banner: chart freshness + reachability.\n"
+    "// Both builders tag failures with topic 'ha/error' + msg._error, so an\n"
+    "// unreachable HA is CRITICAL here -- never a silent 'awaiting first result'.\n"
+    "if (msg.topic === 'ha/error' || msg._error) {\n"
+    "  node.status({fill: 'red', shape: 'ring', text: 'history down'});\n"
+    "  msg.payload = {severity: 'critical',\n"
+    "    message: 'Activity history unavailable: '\n"
+    "             + String(msg._error || '').slice(0, 100)};\n"
+    "  return msg;\n"
+    "}\n"
+    "// A builder may hand over a finished banner (e.g. 'no controllable entities').\n"
+    "if (msg.payload && msg.payload.severity && msg.payload.message) {\n"
+    "  return msg;\n"
+    "}\n"
+    "var total = (msg.payload && typeof msg.payload._total === 'number')\n"
+    "  ? msg.payload._total : null;\n"
+    "var ents = (msg.payload && typeof msg.payload._entities === 'number')\n"
+    "  ? msg.payload._entities : 0;\n"
+    "var sev;\n"
+    "var text;\n"
+    "if (total === null) {\n"
+    "  sev = 'info';\n"
+    "  text = 'Activity: awaiting first result';\n"
+    "} else if (total === 0) {\n"
+    "  sev = 'info';\n"
+    "  text = 'Activity: no state changes in 24h (' + ents + ' entities watched)';\n"
+    "} else {\n"
+    "  sev = 'ok';\n"
+    "  text = total + ' state changes from ' + ents + ' entities in the last 24h';\n"
+    "}\n"
+    + _ALERT_STATUS +
+    "msg.payload = {severity: sev, message: text};\n"
+    "return msg;"
+)
+
+T = nid("tab-activity")
+add({"id": T, "type": "tab", "label": "Activity", "disabled": False, "info": ""})
+# Order 8 / Kiosk 9, not "Activity last": the Kiosk tab must stay the LAST nav
+# entry (tests/test_kiosk_mqtt.py), and the kiosk VIEWS map is 0-based over the
+# VISIBLE nav, so inserting anywhere before Home Assistant would silently
+# re-point every baked view index. Activity therefore lands at index 6, after
+# Home Assistant and before Kiosk, and the six VIEWS entries keep their indices.
+#
+# Icon: "show_chart", not the worker's "chart". node-red-dashboard resolves icon
+# names against its bundled Material set and an unknown name renders the "?"
+# help glyph with no error -- `chart` is not in that set (measured allowlist in
+# tests/test_nav_icons.py).
+add({"id": nid("uitab-activity"), "type": "ui_tab", "z": T, "name": "Activity",
+     "icon": "show_chart", "order": 8, "disabled": False, "hidden": False})
+
+# Alerts first (order 1), matching every other tab: an unreachable HA must read
+# as broken, never as "no data yet".
+G_ALERT = _alert_group("activity", nid("uitab-activity"), T, "Alerts")
+add(G_ALERT)
+add(_alert_template("activity", G_ALERT["id"], T, 1150, 40))
+
+G_ACT = nid("grp-activity")
+add({"id": G_ACT, "type": "ui_group", "z": T, "name": "Activity Area",
+     "tab": nid("uitab-activity"), "order": 2, "disp": True, "width": "12",
+     "collapse": False})
+
+add({"id": nid("tpl-act-chart"), "type": "ui_template", "z": T,
+     "name": "Activity Area Chart", "group": G_ACT, "order": 1,
+     "width": "12", "height": 8, "format": ACTIVITY_TEMPLATE,
+     "storeOutMessages": True, "fwdInMessages": False, "resendOnRefresh": True,
+     "templateScope": "local", "x": 640, "y": 200, "wires": [[]]})
+
+add({"id": nid("inj-act"), "type": "inject", "z": T, "name": "Every 5 min",
+     "props": [{"p": "payload"}], "repeat": "300", "crontab": "", "once": True,
+     "onceDelay": 3.0, "topic": "", "payload": "", "payloadType": "date",
+     "x": 150, "y": 200, "wires": [[nid("fn-act-states")]]})
+
+add({"id": nid("fn-act-states"), "type": "function", "z": T,
+     "name": "List entities", "func": ACTIVITY_BUILD_STATES,
+     "outputs": 3, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 330, "y": 200,
+     "wires": [[nid("http-act-states")], [], [nid("fn-act-alert")]]})
+
+add({"id": nid("http-act-states"), "type": "http request", "z": T,
+     "name": "HA states (activity)", "method": "use", "ret": "obj",
+     "paytoqs": "ignore", "url": "", "tls": "", "persist": False, "proxy": "",
+     "authType": "", "x": 520, "y": 200,
+     "wires": [[nid("fn-act-histurl")]]})
+
+add({"id": nid("fn-act-histurl"), "type": "function", "z": T,
+     "name": "Build history query", "func": ACTIVITY_HISTORY_URL,
+     "outputs": 3, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 330, "y": 320,
+     "wires": [[nid("http-act-history")], [], [nid("fn-act-alert")]]})
+
+add({"id": nid("http-act-history"), "type": "http request", "z": T,
+     "name": "HA history (24h)", "method": "use", "ret": "obj",
+     "paytoqs": "ignore", "url": "", "tls": "", "persist": False, "proxy": "",
+     "authType": "", "x": 520, "y": 320,
+     "wires": [[nid("fn-act-format")]]})
+
+add({"id": nid("fn-act-format"), "type": "function", "z": T,
+     "name": "Count changes per hour", "func": ACTIVITY_FORMAT,
+     "outputs": 2, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 700, "y": 320,
+     "wires": [[nid("tpl-act-chart")], [nid("fn-act-alert")]]})
+
+add({"id": nid("fn-act-alert"), "type": "function", "z": T,
+     "name": "Evaluate activity alerts", "func": ALERT_EVAL_ACTIVITY,
+     "outputs": 1, "noerr": 0, "initialize": "", "finalize": "", "libs": [],
+     "x": 900, "y": 320, "wires": [[nid("tpl-alert-activity")]]})
+
+add(_catch_node("activity", T, nid("fn-act-alert"), 1060, 420))
+
 # ---------------------------------------------------------------- write files
 os.makedirs(OUT, exist_ok=True)
 files = {
@@ -2408,6 +2740,7 @@ labels = {
     nid("tab-settings"):"06-settings.flow.json",
     nid("tab-ha"):"07-home-assistant.flow.json",
     nid("tab-kiosk"):"08-kiosk.flow.json",
+    nid("tab-activity"):"09-activity-chart.flow.json",
 }
 written = []
 by_file = {}

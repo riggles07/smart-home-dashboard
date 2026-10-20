@@ -2116,7 +2116,7 @@
     "z": "bdd11d56e84ec55e",
     "name": "Kiosk",
     "icon": "tablet",
-    "order": 8,
+    "order": 9,
     "disabled": false,
     "hidden": false
   },
@@ -2563,6 +2563,255 @@
     "wires": [
       [
         "0c1aaffb556673c0"
+      ]
+    ]
+  },
+  {
+    "id": "ec9a47ff058311c8",
+    "type": "tab",
+    "label": "Activity",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "b1452072eefeac40",
+    "type": "ui_tab",
+    "z": "ec9a47ff058311c8",
+    "name": "Activity",
+    "icon": "show_chart",
+    "order": 8,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "deff2dd393ddbe05",
+    "type": "ui_group",
+    "z": "ec9a47ff058311c8",
+    "name": "Alerts",
+    "tab": "b1452072eefeac40",
+    "order": 1,
+    "disp": false,
+    "width": "12",
+    "collapse": false,
+    "className": ""
+  },
+  {
+    "id": "c66e5db4435e4ed5",
+    "type": "ui_template",
+    "z": "ec9a47ff058311c8",
+    "name": "Alert Banner",
+    "group": "deff2dd393ddbe05",
+    "order": 1,
+    "width": "12",
+    "height": "2",
+    "format": "<div ng-class=\"msg.payload.severity === 'critical' ? 'alert-critical' : msg.payload.severity === 'warning' ? 'alert-warning' : msg.payload.severity === 'info' ? 'alert-info' : 'alert-ok'\">{{msg.payload.message}}</div><script>(function (scope) {  if (scope.msg && scope.msg.payload && window.SHDBackground) {    window.SHDBackground.setSeverity(scope.msg.payload.severity);  }})(scope);</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 1150,
+    "y": 40,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "d6e2436d69293d52",
+    "type": "ui_group",
+    "z": "ec9a47ff058311c8",
+    "name": "Activity Area",
+    "tab": "b1452072eefeac40",
+    "order": 2,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "bc27f0905140f4fd",
+    "type": "ui_template",
+    "z": "ec9a47ff058311c8",
+    "name": "Activity Area Chart",
+    "group": "d6e2436d69293d52",
+    "order": 1,
+    "width": "12",
+    "height": 8,
+    "format": "<div class=\"shd-activity-chart\" data-role=\"activity-chart\">\n  <canvas id=\"activityChart\" width=\"800\" height=\"240\"></canvas>\n  <div class=\"chart-empty\" style=\"display:none\">No state changes in the last 24 hours</div>\n</div>\n<script>\n(function (scope) {\n  var started = false;\n\n  function paint(msg) {\n    var host = document.querySelector('[data-role=\"activity-chart\"]');\n    if (!host) { return; }\n    var canvas = host.querySelector('canvas');\n    var empty = host.querySelector('.chart-empty');\n    var p = (msg && msg.payload) ? msg.payload : null;\n    var points = (p && Array.isArray(p.payload)) ? p.payload : [];\n    var total = (p && typeof p._total === 'number') ? p._total : 0;\n\n    if (typeof window.Chart === 'undefined') {\n      if (empty) {\n        empty.textContent = 'Chart.js is not loaded on this dashboard';\n        empty.style.display = 'flex';\n      }\n      return;\n    }\n    // A zero series is drawn by Chart.js as a flat line on the baseline, which\n    // reads as \"everything is zero\" rather than \"no data yet\". Say it in words.\n    if (empty) { empty.style.display = total ? 'none' : 'flex'; }\n    canvas.style.opacity = total ? '1' : '0';\n\n    if (window.__shdActivityChart) {\n      window.__shdActivityChart.data.datasets[0].data = points;\n      window.__shdActivityChart.update();\n      return;\n    }\n    window.__shdActivityChart = new window.Chart(canvas.getContext('2d'), {\n      type: 'line',\n      data: { datasets: [{ label: 'State changes', data: points,\n                           borderColor: '#fa6f63',\n                           backgroundColor: 'rgba(250, 111, 99, 0.15)',\n                           borderWidth: 2, fill: true,\n                           pointRadius: 0, pointHoverRadius: 4, tension: 0.3 }] },\n      options: {\n        responsive: false,\n        maintainAspectRatio: false,\n        animation: false,\n        scales: {\n          x: { type: 'time',\n               time: { unit: 'hour', displayFormats: { hour: 'HH' },\n                       tooltipFormat: 'HH:mm' },\n               grid: { color: 'rgba(255,255,255,0.06)' },\n               ticks: { color: '#9fb0c6', maxTicksLimit: 6 } },\n          y: { beginAtZero: true,\n               grid: { color: 'rgba(255,255,255,0.06)' },\n               ticks: { color: '#9fb0c6', precision: 0, maxTicksLimit: 5 } }\n        },\n        plugins: { legend: { display: false } },\n        tooltip: {\n          backgroundColor: 'rgba(36,58,84,0.95)', titleColor: '#eef3f8',\n          bodyColor: '#eef3f8', borderColor: 'rgba(255,255,255,0.1)',\n          borderWidth: 1, cornerRadius: 8, displayColors: false,\n          callbacks: {\n            label: function (ctx) {\n              var y = (ctx.raw && typeof ctx.raw.y === 'number') ? ctx.raw.y : 0;\n              return y + (y === 1 ? ' change' : ' changes');\n            }\n          }\n        }\n      }\n    });\n  }\n\n  scope.$watch(function () { return scope.msg; }, function (m) {\n    // First paint only once the template has actually rendered into the DOM.\n    if (!started) {\n      started = true;\n      setTimeout(function () { paint(m); }, 0);\n      return;\n    }\n    paint(m);\n  });\n})(scope);\n</script>",
+    "storeOutMessages": true,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 640,
+    "y": 200,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "e87df97b611d5c33",
+    "type": "inject",
+    "z": "ec9a47ff058311c8",
+    "name": "Every 5 min",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 3.0,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 200,
+    "wires": [
+      [
+        "ded6915b24df2751"
+      ]
+    ]
+  },
+  {
+    "id": "ded6915b24df2751",
+    "type": "function",
+    "z": "ec9a47ff058311c8",
+    "name": "List entities",
+    "func": "// Step 1: discover which entities to count. filter_entity_id takes explicit\n// ids -- the REST history endpoint does NOT accept wildcards -- so the ids\n// come from /api/states, the same call the HA tab already makes.\nvar base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\nvar token = env.get('HA_TOKEN');\nif (!base || !token) {\n  node.status({fill:'red',shape:'ring',text:'missing HA_URL/HA_TOKEN'});\n  var miss = [];\n  if (!base) { miss.push('HA_URL'); }\n  if (!token) { miss.push('HA_TOKEN'); }\n  msg._error = 'missing ' + miss.join(', ') + ' in /root/.node-red/.env';\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nmsg.method = 'GET';\nmsg.ret = 'obj';\nmsg.url = base + '/api/states';\nmsg.headers = {Authorization: 'Bearer ' + token};\nmsg.rejectUnauthorized = false;\nnode.status({fill:'blue',shape:'dot',text:'listing entities'});\nreturn [msg, null];",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 330,
+    "y": 200,
+    "wires": [
+      [
+        "f230840606ea9d88"
+      ],
+      [],
+      [
+        "045e6ef0c0f7abc3"
+      ]
+    ]
+  },
+  {
+    "id": "f230840606ea9d88",
+    "type": "http request",
+    "z": "ec9a47ff058311c8",
+    "name": "HA states (activity)",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 520,
+    "y": 200,
+    "wires": [
+      [
+        "810f71c0d8d457e3"
+      ]
+    ]
+  },
+  {
+    "id": "810f71c0d8d457e3",
+    "type": "function",
+    "z": "ec9a47ff058311c8",
+    "name": "Build history query",
+    "func": "// Step 2: turn the states list into a 24h history query.\nif (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n  node.status({fill:'red',shape:'ring',text:'states unreachable'});\n  msg._error = msg.error ? String(msg.error.message || msg.error)\n    : ('HTTP ' + (msg.statusCode || '?'));\n  msg.topic = 'ha/error';\n  return [null, null, msg];\n}\nvar DOMAINS = ['light','switch','media_player','cover','lock','climate','fan'];\nvar all = Array.isArray(msg.payload) ? msg.payload : [];\nvar ids = [];\nfor (var i = 0; i < all.length; i++) {\n  var e = all[i];\n  if (!e || !e.entity_id) { continue; }\n  var dom = e.entity_id.split('.')[0];\n  // Explicit membership test. The worker's `!(indexOf) >= 0` inverted this.\n  if (DOMAINS.indexOf(dom) < 0) { continue; }\n  if (e.state === 'unavailable' || e.state === 'unknown') { continue; }\n  ids.push(e.entity_id);\n}\nif (ids.length === 0) {\n  node.status({fill:'yellow',shape:'ring',text:'no controllable entities'});\n  msg.payload = {severity: 'warning',\n                 message: 'Activity: no controllable entities to count'};\n  return [null, null, msg];\n}\n// Cap the id list so the query string stays well under any proxy limit.\nids = ids.slice(0, 120);\nvar base = (env.get('HA_URL') || '').replace(/\\/+$/, '');\nvar since = new Date(Date.now() - 24 * 3600 * 1000)\n  .toISOString().slice(0, 19) + 'Z';\nmsg.method = 'GET';\nmsg.ret = 'obj';\nmsg.url = base + '/api/history/period/' + since\n  + '?filter_entity_id=' + encodeURIComponent(ids.join(','))\n  + '&minimal_response&no_attributes&significant_changes_only=0';\nmsg.headers = {Authorization: 'Bearer ' + (env.get('HA_TOKEN') || '')};\nmsg.rejectUnauthorized = false;\nmsg._entityCount = ids.length;\nnode.status({fill:'blue',shape:'dot',text:ids.length + ' entities'});\nreturn [msg, null];",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 330,
+    "y": 320,
+    "wires": [
+      [
+        "81ebd3609e1823c9"
+      ],
+      [],
+      [
+        "045e6ef0c0f7abc3"
+      ]
+    ]
+  },
+  {
+    "id": "81ebd3609e1823c9",
+    "type": "http request",
+    "z": "ec9a47ff058311c8",
+    "name": "HA history (24h)",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "x": 520,
+    "y": 320,
+    "wires": [
+      [
+        "3aba18fee2c13885"
+      ]
+    ]
+  },
+  {
+    "id": "3aba18fee2c13885",
+    "type": "function",
+    "z": "ec9a47ff058311c8",
+    "name": "Count changes per hour",
+    "func": "// Step 3: count state changes into 24 hourly buckets.\n// /api/history/period returns one array PER ENTITY (time-ordered states).\nif (msg.error || !msg.statusCode || msg.statusCode >= 400) {\n  node.status({fill:'red',shape:'ring',text:'history unreachable'});\n  msg._error = msg.error ? String(msg.error.message || msg.error)\n    : ('HTTP ' + (msg.statusCode || '?'));\n  msg.topic = 'ha/error';\n  return [null, msg];\n}\nvar perEntity = Array.isArray(msg.payload) ? msg.payload : [];\nvar now = Date.now();\nvar HOUR = 3600000;\nvar buckets = [];\nfor (var b = 0; b < 24; b++) { buckets.push(0); }\nvar total = 0;\nfor (var i = 0; i < perEntity.length; i++) {\n  var series = perEntity[i];\n  if (!Array.isArray(series)) { continue; }\n  for (var j = 0; j < series.length; j++) {\n    var st = series[j];\n    if (!st || !st.last_changed) { continue; }\n    var t = new Date(st.last_changed).getTime();\n    if (isNaN(t)) { continue; }\n    var age = Math.floor((now - t) / HOUR);   // 0 = the current hour\n    if (age < 0 || age > 23) { continue; }\n    buckets[age] += 1;\n    total += 1;\n  }\n}\n// Oldest -> newest, which is the order both the x axis and the tooltip assume.\nvar points = [];\nfor (var age = 23; age >= 0; age--) {\n  points.push({t: now - age * HOUR, y: buckets[age]});\n}\nnode.status({fill:'green',shape:'dot',text: total + ' changes / 24h'});\nreturn [{payload: points, _total: total,\n         _entities: (msg._entityCount || 0)},\n        null];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 700,
+    "y": 320,
+    "wires": [
+      [
+        "bc27f0905140f4fd"
+      ],
+      [
+        "045e6ef0c0f7abc3"
+      ]
+    ]
+  },
+  {
+    "id": "045e6ef0c0f7abc3",
+    "type": "function",
+    "z": "ec9a47ff058311c8",
+    "name": "Evaluate activity alerts",
+    "func": "// Catch-node feed: a node failure MUST surface as a critical banner.\nif (msg.error) {\n  var src = (msg.error.source && msg.error.source.name)\n    ? msg.error.source.name : 'integration';\n  var emsg = String(msg.error.message || 'failed').slice(0, 110);\n  node.status({fill: 'red', shape: 'ring', text: 'node error'});\n  msg.payload = {severity: 'critical', message: src + ' failed: ' + emsg};\n  return msg;\n}\n// Activity banner: chart freshness + reachability.\n// Both builders tag failures with topic 'ha/error' + msg._error, so an\n// unreachable HA is CRITICAL here -- never a silent 'awaiting first result'.\nif (msg.topic === 'ha/error' || msg._error) {\n  node.status({fill: 'red', shape: 'ring', text: 'history down'});\n  msg.payload = {severity: 'critical',\n    message: 'Activity history unavailable: '\n             + String(msg._error || '').slice(0, 100)};\n  return msg;\n}\n// A builder may hand over a finished banner (e.g. 'no controllable entities').\nif (msg.payload && msg.payload.severity && msg.payload.message) {\n  return msg;\n}\nvar total = (msg.payload && typeof msg.payload._total === 'number')\n  ? msg.payload._total : null;\nvar ents = (msg.payload && typeof msg.payload._entities === 'number')\n  ? msg.payload._entities : 0;\nvar sev;\nvar text;\nif (total === null) {\n  sev = 'info';\n  text = 'Activity: awaiting first result';\n} else if (total === 0) {\n  sev = 'info';\n  text = 'Activity: no state changes in 24h (' + ents + ' entities watched)';\n} else {\n  sev = 'ok';\n  text = total + ' state changes from ' + ents + ' entities in the last 24h';\n}\nnode.status({fill: sev === 'ok' ? 'green' : (sev === 'critical' ? 'red' : 'yellow'), shape: 'dot', text: sev});\nmsg.payload = {severity: sev, message: text};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 900,
+    "y": 320,
+    "wires": [
+      [
+        "c66e5db4435e4ed5"
+      ]
+    ]
+  },
+  {
+    "id": "8123932039b60443",
+    "type": "catch",
+    "z": "ec9a47ff058311c8",
+    "name": "Catch failures (activity)",
+    "scope": null,
+    "uncaught": false,
+    "x": 1060,
+    "y": 420,
+    "wires": [
+      [
+        "045e6ef0c0f7abc3"
       ]
     ]
   }
