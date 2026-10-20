@@ -232,3 +232,40 @@ back to 135 nodes with zero leftovers.
 
 Result: rooms clearly visible, labels readable, coral highlight unmistakable,
 plan filling the card.
+
+
+## Why a refresh showed no change (2026-10-19)
+
+Uploads were landing correctly -- HA served byte-identical copies of the new
+assets:
+
+```
+floorplan.svg  2539 b  md5 3992164f...  MATCHES LOCAL
+floorplan.css  1997 b  md5 fd3a925f...  MATCHES LOCAL
+```
+
+The problem was the response header:
+
+```
+Cache-Control: public, max-age=2678400     <- 31 days
+```
+
+HA serves everything under `/local/` with a 31-day browser cache. The phone kept
+using the previous SVG and CSS and never re-requested them, so no amount of
+refreshing could show a change. Files on disk were right; the client was right too
+-- it was told the bytes were good for a month.
+
+Fix: **cache-bust the URL itself.** The dashboard config now uses
+
+```yaml
+image: {location: /local/floorplan/floorplan.svg?v=3, cache: false}
+stylesheet: /local/floorplan/floorplan.css?v=3
+```
+
+`cache: false` alone does NOT help here -- that controls Floorplan's own caching,
+not the browser's max-age. Only a different URL forces a re-fetch. Verified by
+reading the saved config back: `image=...svg?v=3`, `cache=False`,
+`stylesheet=...css?v=3`, `rules=4`.
+
+**Bump `?v=` whenever a floorplan asset changes**, or the same stale-cache symptom
+returns and looks exactly like a broken upload.
