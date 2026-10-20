@@ -67,11 +67,14 @@ const history = [
   [ { last_changed: at(30) } ],           // older than 24h -> ignored
 ];
 const r2 = run(funcs.count, { payload: history, statusCode: 200, _entityCount: 3 }, ENV);
-const series = r2[0].payload;
+const series = r2[0].payload.series;
 out.points = series.length;
-out.total = r2[0]._total;
+out.total = r2[0].payload.total;
+out.entities = r2[0].payload.entities;
 out.first = series[0];
 out.last = series[series.length - 1];
+out.allHaveXY = series.every(p => typeof p.x === 'number' && typeof p.y === 'number');
+out.haveT = series.some(p => p.t !== undefined);
 out.allHaveTY = series.every(p => typeof p.t === 'number' && typeof p.y === 'number');
 // out1 must carry the same counts, or the alert banner never updates on success
 out.out1 = r2[1] ? { total: r2[1]._total, entities: r2[1]._entities } : null;
@@ -82,6 +85,10 @@ out.errOut0 = r3[0];
 out.errTopic = r3[1] && r3[1].topic;
 const r4 = run(funcs.alert, { topic: 'ha/error', _error: 'connect ECONNREFUSED' }, ENV);
 out.alert = r4.payload;
+
+// ---- 4. the banner reads the counts off the MESSAGE, as out1 emits them ----
+const r5 = run(funcs.alert, { payload: 485, _total: 485, _entities: 110 }, ENV);
+out.okAlert = r5.payload;
 
 console.log(JSON.stringify(out));
 """
@@ -133,7 +140,11 @@ def test_history_call_is_the_rest_endpoint(result):
 
 def test_formatter_emits_24_hourly_ty_points(result):
     assert result["points"] == 24
-    assert result["allHaveTY"] is True, "Chart.js 2.x needs numeric {t, y}"
+    assert result["allHaveXY"] is True, "this Chart.js build plots {x, y} only"
+    assert result["haveT"] is False, (
+        "a {t, y} series draws zero pixels on this build -- the scales render and "
+        "the line is silently missing"
+    )
 
 
 def test_formatter_counts_changes_in_the_right_bucket(result):
@@ -159,3 +170,11 @@ def test_a_http_failure_reaches_the_alert_evaluator(result):
 def test_alert_banner_treats_unreachable_history_as_critical(result):
     assert result["alert"]["severity"] == "critical"
     assert "ECONNREFUSED" in result["alert"]["message"]
+
+
+def test_a_successful_poll_reports_counts_not_awaiting(result):
+    """Regression: the evaluator read payload._total while out1's payload is the
+    bare number, so a healthy 485-change poll was announced as 'awaiting'."""
+    assert result["okAlert"]["severity"] == "ok"
+    assert "485" in result["okAlert"]["message"]
+    assert "110" in result["okAlert"]["message"]
