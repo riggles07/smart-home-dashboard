@@ -127,7 +127,11 @@ def test_view_indices_match_the_ui_tab_order(nodes):
     # Live-verified 2026-10-19: the nav order really is this.
     assert [n["name"] for n in visible] == [
         "Home Lab", "Network", "Kanban", "System Health", "Settings",
-        "Home Assistant", "Kiosk",
+        "Home Assistant",
+        # Activity (card t_c2217a3c follow-up) sits at index 6: after the six
+        # VIEWS targets so their baked indices do not move, before Kiosk which
+        # must stay last.
+        "Activity", "Kiosk",
     ], [n["name"] for n in visible]
 
     func = _by_name(nodes, "function", "Build kiosk command")["func"]

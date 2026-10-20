@@ -30,6 +30,13 @@ KNOWN_PAIRS = {
     # the ui_base baseColor, so the accent genuinely exists in both files -- that
     # duplication is what this guard exists to keep in sync.
     "--shd-accent": "FA6F63",
+    # The Activity chart template (card t_c2217a3c follow-up) hardcodes two palette
+    # colours as Chart.js option values. A canvas cannot resolve `var(--shd-*)`,
+    # so the duplication cannot be removed -- only kept in sync, which is exactly
+    # what this guard does: change --shd-text/--shd-muted in dashboard.css and the
+    # template's ticks/labels must follow.
+    "--shd-text": "EEF3F8",
+    "--shd-muted": "9FB0C6",
 }
 
 
