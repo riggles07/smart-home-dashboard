@@ -85,9 +85,15 @@ class TestHAWsClient:
         assert 'light' not in read_only
         assert 'switch' not in read_only
     
-    def test_env_var_defaults(self):
-        """Test environment variable defaults."""
-        # HA_URL should have a default fallback
+    def test_env_var_defaults(self, monkeypatch):
+        """Test environment variable defaults.
+
+        The fallback only applies when the variable is UNSET, so the ambient
+        environment has to be cleared first -- otherwise this test fails on a
+        machine that legitimately has HA_URL exported, which says nothing about
+        the code.
+        """
+        monkeypatch.delenv('HA_URL', raising=False)
         ha_url = os.environ.get('HA_URL', 'http://homeassistant.local:8123')
         assert ha_url == 'http://homeassistant.local:8123'
 
