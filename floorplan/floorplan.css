@@ -1,82 +1,93 @@
 /* ha-floorplan stylesheet for the traced main-floor plan.
  *
- * Rewritten after the first on-device screenshot: rooms rendered essentially
- * BLACK. A 0.32-opacity navy over a dark page is not "muted", it is invisible.
- * Everything here is now opaque enough to read on a dark page.
+ * PALETTE HISTORY (worth reading before "simplifying" this again):
+ *   v1 -- Roborock's own colours, 0.55 alpha. Readable on the map, but alpha
+ *         over a dark page composites to near-black.
+ *   v2 -- one muted slate for every room, opaque. Fixed the blackness, but threw
+ *         away the colour-coded rooms, so the plan read as "black and grey".
+ *   v3 -- THIS. Per-room colour is back (it is what makes a floorplan legible at
+ *         a glance), fully opaque, with a brighter lit variant per hue. State is
+ *         carried by brightness + a glow, not by hue, so a room keeps its
+ *         identity whether it is on or off.
  *
- * Rooms with no bound entity must still look inert -- an unbound room that shows
- * a pointer cursor is the same lie as a dead button.
+ * The class names come from the trace (blue/orange/teal/gold), so no per-room
+ * CSS is needed for the four hues.
  */
 
-/* Base: every room is a visible slate surface, fully opaque so it reads against
- * the page. The SVG no longer relies on its own fill attributes. */
+/* ---- base: fully opaque, visible hues ------------------------------- */
 .room {
-  fill: #2b3f57;
   fill-opacity: 1;
-  stroke: #6f88a6;
-  stroke-opacity: 0.55;
+  stroke: #ffffff;
+  stroke-opacity: 0.28;
   stroke-width: 2;
-  transition: fill 200ms ease, stroke-opacity 200ms ease;
+  transition: fill 220ms ease, stroke-opacity 220ms ease, filter 220ms ease;
 }
 
-/* ON: the NexusHome coral. Near-opaque so it is unmistakable at a glance. */
+.room.blue   { fill: #2f6ea8; }   /* study, corridor */
+.room.orange { fill: #a8542f; }   /* kitchen, bathroom */
+.room.teal   { fill: #177a74; }   /* dining room */
+.room.gold   { fill: #8a6d1f; }   /* laundry, living room */
+
+/* ---- OFF: same hue, dimmed. Still a room, not a hole. ---------------- */
+.room.room-off { fill-opacity: 0.55; stroke-opacity: 0.18; }
+
+/* ---- ON: brighter version of the same hue, plus a glow -------------- */
+.room.blue.room-on   { fill: #63b3ff; }
+.room.orange.room-on { fill: #ff8f5a; }
+.room.teal.room-on   { fill: #3fe0d0; }
+.room.gold.room-on   { fill: #ffd75e; }
+
 .room.room-on {
-  fill: #fa6f63;
-  fill-opacity: 0.92;
-  stroke: #ffd0cb;
-  stroke-opacity: 1;
-}
-
-/* OFF: cooler and darker than base, but still clearly a room, not a hole. */
-.room.room-off {
-  fill: #22303f;
   fill-opacity: 1;
-  stroke-opacity: 0.45;
+  stroke: #ffffff;
+  stroke-opacity: 0.85;
+  /* the glow is what reads as "lit" on a phone at a glance */
+  filter: drop-shadow(0 0 14px rgba(255, 214, 140, 0.65));
 }
 
-/* Interactive rooms only (those with a rule in floorplan.yaml). */
+/* Interactive rooms only (those with a rule). */
 #study,
 #corridor,
 #living_room,
-#laundry {
-  cursor: pointer;
-}
+#laundry { cursor: pointer; }
 
 #study:hover,
 #corridor:hover,
 #living_room:hover,
 #laundry:hover {
   stroke-opacity: 1;
-  stroke: #9fb6cf;
+  filter: drop-shadow(0 0 10px rgba(160, 200, 255, 0.45));
 }
 
 /* Unbound rooms: kitchen, dining_room, bathroom.
- * Still legible as part of the floor, but flat, inert, and never a target. */
+ * These keep their HUE -- kitchen is orange, dining teal -- because colour means
+ * "which room is this", not "is it controllable". Greying them out was worse than
+ * useless: they are the two largest rooms on the plan, so a grey fill dominated
+ * the whole view and made it read as black-and-grey.
+ * Inertness is signalled by the dashed stroke and the missing glow instead. */
 #kitchen,
 #dining_room,
 #bathroom {
   cursor: default;
   pointer-events: none;
-  fill: #1b2734;
-  fill-opacity: 1;
-  stroke-opacity: 0.22;
+  fill-opacity: 0.45;      /* inherits .orange / .teal, just dimmed */
+  stroke-dasharray: 6 5;
+  stroke-opacity: 0.35;
 }
 
-/* Labels are decoration, drawn above the fills, never a tap target. */
+/* Labels sit above the fills, never a tap target. */
 .room-label {
-  fill: #dce8f5;
+  fill: #f2f7fc;
   font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 30px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   paint-order: stroke;
-  stroke: #101a26;
-  stroke-width: 4px;
+  stroke: #0b1420;
+  stroke-width: 5px;
   stroke-linejoin: round;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .room {
-    transition: none;
-  }
+  .room { transition: none; }
 }
