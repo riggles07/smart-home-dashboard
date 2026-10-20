@@ -200,3 +200,35 @@ must be checked by eye:
 - tap on study / corridor / living_room / laundry changes the real device
 - kitchen, dining_room, bathroom are inert (no pointer cursor, no tap)
 - the four hazard entities are still unbound
+
+
+## Visual fixes after the first on-device screenshot (2026-10-19)
+
+The card worked on first try -- taps controlled the lights -- but looked bad.
+Three separate causes, none of them guesswork:
+
+1. **The white "Clear log" panel** covering half the screen. Cause: `log_level:
+   warn`. The docs are explicit that setting ANY level *displays* the panel; it is
+   not a silent verbosity setting. Removed from the dashboard config (re-saved
+   over WS; readback keys are now `image,stylesheet,rules`).
+2. **Rooms rendering near-black.** The old CSS used `#243a54` at 0.55 alpha
+   (`#1b2a3d` at 0.55 for off) over a dark page -- which composites to almost the
+   page colour. Alpha is not the same as "muted". Fills are now opaque:
+   base `#2b3f57`, off `#22303f`, unbound `#1b2734`, on `#fa6f63` @ 0.92.
+3. **The plan floating in dead space.** The trace inherited the screenshot's
+   viewBox (`0 0 1280 1048`) while the plan only occupies the middle. `render_floorplan.py`
+   crops the viewBox to the union of the room paths -- 1086x802, i.e. 65% of the
+   old area -- and adds `<text>` labels from the measured centroids with
+   `pointer-events:none` so labels can never intercept a tap.
+
+### Verified before asking for another upload
+
+The browser cannot open `file://` or `data:` URLs, and this container sits on a
+docker bridge the browser cannot reach. So the preview was served for real: a
+temporary `http in -> template -> http response` flow on the Node-RED LXC, viewed
+in the browser, two panels side by side (nothing on / study+corridor on) to check
+both states in one shot. Then the temporary flow was removed -- live Node-RED is
+back to 135 nodes with zero leftovers.
+
+Result: rooms clearly visible, labels readable, coral highlight unmistakable,
+plan filling the card.

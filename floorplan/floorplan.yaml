@@ -16,79 +16,51 @@
 
 image: /local/floorplan/floorplan.svg
 stylesheet: /local/floorplan/floorplan.css
-log_level: warn
-
 rules:
-  # ---- Study (HA: family_room) -------------------------------------------
-  - element: study
-    entity: light.family_room_family_room
-    state_action:
-      action: call-service
-      service: floorplan.class_set
-      service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-    tap_action:
-      action: call-service
-      service: light.toggle
-      service_data:
-        entity_id: light.family_room_family_room
-
-  # ---- Corridor (HA: foyer) ----------------------------------------------
-  # The three candelabras are bound as a group for the tap. The glow follows
-  # candelabra_1 only -- if they are ever switched independently, the fill will
-  # disagree with the room. Worth revisiting once it is on screen.
-  - element: corridor
-    entity: light.foyer_candelabra_1
-    state_action:
-      action: call-service
-      service: floorplan.class_set
-      service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-    tap_action:
-      action: call-service
-      service: light.toggle
-      service_data:
-        entity_id:
-          - light.foyer_candelabra_1
-          - light.foyer_candelabra_2
-          - light.foyer_candelabra_3
-
-  # ---- Living room --------------------------------------------------------
-  - element: living_room
-    entity: light.living_room_ceiling
-    state_action:
-      action: call-service
-      service: floorplan.class_set
-      service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-    tap_action:
-      action: call-service
-      service: light.toggle
-      service_data:
-        entity_id: light.living_room_ceiling
-
-  # ---- Laundry ------------------------------------------------------------
-  # The relay is the light. washer_power / laundry_dryer_power are NOT bound:
-  # they cut power to an appliance, which mid-cycle is destructive.
-  - element: laundry
-    entity: switch.laundry_laundry_relay
-    state_action:
-      action: call-service
-      service: floorplan.class_set
-      service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-    tap_action:
-      action: call-service
-      service: homeassistant.toggle
-      service_data:
-        entity_id: switch.laundry_laundry_relay
-
-  # ---- Deliberately UNBOUND ----------------------------------------------
-  # These rooms render, but must not look tappable and must not toggle anything.
-  #
-  #   kitchen     area has ZERO lights. Its only switch is
-  #               switch.refrigerator_express_mode -- toggling the fridge's
-  #               express mode from a floorplan tap is not "turning on a light".
-  #   dining_room user: "no devices right now"
-  #   bathroom    no bathroom area exists in HA, and no target was confirmed.
-  #
-  # ---- NOT bound on purpose, and must stay that way ----------------------
-  # switch.siren and switch.siren_alarm sit in the foyer area next to the
-  # candelabras. A rule that bound "everything in foyer" would sound an alarm on
-  # a stray tap. Never add them.
+- element: study
+  entity: light.family_room_family_room
+  state_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
+  tap_action:
+    action: call-service
+    service: light.toggle
+    service_data:
+      entity_id: light.family_room_family_room
+- element: corridor
+  entity: light.foyer_candelabra_1
+  state_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
+  tap_action:
+    action: call-service
+    service: light.toggle
+    service_data:
+      entity_id:
+      - light.foyer_candelabra_1
+      - light.foyer_candelabra_2
+      - light.foyer_candelabra_3
+- element: living_room
+  entity: light.living_room_ceiling
+  state_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
+  tap_action:
+    action: call-service
+    service: light.toggle
+    service_data:
+      entity_id: light.living_room_ceiling
+- element: laundry
+  entity: switch.laundry_laundry_relay
+  state_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
+  tap_action:
+    action: call-service
+    service: homeassistant.toggle
+    service_data:
+      entity_id: switch.laundry_laundry_relay

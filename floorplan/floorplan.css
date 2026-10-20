@@ -1,37 +1,40 @@
 /* ha-floorplan stylesheet for the traced main-floor plan.
  *
- * The SVG ships with the Roborock app's own fill colours baked in. CSS here
- * overrides them so room state reads instantly, and so ROOMS WITH NO TARGET
- * look inert -- an unbound room that still shows a pointer cursor is the same
- * class of lie as a dead button in the main dashboard.
+ * Rewritten after the first on-device screenshot: rooms rendered essentially
+ * BLACK. A 0.32-opacity navy over a dark page is not "muted", it is invisible.
+ * Everything here is now opaque enough to read on a dark page.
+ *
+ * Rooms with no bound entity must still look inert -- an unbound room that shows
+ * a pointer cursor is the same lie as a dead button.
  */
 
-/* Base: every room is a muted surface. */
+/* Base: every room is a visible slate surface, fully opaque so it reads against
+ * the page. The SVG no longer relies on its own fill attributes. */
 .room {
-  fill: #243a54;
-  fill-opacity: 0.55;
-  stroke: #ffffff;
-  stroke-opacity: 0.18;
-  stroke-width: 1.5;
-  transition: fill 220ms ease, fill-opacity 220ms ease, stroke-opacity 220ms ease;
+  fill: #2b3f57;
+  fill-opacity: 1;
+  stroke: #6f88a6;
+  stroke-opacity: 0.55;
+  stroke-width: 2;
+  transition: fill 200ms ease, stroke-opacity 200ms ease;
 }
 
-/* ON: the accent colour from the NexusHome palette, at a readable opacity. */
+/* ON: the NexusHome coral. Near-opaque so it is unmistakable at a glance. */
 .room.room-on {
   fill: #fa6f63;
-  fill-opacity: 0.72;
-  stroke: #ff9a91;
-  stroke-opacity: 0.9;
+  fill-opacity: 0.92;
+  stroke: #ffd0cb;
+  stroke-opacity: 1;
 }
 
-/* OFF: quieter than the base, so an off room recedes instead of competing. */
+/* OFF: cooler and darker than base, but still clearly a room, not a hole. */
 .room.room-off {
-  fill: #1b2a3d;
-  fill-opacity: 0.55;
+  fill: #22303f;
+  fill-opacity: 1;
+  stroke-opacity: 0.45;
 }
 
-/* Only rooms with a rule should look interactive. The four unbound rooms stay
- * default-cursor -- see the "Deliberately UNBOUND" block in floorplan.yaml. */
+/* Interactive rooms only (those with a rule in floorplan.yaml). */
 #study,
 #corridor,
 #living_room,
@@ -43,20 +46,35 @@
 #corridor:hover,
 #living_room:hover,
 #laundry:hover {
-  stroke-opacity: 0.75;
+  stroke-opacity: 1;
+  stroke: #9fb6cf;
 }
 
-/* Unbound rooms: explicitly inert, and visually recessive. */
+/* Unbound rooms: kitchen, dining_room, bathroom.
+ * Still legible as part of the floor, but flat, inert, and never a target. */
 #kitchen,
 #dining_room,
 #bathroom {
   cursor: default;
   pointer-events: none;
-  fill-opacity: 0.32;
-  stroke-opacity: 0.10;
+  fill: #1b2734;
+  fill-opacity: 1;
+  stroke-opacity: 0.22;
 }
 
-/* Respect a user's reduced-motion preference. */
+/* Labels are decoration, drawn above the fills, never a tap target. */
+.room-label {
+  fill: #dce8f5;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: #101a26;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .room {
     transition: none;
