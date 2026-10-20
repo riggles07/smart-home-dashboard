@@ -69,7 +69,9 @@
 #corridor,
 #kitchen,
 #dining_room,
-#living_room {
+#living_room,
+#laundry,
+#bathroom {
   fill-opacity: 0.42;
   stroke-opacity: 0.35;
 }
@@ -82,7 +84,7 @@
   stroke-opacity: 0.18;
 }
 #laundry.room-off {
-  fill-opacity: 0.55;
+  fill-opacity: 0.5;      /* photo underneath: same tint as the other lit rooms */
   stroke-opacity: 0.18;
 }
 
@@ -99,7 +101,7 @@
 #study.room-on,
 #corridor.room-on { fill: #63b3ff; fill-opacity: 0.55; }   /* blue  */
 #living_room.room-on { fill: #ffd75e; fill-opacity: 0.55; } /* gold  */
-#laundry.room-on { fill: #ffd75e; fill-opacity: 1; }        /* no photo */
+#laundry.room-on { fill: #ffd75e; fill-opacity: 0.55; }      /* photo underneath */
 
 /* Interactive rooms only (those with a rule). */
 #study,
