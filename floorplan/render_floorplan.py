@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the raw traced SVG into something presentable.
+"""Turn the raw traced SVG into something presentable AND self-contained.
 
 Three defects fixed here, all visible in the first on-device screenshot:
 
@@ -13,13 +13,32 @@ Three defects fixed here, all visible in the first on-device screenshot:
 3. NO LABELS. The trace intentionally drops the app's own text (it would become a
    click target), which left an unlabelled plan. Fix: <text> labels from the
    measured centroids, with pointer-events:none so they never intercept a tap.
+
+WHY THE STYLESHEET IS INLINED (2026-10-20, second feedback round)
+------------------------------------------------------------------
+The plan needs TWO assets when the CSS is a separate file: floorplan.svg and
+floorplan.css. Only the SVG got uploaded, so the card rendered the new SVG with
+the OLD stylesheet -- the photo layer simply did not exist on the device, and the
+rooms that have photos were painted over by an opaque fill. That is a whole class
+of failure ("I uploaded it and nothing changed") and it is not worth keeping.
+
+So the CSS is embedded in the SVG as a <style> element. ONE file to upload. The
+dashboard config no longer references a stylesheet, and floorplan.css is the
+SOURCE that gets inlined here -- it is not served. tests/test_floorplan_assets.py
+asserts the two agree, so they cannot drift.
+
+Input is the immutable trace (floorplan_traced_raw.svg), never our own output:
+reading and rewriting the same file is how you get duplicated layers after a
+second run.
 """
 import json
 import re
 
-SRC = "floorplan.svg"
+SRC = "floorplan_traced_raw.svg"
 OUT = "floorplan.svg"
 OUT_MIN = "floorplan_min.svg"
+CSS = "floorplan.css"
+
 ROOMS = json.load(open("rooms.json"))
 
 svg = open(SRC).read()
@@ -51,6 +70,15 @@ PHOTOS = {
     "corridor":    "corridor.jpg",
     "living_room": "living_room.jpg",
 }
+# Base hue per room, also written as a fill="" attribute on the path. The
+# attribute is the belt to the CSS's braces: it survives ANY class change,
+# including the one below.
+HUE = {
+    "study": "#2f6ea8", "corridor": "#2f6ea8",
+    "kitchen": "#a8542f", "bathroom": "#a8542f",
+    "dining_room": "#177a74",
+    "laundry": "#8a6d1f", "living_room": "#8a6d1f",
+}
 # Visible names. The SVG ids are deliberately NOT renamed: floorplan.yaml binds
 # rules by id, and renaming an id silently breaks every tap on that room.
 # Only the text changes -- Study actually IS the family room, and the corridor
@@ -60,11 +88,27 @@ LABELS = {
     "corridor": "Foyer",
 }
 
+css = open(CSS).read()
+# An inline <style> inside an SVG that the HTML parser builds is TEXT ONLY until
+# the first '<'. A '<' anywhere in the CSS -- including in a comment -- ends the
+# style text, and the CSS parser then throws away that rule AND everything after
+# it, silently. Measured: "<image>" in a comment truncated the sheet at 5 rules,
+# so the photo tint and every ON/OFF rule never existed in the browser.
+bad = [ch for ch in "<&" if ch in css]
+if bad:
+    raise SystemExit(f"{CSS} must not contain {'/'.join(bad)}: it would truncate "
+                     f"the inlined stylesheet at that point")
+
 lines = [
     f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb[0]} {vb[1]} {vb[2]} {vb[3]}" '
     f'width="100%" height="100%" preserveAspectRatio="xMidYMid meet">',
     '  <!-- Traced from a Roborock map; viewBox cropped to the plan itself.',
-    '       Room ids are what ha-floorplan binds to. -->',
+    '       Room ids are what ha-floorplan binds to.',
+    '       The stylesheet is INLINED below on purpose: one file to upload, and',
+    '       it cannot go stale separately from the geometry. -->',
+    '  <style>',
+    css.rstrip(),
+    '  </style>',
     # background plate: gives the dark fills something to contrast against
     f'  <rect x="{vb[0]}" y="{vb[1]}" width="{vb[2]}" height="{vb[3]}" '
     f'fill="#101a26" pointer-events="none"/>',
@@ -94,7 +138,8 @@ for room, cls, d in sorted(paths):
     cls = " ".join(dict.fromkeys(cls.split()))   # regex capture already has "room"
     if room in PHOTOS:
         cls += " has-photo"
-    lines.append(f'  <path id="{room}" class="{cls}" d="{d}"/>')
+    lines.append(
+        f'  <path id="{room}" class="{cls}" fill="{HUE[room]}" d="{d}"/>')
 # labels last => drawn on top, but never clickable
 for room, cls, _d in sorted(paths):
     c = cent.get(room)
@@ -110,4 +155,5 @@ lines.append('</svg>')
 out = "\n".join(lines) + "\n"
 open(OUT, "w").write(out)
 open(OUT_MIN, "w").write(out)
-print(f"wrote {OUT} ({len(out)} bytes, {len(paths)} rooms, {len(cent)} labels)")
+print(f"wrote {OUT} ({len(out)} bytes, {len(paths)} rooms, {len(cent)} labels, "
+      f"{len(css)} bytes of CSS inlined)")

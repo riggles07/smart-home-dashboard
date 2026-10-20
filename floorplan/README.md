@@ -357,3 +357,81 @@ The visible text is now **Family Room** (was Study) and **Foyer** (was Corridor)
 The SVG ids stay `study` and `corridor`, because `floorplan.yaml` binds every rule
 by id -- renaming an id silently breaks that room's tap. The label was wrong, the
 id is just a key.
+
+
+## Photos did not show on the device -- TWO bugs, 2026-10-20 (second round)
+
+Reported as "partially updated: still no background graphics on rooms with
+lighting controls". Two independent causes, both invisible in source:
+
+### 1. The card needed two uploaded files and only one was uploaded
+
+`image:` + `stylesheet:` are separate assets. The new SVG went up; the CSS did
+not, so the device rendered new geometry with the OLD stylesheet -- which had no
+`.room-photo` / `.has-photo` rules at all. Measured on HA while debugging:
+
+```
+/local/floorplan/floorplan.svg   200  4495 b   MATCHES local
+/local/floorplan/floorplan.css   200  3156 b   MISSING the whole photo layer
+                                 (local was 4167 b)
+```
+
+That also explains the exact symptom shape: unbound rooms (kitchen, dining) are
+painted at `fill-opacity: .45`, so their photos showed through; bound rooms were
+at `1.0`, so theirs were covered. "Graphics appear only where there are NO
+controls" was the fingerprint of a missing stylesheet, not of a missing image.
+
+Fix: the stylesheet is now INLINED into the SVG (`render_floorplan.py` reads
+`floorplan.css` and emits a `<style>` block). One file to upload, and the two can
+no longer drift -- `tests/test_floorplan_assets.py` fails if they do. The
+dashboard config no longer has a `stylesheet:` key at all (`repoint_dashboard.py`,
+saved over WS and read back: `image=/local/floorplan/floorplan.svg?v=6`,
+`stylesheet` absent, `rules=4`).
+
+### 2. `floorplan.class_set` REPLACES the class attribute
+
+In ha-floorplan 1.1.5 (the build on this HA):
+
+```js
+static setClass(e, t) { e.setAttribute('class', t) }
+```
+
+So `service_data: '${entity.state === "on" ? "room-on" : "room-off"}'` turns
+`class="room blue has-photo"` into `class="room-on"` on the very first state
+update. `.room.has-photo` then stops matching, the fill goes fully opaque and
+covers the photo -- even with the correct stylesheet. Fix: every rule that paints
+a room is id-scoped (`#study.room-on`), and each path also carries its hue as a
+`fill=""` attribute so the SVG default (black) can never win. A test asserts no
+room-painting rule depends on a class other than the state class.
+
+### 3. A '<' anywhere in the inlined CSS silently truncates it
+
+An inline `<style>` in an HTML-parsed SVG is text only until the first `<`. One
+comment containing `<image>` cut the sheet off at 5 of 18 rules in a real browser
+-- the photo tint AND every ON/OFF rule simply did not exist. The renderer now
+refuses to emit a stylesheet containing `<` or `&`; a test backs it up.
+
+### Verified, by measurement rather than by eye
+
+A local preview reproduces floorplan's own path (fetchText -> innerHTML ->
+`querySelector('svg')` -> append into a **shadow root** -> `class_set` via
+`setAttribute`), with the real photos served from HA. Three panels: as-shipped /
+after `class_set "room-off"` / after `class_set "room-on"`.
+
+```
+computed (shadow root)   study fill / opacity       laundry fill / opacity
+as shipped               #2f6ea8  0.42              #8a6d1f  1
+after "room-off"         #2f6ea8  0.50              #8a6d1f  0.55
+after "room-on"          #63b3ff  0.55              #ffd75e  1
+photo filter             blur(5px) saturate(.85) brightness(.5)   applied
+
+pixels that change when .room-photo{display:none} is injected: 373,833
+Family Room mean RGB   with photo [50.2 74.1 98.0]  without [37.1 67.5 98.2]
+```
+
+The last two lines are the ones that matter: the photo layer is doing real work
+behind the tint, in a shadow root, after the class attribute has been wiped.
+
+Note: the five room photos are 1.6-2.3 MB each (~9 MB total). They are cached
+after first load, but they are worth downscaling to ~100 kB each if the kiosk
+ever feels sluggish.

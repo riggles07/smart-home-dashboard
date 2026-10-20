@@ -1,6 +1,166 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="118 100 1086 802" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <!-- Traced from a Roborock map; viewBox cropped to the plan itself.
-       Room ids are what ha-floorplan binds to. -->
+       Room ids are what ha-floorplan binds to.
+       The stylesheet is INLINED below on purpose: one file to upload, and
+       it cannot go stale separately from the geometry. -->
+  <style>
+/* ha-floorplan stylesheet for the traced main-floor plan.
+ *
+ * THIS FILE IS NOT SERVED AS AN ASSET. render_floorplan.py inlines it into
+ * floorplan.svg so the card needs exactly ONE uploaded file. Edit this file,
+ * then run `python3 render_floorplan.py`; tests/test_floorplan_assets.py fails
+ * if the two ever disagree.
+ *
+ * WHY EVERY SELECTOR IS ID-SCOPED (2026-10-20, second feedback round)
+ * -------------------------------------------------------------------
+ * floorplan.class_set -- the service the rules use to show ON/OFF -- does NOT
+ * merge classes. In ha-floorplan 1.1.5 it is literally:
+ *
+ *     static setClass(e, t) { e.setAttribute('class', t) }
+ *
+ * i.e. it REPLACES the whole class attribute. So a rule whose service_data
+ * evaluates to "room-on" turns class="room blue has-photo" into class="room-on":
+ * the hue class and the has-photo class both vanish, on the very first state
+ * update. Every rule below therefore keys off the element ID (which class_set
+ * never touches) and the state class alone; the hue is also repeated as a
+ * fill="" attribute on the path so the SVG default (black) can never win.
+ *
+ * PALETTE HISTORY (worth reading before "simplifying" this again):
+ *   v1 -- Roborock's own colours, 0.55 alpha. Readable on the map, but alpha
+ *         over a dark page composites to near-black.
+ *   v2 -- one muted slate for every room, opaque. Fixed the blackness, but threw
+ *         away the colour-coded rooms, so the plan read as "black and grey".
+ *   v3 -- per-room colour, opaque, brighter lit variant. Colour encodes WHICH
+ *         room it is; state is brightness + glow, never hue.
+ *   v4 -- THIS. Same visual language, id-scoped so a class wipe cannot break it,
+ *         and the photo layer that v3 was missing on the device.
+ */
+
+/* ---- base: geometry + stroke ------------------------------------------ */
+#bathroom,
+#corridor,
+#dining_room,
+#kitchen,
+#laundry,
+#living_room,
+#study {
+  fill-opacity: 1;
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-opacity: 0.28;
+  transition: fill 220ms ease, stroke-opacity 220ms ease, filter 220ms ease;
+}
+
+/* ---- hue = WHICH room ------------------------------------------------- */
+#study, #corridor     { fill: #2f6ea8; }   /* blue */
+#kitchen, #bathroom   { fill: #a8542f; }   /* orange */
+#dining_room          { fill: #177a74; }   /* teal */
+#laundry, #living_room { fill: #8a6d1f; }  /* gold */
+
+/* ---- photo layer ------------------------------------------------------
+ * The uploaded photos are WALKING-THROUGH phone shots, not overhead shots: the
+ * corridor one is eye-level at the top of the stairs, the living-room one is
+ * angled with the photographer's bare leg in frame. Pushed through
+ *   - preserveAspectRatio="slice"  (crop, never stretch -- set on the image element)
+ *   - blur + brightness            (kills the perspective and the clutter)
+ *   - the room's own fill as a TINT on top (state still reads)
+ * they read as a warm photographic floor rather than a picture pasted in.
+ */
+.room-photo {
+  filter: blur(5px) saturate(0.85) brightness(0.5);
+}
+
+/* Where a photo exists, the room fill is a tint over it, not a cover. */
+#study,
+#corridor,
+#kitchen,
+#dining_room,
+#living_room {
+  fill-opacity: 0.42;
+  stroke-opacity: 0.35;
+}
+
+/* ---- OFF: same hue, dimmed. Still a room, not a hole. ---------------- */
+#study.room-off,
+#corridor.room-off,
+#living_room.room-off {
+  fill-opacity: 0.5;
+  stroke-opacity: 0.18;
+}
+#laundry.room-off {
+  fill-opacity: 0.55;
+  stroke-opacity: 0.18;
+}
+
+/* ---- ON: brighter version of the same hue, plus a glow --------------- */
+#study.room-on,
+#corridor.room-on,
+#living_room.room-on,
+#laundry.room-on {
+  /* the glow is what reads as "lit" on a phone at a glance */
+  filter: drop-shadow(0 0 14px rgba(255, 214, 140, 0.65));
+  stroke: #ffffff;
+  stroke-opacity: 0.85;
+}
+#study.room-on,
+#corridor.room-on { fill: #63b3ff; fill-opacity: 0.55; }   /* blue  */
+#living_room.room-on { fill: #ffd75e; fill-opacity: 0.55; } /* gold  */
+#laundry.room-on { fill: #ffd75e; fill-opacity: 1; }        /* no photo */
+
+/* Interactive rooms only (those with a rule). */
+#study,
+#corridor,
+#living_room,
+#laundry { cursor: pointer; }
+
+#study:hover,
+#corridor:hover,
+#living_room:hover,
+#laundry:hover {
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(160, 200, 255, 0.45));
+}
+
+/* ---- Unbound rooms: kitchen, dining_room, bathroom --------------------
+ * These keep their HUE -- kitchen is orange, dining teal -- because colour means
+ * "which room is this", not "is it controllable". Greying them out was worse than
+ * useless: they are the two largest rooms on the plan, so a grey fill dominated
+ * the whole view and made it read as black-and-grey.
+ * Inertness is signalled by the dashed stroke and the missing glow instead.
+ * Declared LAST so its fill-opacity wins over the photo tint above. */
+#kitchen,
+#dining_room,
+#bathroom {
+  cursor: default;
+  pointer-events: none;
+  fill-opacity: 0.45;
+  stroke-dasharray: 6 5;
+  stroke-opacity: 0.35;
+}
+
+/* ---- Labels: above the fills, never a tap target ---------------------- */
+.room-label {
+  fill: #f2f7fc;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: #0b1420;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #bathroom,
+  #corridor,
+  #dining_room,
+  #kitchen,
+  #laundry,
+  #living_room,
+  #study { transition: none; }
+}
+  </style>
   <rect x="118" y="100" width="1086" height="802" fill="#101a26" pointer-events="none"/>
   <clipPath id="clip_corridor"><path d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/></clipPath>
   <clipPath id="clip_dining_room"><path d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/></clipPath>
@@ -12,13 +172,13 @@
   <image class="room-photo" x="456" y="119" width="458" height="334" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_kitchen)" href="/local/floorplan/rooms/kitchen.jpg?v=1"/>
   <image class="room-photo" x="980" y="591" width="113" height="293" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_living_room)" href="/local/floorplan/rooms/living_room.jpg?v=1"/>
   <image class="room-photo" x="136" y="118" width="337" height="317" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip_study)" href="/local/floorplan/rooms/study.jpg?v=1"/>
-  <path id="bathroom" class="room orange" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z"/>
-  <path id="corridor" class="room blue has-photo" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/>
-  <path id="dining_room" class="room teal has-photo" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/>
-  <path id="kitchen" class="room orange has-photo" d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/>
-  <path id="laundry" class="room gold" d="M 586,533 L 586,555 L 602,560 L 609,571 L 606,586 L 597,593 L 586,595 L 586,622 L 744,622 L 743,547 L 704,546 L 700,544 L 696,532 Z"/>
-  <path id="living_room" class="room gold has-photo" d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/>
-  <path id="study" class="room blue has-photo" d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/>
+  <path id="bathroom" class="room orange" fill="#a8542f" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z"/>
+  <path id="corridor" class="room blue has-photo" fill="#2f6ea8" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/>
+  <path id="dining_room" class="room teal has-photo" fill="#177a74" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/>
+  <path id="kitchen" class="room orange has-photo" fill="#a8542f" d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/>
+  <path id="laundry" class="room gold" fill="#8a6d1f" d="M 586,533 L 586,555 L 602,560 L 609,571 L 606,586 L 597,593 L 586,595 L 586,622 L 744,622 L 743,547 L 704,546 L 700,544 L 696,532 Z"/>
+  <path id="living_room" class="room gold has-photo" fill="#8a6d1f" d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/>
+  <path id="study" class="room blue has-photo" fill="#2f6ea8" d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/>
   <text x="665" y="730" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
   <text x="883" y="617" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Foyer</text>
   <text x="1056" y="276" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Dining Room</text>
