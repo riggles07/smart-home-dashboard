@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="118 100 1086 802" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-  <!-- Traced from a Roborock map; viewBox cropped to the plan itself.
+  <!-- Normalised main floor. Geometry: geometry.py (rectilinear, shared walls).
        Room ids are what ha-floorplan binds to.
        The stylesheet is INLINED below on purpose: one file to upload, and
        it cannot go stale separately from the geometry. -->
@@ -121,6 +121,20 @@
   filter: drop-shadow(0 0 10px rgba(160, 200, 255, 0.45));
 }
 
+/* ---- Stairs: a plan feature, drawn over the foyer fill -----------------
+ * They were never in the robot's map (a vacuum cannot climb stairs), so they are
+ * stroked rather than tinted: crisp white-ish lines that read as an architectural
+ * element instead of as photo texture. Never a tap target. */
+.stairs {
+  fill: none;
+  stroke: #dfe9f5;
+  stroke-opacity: 0.55;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 /* ---- Unbound rooms: kitchen, dining_room, bathroom --------------------
  * These keep their HUE -- kitchen is orange, dining teal -- because colour means
  * "which room is this", not "is it controllable". Greying them out was worse than
@@ -162,38 +176,51 @@
 }
   </style>
   <rect x="118" y="100" width="1086" height="802" fill="#101a26" pointer-events="none"/>
-  <clipPath id="clip_corridor"><path d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/></clipPath>
-  <clipPath id="clip_dining_room"><path d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/></clipPath>
-  <clipPath id="clip_kitchen"><path d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/></clipPath>
-  <clipPath id="clip_living_room"><path d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/></clipPath>
-  <clipPath id="clip_study"><path d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/></clipPath>
-  <g clip-path="url(#clip_corridor)">
-    <image class="room-photo" x="646" y="368" width="455" height="577" transform="rotate(-90 873.5 656.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/corridor.jpg?v=1"/>
-  </g>
-  <g clip-path="url(#clip_dining_room)">
-    <image class="room-photo" x="893" y="146" width="320" height="266" transform="rotate(-90 1053 279)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/dining_room.jpg?v=1"/>
+  <clipPath id="clip_study"><path d="M 136,118 L 454,118 L 454,384 L 474,384 L 474,436 L 136,436 Z"/></clipPath>
+  <clipPath id="clip_kitchen"><path d="M 457,118 L 915,118 L 915,453 L 690,453 L 690,428 L 478,428 L 478,384 L 457,384 Z"/></clipPath>
+  <clipPath id="clip_dining_room"><path d="M 915,118 L 1186,118 L 1186,438 L 1058,438 L 1058,423 L 915,423 Z"/></clipPath>
+  <clipPath id="clip_corridor"><path d="M 585,428 L 690,428 L 690,453 L 915,453 L 915,438 L 1162,438 L 1162,590 L 980,590 L 980,884 L 748,884 L 748,533 L 585,533 Z"/></clipPath>
+  <clipPath id="clip_living_room"><path d="M 980,590 L 1186,590 L 1186,884 L 980,884 Z"/></clipPath>
+  <g clip-path="url(#clip_study)">
+    <image class="room-photo" x="146" y="108" width="318" height="338" transform="rotate(-90 305 277)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/study.jpg?v=1"/>
   </g>
   <g clip-path="url(#clip_kitchen)">
-    <image class="room-photo" x="518" y="57" width="334" height="458" transform="rotate(-90 685 286)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/kitchen.jpg?v=1"/>
+    <image class="room-photo" x="518.5" y="56.5" width="335" height="458" transform="rotate(-90 686 285.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/kitchen.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_dining_room)">
+    <image class="room-photo" x="890.5" y="142.5" width="320" height="271" transform="rotate(-90 1050.5 278)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/dining_room.jpg?v=1"/>
+  </g>
+  <g clip-path="url(#clip_corridor)">
+    <image class="room-photo" x="645.5" y="367.5" width="456" height="577" transform="rotate(-90 873.5 656)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/corridor.jpg?v=1"/>
   </g>
   <g clip-path="url(#clip_living_room)">
-    <image class="room-photo" x="890" y="681" width="293" height="113" transform="rotate(-90 1036.5 737.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/living_room.jpg?v=1"/>
+    <image class="room-photo" x="936" y="634" width="294" height="206" transform="rotate(-90 1083 737)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/living_room.jpg?v=1"/>
   </g>
-  <g clip-path="url(#clip_study)">
-    <image class="room-photo" x="146" y="108" width="317" height="337" transform="rotate(-90 304.5 276.5)" preserveAspectRatio="xMidYMid slice" href="/local/floorplan/rooms/study.jpg?v=1"/>
+  <path id="study" class="room blue has-photo" fill="#2f6ea8" d="M 136,118 L 454,118 L 454,384 L 474,384 L 474,436 L 136,436 Z"/>
+  <path id="kitchen" class="room orange has-photo" fill="#a8542f" d="M 457,118 L 915,118 L 915,453 L 690,453 L 690,428 L 478,428 L 478,384 L 457,384 Z"/>
+  <path id="dining_room" class="room teal has-photo" fill="#177a74" d="M 915,118 L 1186,118 L 1186,438 L 1058,438 L 1058,423 L 915,423 Z"/>
+  <path id="corridor" class="room blue has-photo" fill="#2f6ea8" d="M 585,428 L 690,428 L 690,453 L 915,453 L 915,438 L 1162,438 L 1162,590 L 980,590 L 980,884 L 748,884 L 748,533 L 585,533 Z"/>
+  <path id="laundry" class="room gold" fill="#8a6d1f" d="M 586,533 L 744,533 L 744,622 L 586,622 Z"/>
+  <path id="bathroom" class="room orange" fill="#a8542f" d="M 579,680 L 744,680 L 744,782 L 579,782 Z"/>
+  <path id="living_room" class="room gold has-photo" fill="#8a6d1f" d="M 980,590 L 1186,590 L 1186,884 L 980,884 Z"/>
+  <!-- Stair flight in the top-right corner of the foyer. Drawn in plan
+       view: two strings + evenly spaced treads. Not a tap target. -->
+  <g class="stairs" pointer-events="none">
+    <rect x="986" y="444" width="170" height="140"/>
+    <line x1="1007.2" y1="444" x2="1007.2" y2="584"/>
+    <line x1="1028.5" y1="444" x2="1028.5" y2="584"/>
+    <line x1="1049.8" y1="444" x2="1049.8" y2="584"/>
+    <line x1="1071.0" y1="444" x2="1071.0" y2="584"/>
+    <line x1="1092.2" y1="444" x2="1092.2" y2="584"/>
+    <line x1="1113.5" y1="444" x2="1113.5" y2="584"/>
+    <line x1="1134.8" y1="444" x2="1134.8" y2="584"/>
+    <polyline points="1000.0,503.0 1012.0,514.0 1000.0,525.0"/>
   </g>
-  <path id="bathroom" class="room orange" fill="#a8542f" d="M 579,683 L 579,721 L 597,720 L 609,734 L 608,744 L 600,754 L 578,755 L 579,779 L 744,779 L 744,748 L 739,742 L 744,732 L 743,683 Z"/>
-  <path id="corridor" class="room blue has-photo" fill="#2f6ea8" d="M 1161,445 L 927,429 L 911,458 L 693,459 L 683,432 L 585,432 L 585,525 L 698,526 L 706,540 L 748,544 L 756,884 L 977,884 L 977,764 L 963,747 L 977,721 L 977,591 L 1162,584 Z"/>
-  <path id="dining_room" class="room teal has-photo" fill="#177a74" d="M 921,119 L 926,174 L 920,184 L 920,423 L 1055,425 L 1062,439 L 1185,438 L 1186,120 Z"/>
-  <path id="kitchen" class="room orange has-photo" fill="#a8542f" d="M 456,120 L 457,382 L 478,387 L 479,434 L 684,426 L 692,453 L 911,452 L 914,185 L 889,186 L 886,173 L 889,153 L 914,154 L 914,119 Z"/>
-  <path id="laundry" class="room gold" fill="#8a6d1f" d="M 586,533 L 586,555 L 602,560 L 609,571 L 606,586 L 597,593 L 586,595 L 586,622 L 744,622 L 743,547 L 704,546 L 700,544 L 696,532 Z"/>
-  <path id="living_room" class="room gold has-photo" fill="#8a6d1f" d="M 985,591 L 980,719 L 999,731 L 1002,746 L 980,765 L 982,883 L 1091,884 L 1093,846 L 1071,841 L 1070,819 L 1063,827 L 1068,837 L 1057,845 L 1007,844 L 999,821 L 1001,795 L 1008,788 L 1058,788 L 1066,814 L 1071,790 L 1092,781 L 1093,592 Z"/>
-  <path id="study" class="room blue has-photo" fill="#2f6ea8" d="M 136,118 L 136,435 L 472,435 L 473,391 L 454,384 L 451,119 Z"/>
-  <text x="665" y="730" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
-  <text x="883" y="617" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Foyer</text>
-  <text x="1056" y="276" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Dining Room</text>
-  <text x="721" y="280" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Kitchen</text>
-  <text x="666" y="579" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Laundry</text>
-  <text x="1036" y="724" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Living Room</text>
-  <text x="298" y="281" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Family Room</text>
+  <text x="297" y="278" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Family Room</text>
+  <text x="692" y="279" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Kitchen</text>
+  <text x="1052" y="274" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Dining Room</text>
+  <text x="882" y="617" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Foyer</text>
+  <text x="665" y="578" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Laundry</text>
+  <text x="662" y="731" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
+  <text x="1083" y="737" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Living Room</text>
 </svg>
