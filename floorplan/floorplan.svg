@@ -176,7 +176,9 @@
   #living_room,
   #study { transition: none; }
 }
-  </style>
+  
+.room-temp { pointer-events: none; user-select: none; font-weight: 500; text-shadow: 1px 1px 2px #000; }
+</style>
   <rect x="118" y="100" width="1086" height="802" fill="#101a26" pointer-events="none"/>
   <clipPath id="clip_study"><path d="M 136,118 L 454,118 L 454,384 L 474,384 L 474,436 L 136,436 Z"/></clipPath>
   <clipPath id="clip_kitchen"><path d="M 457,118 L 915,118 L 915,453 L 690,453 L 690,428 L 478,428 L 478,384 L 457,384 Z"/></clipPath>
@@ -233,4 +235,10 @@
   <text x="665" y="578" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Laundry</text>
   <text x="662" y="731" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
   <text x="1083" y="737" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Living Room</text>
+
+  <!-- Temperature Displays -->
+  <text id="temp_study" x="230" y="210" class="room-temp" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" opacity="0.6">study --</text>
+  <text id="temp_kitchen" x="730" y="230" class="room-temp" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" opacity="0.6">kitchen --</text>
+  <text id="temp_corridor" x="970" y="500" class="room-temp" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" opacity="0.6">corridor --</text>
+  <text id="temp_laundry" x="700" y="610" class="room-temp" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" opacity="0.6">laundry --</text>
 </svg>
