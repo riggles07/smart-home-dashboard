@@ -70,3 +70,35 @@ rules:
     service: light.toggle
     service_data:
       entity_id: light.z_wave_plus_s2_dimmer_light_switch
+- element: temp_study
+  entity: sensor.family_room_family_room_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      element: temp_study
+      text: "${entity.state} \xB0F"
+- element: temp_kitchen
+  entity: sensor.kitchen_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      element: temp_kitchen
+      text: "${entity.state} \xB0F"
+- element: temp_corridor
+  entity: sensor.hallway_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      element: temp_corridor
+      text: "${entity.state} \xB0F"
+- element: temp_laundry
+  entity: sensor.laundry_door_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      element: temp_laundry
+      text: "${entity.state} \xB0F"
