@@ -469,3 +469,167 @@ tappable that isn't; (e) I would use this instead of the HA app.
 5. Every commit: tests green, `?v=N` bumped, config read back after write.
 6. Report per phase: what changed, the gate numbers measured, what you could not
    verify and why. "Green save" is not verification.
+
+---
+
+# 14. LOCKED DECISIONS AND PROBE RESULTS — 2026-10-22
+
+The user answered the decision register. **This section is authoritative**; §4 above
+stays as the record of what each option would have cost.
+
+| # | Decision | Locked | Consequence |
+|---|---|---|---|
+| D1 | View style | **1A isometric cutaway** | Projection + wall omission per §5.1 |
+| D2 | Art source | **2B image-generated raster + derived hotspots** | §15 below; art is a build artefact, not hand-drawn |
+| D3 | Renderer | **3A custom LitElement card** | One `.js`, no build step, reads `hass.states` directly |
+| D4 | Interaction | **4A** fixture tap = toggle, room tap = sheet, long-press = all lights | §6 FR-3..FR-5 |
+| D5 | Palette | **5A daylight + automatic night variant** | CSS custom properties over one art asset |
+| D6 | Alarm mode | **6C — wire the real integration** (now available) | See §16; no helper needed |
+| D7 | Photos | **7a drop them** | `rooms_small/` stays in the repo, unreferenced |
+| D8 | Scope | **8c main floor now, basement/garage fast-follow** | Needs a second map trace; separate phase |
+| D9 | Review | **9b single review at the end** | Compensated by the self-verification regime in §17 |
+| — | Reference | `experiencelovelace.github.io/ha-floorplan/docs/example-floorplanner-home/` | Analysed in §15.1 |
+
+## 15. The art pipeline for 2B, and what the probe measured
+
+### 15.1 What the reference actually is
+
+Fetched and unpacked (`floorplanner_home.svg`, 2.83 MB): **one SVG containing a
+2.06 MB embedded 1920×1080 PNG** — a Floorplanner top-down 3D render — plus room
+paths ids `area.<room>`, object paths `thing.<object>`, device paths `element.<dev>`.
+
+Three techniques worth copying, one correction:
+
+1. **Bake the lit state into the image.** The render shows every room lit; a room's
+   overlay path sits at `opacity: .5` normally and `0` when its light is on. So "off"
+   is a *dimming wash*, not a missing light. This is the only way to get believable
+   lamp glow out of a raster, and it removes the need for glow filters entirely.
+2. **`vector-effect: non-scaling-stroke` + `pointer-events: all`** on `svg *`, so
+   hotspot strokes stay 1 px at any zoom and thin shapes remain tappable.
+3. **One asset, two files** (SVG + CSS). We keep one *file*: the CSS is inlined
+   (lesson already learned in `floorplan/README.md`).
+4. **Correction:** the reference is ~90° top-down, not a 2:1 isometric. D1 = 1A asks
+   for a cutaway; the render below is generated at a slight tilt — dollhouse legible,
+   wall faces visible. That is the synthesis of 1A and the reference, and it is what
+   the probe produced.
+
+### 15.2 Probe: generation works, and it is fast
+
+Implemented and run today (`floorplan/cartoon/`):
+
+```
+make_control_image.py   geometry.py -> flat 1600x1168 colour plan   (no text, no furniture)
+generate_art.py         control + prompt -> render, Google image API
+fit_hotspots.py         derive + validate one polygon per room
+```
+
+Measured, three generations:
+
+| Model | Output | Latency | Notes |
+|---|---|---|---|
+| `gemini-3.1-flash-image` | 1200×896 | **7.7 s** | good layout adherence, no text artefacts |
+| `gemini-3-pro-image` | 1200×896 | ~15 s | similar composition, slightly cleaner materials |
+| `gemini-3-pro-image --size 2K` | **2400×1792** | ~25 s | **production setting** — 3× the tablet width |
+
+The 2K render in `floorplan/cartoon/art/render_2k.jpg` preserves all seven rooms,
+the L-shaped hall, the stair flight and the room proportions from the control image.
+No text, no watermark, no invented rooms.
+
+**Constraint discovered:** output is JPEG regardless of the requested MIME type, and
+the default is 1K. Both are handled in `generate_art.py` (extension follows the real
+MIME; `--size 2K` for production). Cost is metered — each regeneration is a paid call,
+so **the chosen render is committed to the repo** and never silently regenerated.
+
+### 15.3 Probe: hotspot derivation — 6 of 7 rooms, three approaches rejected
+
+Deriving the polygons is the risky half of 2B. What was tried, with numbers:
+
+| Approach | Result | Verdict |
+|---|---|---|
+| Trust `geometry.py` mapped by house bbox | centroid drift 0.001 (sub-1 %) but polygons **rode the wall band** — edge-band floor purity 0.12–0.40 | rejected |
+| Colour region-grow from each room centroid | grow covered 3–70 % of the room; furniture and lighting break the uniform-colour assumption | rejected |
+| Fit affine by wall-mask IoU | best IoU **0.13** — the render's bright furniture (bed, island, cabinetry) dominates a "light-neutral" mask | rejected |
+| **Anchor + wall-band clip** | **6/7 pass**: band purity 0.86–1.00, drift 0.03–0.06, area ratio 0.72–0.89 | **current** |
+
+Method that works: map the measured polygons onto the render (bbox anchor), then
+**clip each polygon to the render's non-wall pixels**. Clipping trims the wall-band
+overshoot without needing a colour model, and the anchor stops the clip bleeding
+through a doorway into the neighbouring room.
+
+Known defects, to be fixed in P1 (they are why the gate still fails):
+
+- **kitchen** — pale stone floor is bright *and* neutral, so the wall mask eats the
+  floor; the clip finds only 39 % of the room and falls back to the inflated
+  geometry polygon. Fix: classify walls by *straight-edge continuity* (Hough / line
+  support), not brightness.
+- **living_room** — the bright rug and sofa are clipped out, leaving a jagged
+  concave polygon. Fix: clip against wall lines only, and allow interior holes to be
+  filled (a room's polygon is its outer boundary, furniture is not a wall).
+- Area ratios cluster at 0.72–0.89 because furniture sits inside every room; the
+  polygon should be the *room*, so P1 must take the room boundary, not the visible
+  floor pixels.
+
+**Gate for P1 is therefore:** all 7 rooms pass with band purity ≥ 0.95, area ratio
+0.95–1.05, drift ≤ 0.03 — i.e. the polygon is the room, not the floor minus furniture.
+
+## 16. Alarm — 6C is satisfied, real integration exists
+
+`GET /api/states` shows **Alarmo** with three panels (was zero at the time of the
+draft):
+
+| Entity | State | `supported_features` |
+|---|---|---|
+| `alarm_control_panel.house` | `disarmed` | **15** = arm_home 1 + arm_away 2 + arm_night 4 + trigger 8 |
+| `alarm_control_panel.garage` | `disarmed` | 15 |
+| `alarm_control_panel.master` | `disarmed` | 15 |
+
+Requirements consequences:
+
+- Modes offered must be derived from `supported_features` → **home / away / night /
+  disarm**. **No vacation mode** (the draft proposed one; the hardware does not offer
+  it and Alarmo would reject it).
+- `alarm_control_panel.house` is the header chip; garage and master live in a
+  secondary row of the sheet, never as the primary control.
+- Useful live attributes already present: `open_sensors`, `bypassed_sensors`,
+  `changed_by`, `last_triggered`, `arm_mode`, `delay`, `next_state` — so "armed with
+  the kitchen door open" is displayable without inventing state.
+- `code_arm_required` and `code_format` must be read before rendering a keypad. If a
+  code is required, the card shows a numeric entry, not a bare arm button that will
+  fail.
+- The Alarm Panel Pro zone sensors (`zone_1` Front Door, `zone_2` Garage Interior,
+  `zone_3` Kitchen Door, `zone_5` Garage Exterior, `zone_6` Living Room Motion) stay
+  as the zone summary. **`zone_7..12` read `on` and are unconfigured — never shown.**
+
+## 17. Compensating for D9 = single review at the end
+
+One review means one chance to be wrong, so verification moves into the pipeline:
+
+1. **Every phase gate must pass numerically before its screenshot is sent.** No
+   "looks fine to me" — §10 gates already require measured numbers.
+2. **Art gets one early checkpoint anyway.** D9 is about avoiding five rounds of
+   layout bikeshedding; the art is the one item where a late "I don't like the
+   style" costs a rebuild. I will send the P1 render with three variants (tilt
+   angle / outline weight / palette warmth) for a single pick, then not raise art
+   again. Everything else waits for the final review.
+3. **Rendered, not asserted.** Each phase ships a tablet-portrait screenshot plus the
+   desktop view; state changes are shown in the same shot wherever possible.
+4. **Failures are reported, not smoothed.** The kitchen/living-room defects above are
+   written down as defects rather than declared "close enough".
+
+## 18. Additional risks introduced by 2B
+
+| Risk | Impact | Mitigation (binding) |
+|---|---|---|
+| Art is a raster → fixed resolution | Blurry on the kiosk | Generate at 2K (2400 px wide = 3× the 800 px viewport); never upscale a 1K render |
+| Regeneration is non-deterministic | Polygons drift per generation; art changes silently | The chosen render + its prompt + its derived `hotspots.json` are **committed together**; a regeneration is a new art version, gated by the P1 tests |
+| Cloud dependency (Google image API) | Pipeline stops without the key/quota | Render is committed; the pipeline is only needed to *change* the art. `make_control_image.py` and `fit_hotspots.py` are fully local |
+| Model invents a room or a door | Hotspots miss; a "door swing" animates the wrong thing | Room count/proportions validated against `geometry.py`; door animation only where the art shows a door, otherwise omitted rather than faked |
+| L-shaped footprint leaves a large void | Renders read as "missing rooms" | Add a neutral exterior treatment (flat surround + soft contact shadow) instead of leaving white space; **no grass or landscape** — it would imply data we do not have |
+| Bright furniture vs wall in segmentation | Kitchen/living polygons wrong | P1 gate requires 7/7 with area ratio 0.95–1.05; fix is line-based wall detection (documented above) |
+
+## 19. Art checkpoint question (the only open item)
+
+D9 says one review at the end; §17.2 carves out the art. To avoid a rebuild I will
+send **the P1 render in three variants** for a single pick. If you would rather
+strictly hold to one review, say so and I will pick the middle variant myself and
+report the choice.
