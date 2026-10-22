@@ -852,3 +852,25 @@ The deploy script verifies the files are served *before* writing any config, and
 dashboard config back afterwards. What it cannot verify is the browser paint inside the HA
 frontend — the card was verified against a mock `hass` in a harness (§20, P2/P3), so the
 outstanding check is a visual one on the tablet.
+
+## 20.2 "Custom element doesn't exist" — cause and fix
+
+First load after deploy failed with HA's `Custom element doesn't exist:
+floorplan-cartoon-card`, while the file itself was provably fine:
+
+```
+Content-Type: text/javascript (200, 28,014 B, defines the element once)
+loaded as <script type="module"> in a harness -> customElements.get() === defined
+```
+
+The frontend had already fetched its resource list before the resource existed; navigating
+to a newly created dashboard is a client-side route, so no resource load happens and the
+card type resolves to nothing. A full reload fixes it.
+
+Hardening applied at the same time: the resource URL now carries `?v=<payload version>`
+because HA serves `/local/` with `Cache-Control: max-age=2678400` (31 days). Every other
+resource on this install does the same (`?hacstag=…`). Without it, a re-uploaded card can
+sit behind a month-long cache — the same class of bug as the floorplan image drift.
+
+Lesson for the requirements doc: **adding a resource requires a page reload; a green
+`resources/create` result does not mean the browser has the card.**
