@@ -633,3 +633,51 @@ D9 says one review at the end; §17.2 carves out the art. To avoid a rebuild I w
 send **the P1 render in three variants** for a single pick. If you would rather
 strictly hold to one review, say so and I will pick the middle variant myself and
 report the choice.
+
+## 15.4 Art v2 — user corrections applied (2026-10-22)
+
+The user reviewed the first render and corrected the drawing. Those corrections live in
+`floorplan/cartoon/room_spec.py` — a separate file from `geometry.py`, which holds
+*measured* architecture and must not be edited to make a picture look better.
+
+| User instruction | Implementation |
+|---|---|
+| All floors medium brown wood except laundry | `FLOORS` = one wood value everywhere; laundry keeps `(186,196,200)` cool tile |
+| Family room and kitchen are one open room, kitchen table between them | `OPENINGS` punches the shared wall (x 447–464, y 150–375) in the floor colour; a table block straddles it |
+| Family room: fireplace on the left, two blue chairs on the north side, sofa at the bottom, golden rug | Four `FURNITURE` blocks at those walls |
+| Living room open to the foyer, blue rug, bookshelf on the right, two small blue chairs at the southern end | `OPENINGS` punches x 972–988 / y 630–850; three blocks, no sofa |
+| Bathroom and laundry | Bathroom wood; laundry tile with a drawn grout grid as a visual prior |
+
+### What the correction pass taught (binding on the pipeline)
+
+**Full regeneration is non-deterministic.** v4 had the bathroom correct and a marble
+patch in the kitchen; v5 fixed the kitchen and re-tiled the bathroom. Re-rolling a 2K
+render (~23 s, metered) to change one surface is how art pipelines get flaky.
+
+So corrections are now applied as **targeted edits**, not re-rolls: `edit_art.py`
+sends the existing render plus an instruction naming exactly one region, with a guard
+that everything else stays pixel-identical. That is what finally produced the accepted
+render (`art/floorplan_render.jpg`): v5 + one bathroom-floor edit.
+
+Two further prompts that turned out to matter as much as the wording:
+- **Name rooms by position and contents**, not by name ("the laundry is the UPPER of the
+  two small rooms, the one with the washer and dryer"). "Laundry" and "bathroom" were
+  swapped repeatedly until the prompt located them physically.
+- **A drawn prior beats a sentence.** The model ignored "grey tile" written in prose but
+  obeyed a grout grid drawn into the control image (and, earlier, obeyed a marble slab it
+  invented from a pale counter block that we had to remove).
+
+### Hotspot status on the accepted render
+
+`fit_hotspots.py` on `art/floorplan_render.jpg`: **5 of 7 rooms pass**
+(study, dining, laundry, bathroom, living room — edge-band purity 0.92–1.00, drift
+0.02–0.04, area ratio 0.80–0.91).
+
+Failures, unchanged in kind and still P1 work:
+- **kitchen** — the white counter run touches the room boundary, so the wall-band clip
+  eats 23 % of the polygon (purity 0.72).
+- **corridor** — the open-plan boundary at the living room means there is no wall for the
+  clip to stop at (purity 0.81).
+
+Both are fixed by the same P1 change: detect walls as *lines* (Hough/continuity) rather
+than as "bright neutral pixels", and let a room polygon span open boundaries.
