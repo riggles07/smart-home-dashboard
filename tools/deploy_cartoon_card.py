@@ -23,6 +23,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -32,7 +33,16 @@ ROOT = Path(__file__).resolve().parents[1]
 ENV = Path("/root/.hermes/.env")
 
 ART = "/local/floorplan/cartoon/floorplan_render.jpg"
-CARD = "/local/floorplan/cartoon/floorplan-cartoon-card.js"
+_CARD_BASE = "/local/floorplan/cartoon/floorplan-cartoon-card.js"
+# Append the payload version: /local files are served with max-age=31 days, so a card
+# registered without a query string can be served from a stale cache. Every HACS resource
+# on this install does the same (?hacstag=...).
+try:
+    _ver = re.search(r'"version":"([0-9a-f]{8})"',
+                     (ROOT / "floorplan" / "cartoon" / "dist" / "floorplan-cartoon-card.js").read_text())
+    CARD = f"{_CARD_BASE}?v={_ver.group(1)}" if _ver else _CARD_BASE
+except FileNotFoundError:
+    CARD = _CARD_BASE
 URL_PATH = "cartoon-plan"   # HA requires a hyphen in url_path
 TITLE = "Cartoon Plan"
 
