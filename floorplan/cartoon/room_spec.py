@@ -4,17 +4,11 @@ This is the file the user edits when the drawing is wrong. It is deliberately
 separate from `geometry.py`, which holds *measured* architecture and must not be
 touched to make a picture look better.
 
-Coordinate space: plan centimetres, north is up (-y), origin at the source map's
-top-left. Furniture is drawn as flat blocks into the control image so the image
-model has unambiguous placement, and described in the prompt so it renders them in
-3D rather than copying the blocks.
+Coordinate space: plan centimetres, north is up (-y).
 
-DIRECTIONS, as the user phrased them (2026-10-22):
-    family room  -- fireplace LEFT (west) wall, two blue chairs NORTH edge,
-                    sofa at the BOTTOM (south) edge, golden rug
-    kitchen      -- table BETWEEN family room and kitchen, i.e. on the opening
-    living room  -- blue rug, bookshelf on the RIGHT (east) wall,
-                    two small blue chairs at the SOUTHERN end
+Markup round 2 (2026-10-22, image annotations) drove the kitchen and circulation
+changes below. Each entry names the annotation it came from so a future reader can
+trace why a block sits where it does.
 """
 
 # Every floor is medium brown wood except the laundry, which keeps its cool tile.
@@ -29,19 +23,37 @@ FLOORS = {
     "laundry":     (186, 196, 200),   # stays as set: cool grey tile
 }
 
-# Open plan: these shared walls are not walls. Each rect is painted in the floor
-# colour so the model renders a continuous opening rather than a doorway.
-# (x0, y0, x1, y1) in plan cm, plus the two rooms it joins -- asserted at build time.
+# Open plan / doorways. Each rect is painted in the floor colour so the model renders
+# an opening instead of a wall. `kind` distinguishes a cased opening from a door leaf.
 OPENINGS = [
-    # family room <-> kitchen: study's east edge is x=454, kitchen's west edge is
-    # x=457, so the opening spans that 3 cm gap and runs most of the shared length.
-    {"rooms": ("study", "kitchen"), "rect": (447, 150, 464, 375)},
-    # living room <-> foyer: both polygons share x=980 from y 590 to 884.
-    {"rooms": ("living_room", "corridor"), "rect": (972, 630, 988, 850)},
+    # family room <-> kitchen: the user's first message ("open room between family room
+    # and kitchen, kitchen table between them"). Kept wide.
+    {"id": "family_kitchen", "rooms": ("study", "kitchen"), "kind": "open",
+     "rect": (447, 150, 464, 375)},
+
+    # "Kitchen Door" (red ellipse, north wall at the kitchen's west end): a doorway in
+    # the NORTH wall, so the counter cannot start until east of it.
+    {"id": "kitchen_north_door", "rooms": ("kitchen",), "kind": "door",
+     "rect": (498, 126, 592, 168)},
+
+    # "Open doorway" (green, lower-left of the kitchen): kitchen -> hall.
+    {"id": "kitchen_hall", "rooms": ("kitchen", "corridor"), "kind": "open",
+     "rect": (520, 430, 640, 462)},
+
+    # unlabelled green marks at the kitchen/dining wall: kitchen -> dining room.
+    {"id": "kitchen_dining", "rooms": ("kitchen", "dining_room"), "kind": "open",
+     "rect": (906, 285, 928, 400)},
+
+    # living room <-> foyer (first message: "living room should also be open to foyer")
+    {"id": "living_foyer", "rooms": ("living_room", "corridor"), "kind": "open",
+     "rect": (972, 630, 988, 850)},
+
+    # "Front door" (red, bottom edge): door in the south wall of the foyer.
+    {"id": "front_door", "rooms": ("corridor",), "kind": "door",
+     "rect": (800, 872, 884, 890)},
 ]
 
-# kind: used only for colour/shape language in the control image and the prompt.
-# colour names are the user's words, kept verbatim so the prompt can echo them.
+# kind: shape language in the control image and in the prompt.
 FURNITURE = [
     # --- family room (plan id "study") -------------------------------------
     {"room": "study", "kind": "fireplace", "colour": "stone", "rect": (140, 245, 186, 335)},
@@ -52,9 +64,15 @@ FURNITURE = [
     # table between family room and kitchen, straddling the opening
     {"room": "study", "kind": "table", "colour": "wood", "rect": (404, 236, 505, 322)},
 
-    # --- kitchen ------------------------------------------------------------
-    {"room": "kitchen", "kind": "counter", "colour": "pale", "rect": (470, 126, 900, 172)},
-    {"room": "kitchen", "kind": "sink", "colour": "steel", "rect": (620, 130, 690, 168)},
+    # --- kitchen: annotation-driven ----------------------------------------
+    # "Island" (black box, kitchen centre)
+    {"room": "kitchen", "kind": "island", "colour": "pale", "rect": (665, 275, 795, 370)},
+    # "Counter" (thick black line): north run, then a return down the east wall
+    {"room": "kitchen", "kind": "counter", "colour": "pale", "rect": (600, 126, 900, 172)},
+    {"room": "kitchen", "kind": "counter", "colour": "pale", "rect": (858, 172, 900, 330)},
+    {"room": "kitchen", "kind": "sink", "colour": "steel", "rect": (700, 132, 790, 168)},
+    # "Fridge" (black outline, south wall of the kitchen)
+    {"room": "kitchen", "kind": "fridge", "colour": "steel", "rect": (700, 398, 785, 448)},
 
     # --- dining room --------------------------------------------------------
     {"room": "dining_room", "kind": "table", "colour": "wood", "rect": (985, 190, 1115, 330)},
@@ -80,26 +98,22 @@ FURNITURE = [
     {"room": "living_room", "kind": "chair", "colour": "blue", "rect": (1090, 830, 1132, 878)},
 ]
 
-# Control-image fills for furniture (the render gets its own materials from the prompt).
+# "Stair direction" (arrow, pointing east): the flight ascends toward +x, so treads are
+# drawn perpendicular to travel -- vertical lines -- and the arrow points east.
+STAIR_DIRECTION = "east"
+
 KIND_FILL = {
     "fireplace": (150, 145, 140), "chair": (78, 110, 170), "sofa": (120, 126, 134),
     "rug": (214, 178, 96), "table": (128, 88, 52), "counter": (226, 222, 214),
     "sink": (176, 182, 188), "console": (128, 88, 52), "washer": (240, 240, 240),
     "dryer": (240, 240, 240), "toilet": (245, 245, 245), "basin": (245, 245, 245),
-    "shower": (196, 214, 222), "bookshelf": (110, 76, 46),
+    "shower": (196, 214, 222), "bookshelf": (110, 76, 46), "island": (222, 218, 210),
+    "fridge": (188, 194, 200),
 }
-# The user said "blue chairs" and "golden rug"/"blue rug"; the control colour must
-# follow the *word*, not the kind, or the model renders a grey chair.
 COLOUR_OVERRIDE = {
-    "blue": (78, 110, 170),
-    "golden": (214, 178, 96),
-    "grey": (120, 126, 134),
-    "wood": (128, 88, 52),
-    "pale": (226, 222, 214),
-    "steel": (176, 182, 188),
-    "stone": (150, 145, 140),
-    "white": (240, 240, 240),
-    "glass": (196, 214, 222),
+    "blue": (78, 110, 170), "golden": (214, 178, 96), "grey": (120, 126, 134),
+    "wood": (128, 88, 52), "pale": (226, 222, 214), "steel": (176, 182, 188),
+    "stone": (150, 145, 140), "white": (240, 240, 240), "glass": (196, 214, 222),
 }
 
 

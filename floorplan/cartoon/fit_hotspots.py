@@ -167,28 +167,37 @@ def fit(render_path: Path, control_path: Path) -> dict:
         method, final = "geometry", mapped
         dbg = {}
 
-        # clip the anchored polygon to floor pixels (not wall, not background)
-        wm = _wall_mask(render)
-        bgl = cv2.cvtColor(bg.reshape(1, 1, 3).astype(np.uint8), cv2.COLOR_BGR2LAB)[0, 0]
-        bg_dist = np.linalg.norm(lab - bgl.astype(np.float32), axis=2)
-        is_floor = np.logical_and(wm == 0, bg_dist > 16).astype(np.uint8)
-        allow = np.zeros((rh, rw), np.uint8)
-        cv2.fillPoly(allow, [mapped.astype(np.int32).reshape(-1, 1, 2)], 1)
-        clipped = np.logical_and(is_floor == 1, allow == 1).astype(np.uint8)
-        clipped = cv2.morphologyEx(clipped, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
-        cnts, _ = cv2.findContours(clipped, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = [c for c in cnts if cv2.contourArea(c) > 0.15 * anchor_area]
+        # Inset the anchored polygon by half a wall (~7 cm) to get the room INTERIOR.
+        #
+        # Three image-derived attempts came before this and are recorded because each
+        # looked reasonable and each failed on a measurable ground:
+        #   * bright+neutral "wall mask" -- the kitchen island, the pale counters and
+        #     the white bed are the same colour as walls, so the clip ate 23-55 % of
+        #     the room (edge-band purity fell to 0.56 on this render).
+        #   * per-room colour region-grow -- furniture and lighting break uniform colour.
+        #   * wall-mask IoU registration -- the same furniture dominates the mask (0.13).
+        #
+        # The walls are not something to be discovered in the render: they are known
+        # exactly, because the control image was drawn from the same polygons at a known
+        # scale. So the interior is defined geometrically -- polygon inset by half the
+        # wall thickness -- and the RENDER is used only to VERIFY (drift + edge-band
+        # purity). That is a deterministic transform, not an estimate, and it cannot
+        # mistake an island for a wall.
+        inset_px = max(3.0, 7.0 * sx)          # 7 cm half-wall, in render px
+        mask = np.zeros((rh, rw), np.uint8)
+        cv2.fillPoly(mask, [mapped.astype(np.int32).reshape(-1, 1, 2)], 1)
+        k = int(round(inset_px)) * 2 + 1
+        eroded = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+        cnts, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = [c for c in cnts if cv2.contourArea(c) > 0.2 * anchor_area]
         if cnts:
             cnt = max(cnts, key=cv2.contourArea)
             approx = cv2.approxPolyDP(cnt, 0.008 * cv2.arcLength(cnt, True), True)
-            approx = approx.reshape(-1, 2).astype(np.float32)
-            ratio = abs(cv2.contourArea(approx)) / max(1.0, anchor_area)
-            if 0.60 <= ratio <= 1.02:
-                final, method = approx, "clipped"
-            else:
-                why.append(f"clip rejected (ratio {ratio:.2f})")
+            final = approx.reshape(-1, 2).astype(np.float32)
+            method = "inset"
         else:
-            why.append("clip found no floor region")
+            why.append("inset produced no contour")
+
         area = abs(cv2.contourArea(final))
         M = cv2.moments(final)
         if M["m00"] == 0:
