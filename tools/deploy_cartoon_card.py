@@ -33,7 +33,7 @@ ENV = Path("/root/.hermes/.env")
 
 ART = "/local/floorplan/cartoon/floorplan_render.jpg"
 CARD = "/local/floorplan/cartoon/floorplan-cartoon-card.js"
-URL_PATH = "cartoon"
+URL_PATH = "cartoon-plan"   # HA requires a hyphen in url_path
 TITLE = "Cartoon Plan"
 
 
@@ -65,7 +65,7 @@ def check_files(base: str) -> list[str]:
 
 VIEW = {
     "title": "Cartoon",
-    "path": "cartoon",
+    "path": "cartoon-plan",
     "icon": "mdi:home-floor-a",
     "cards": [
         {

@@ -827,3 +827,28 @@ registers the resource as `module`, and creates a **separate** `/cartoon` dashbo
 `/floor-plan` keeps working until the user chooses to switch.
 
 Tests: **545 pass** (12 new in `tests/test_cartoon_card.py`).
+
+## 20.1 Deployment — DONE (2026-10-22)
+
+User uploaded the bundle. Verified in this order:
+
+```
+served vs local, byte comparison
+  floorplan_render.jpg          2,263,646 B  served == local  IDENTICAL
+  floorplan-cartoon-card.js        28,014 B  served == local  IDENTICAL
+  payload version in served JS:  06850ea8      (matches the build)
+
+resource   id=4e053527…  type=module  /local/floorplan/cartoon/floorplan-cartoon-card.js
+dashboard  cartoon_plan  url_path=cartoon-plan  title="Cartoon Plan"  show_in_sidebar
+config     views[0].cards[0] = custom:floorplan-cartoon-card   (read back, not just written)
+```
+
+Two HA quirks hit and handled:
+- a dashboard `url_path` **must contain a hyphen** — `cartoon` was rejected with
+  `invalid_format`, `cartoon-plan` accepted;
+- the resource had to be created once, then `update` on re-runs (the script is idempotent).
+
+The deploy script verifies the files are served *before* writing any config, and reads the
+dashboard config back afterwards. What it cannot verify is the browser paint inside the HA
+frontend — the card was verified against a mock `hass` in a harness (§20, P2/P3), so the
+outstanding check is a visual one on the tablet.
