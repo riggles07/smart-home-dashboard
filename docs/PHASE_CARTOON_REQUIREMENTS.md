@@ -925,3 +925,39 @@ Worst case 5.12:1 against the 4.5:1 floor. Locked as 7 tests in
 | Per-fixture tapping (D4 "tap a fixture") | **implemented as room + sheet**, not per-lamp: the art draws no lamp glyphs, so a per-fixture target would be an invented hit area. Honest deviation, needs a decision. |
 | Basement / garage (8c fast-follow) | blocked on a second source map |
 | Cameras | out of scope (N1) |
+
+## 21. Garage added (markup round 3, 2026-10-22)
+
+The bottom-left quadrant was never "outside the house" — it is the two-car garage. That
+also explains a rendering problem that had been blamed on the model: it kept compressing
+the middle of the plan because it saw an empty quadrant and filled it. With the garage
+drawn, proportions hold.
+
+| Input | Implementation |
+|---|---|
+| garage region marked in grey | `geometry.ROOMS["garage"] = (136,436)…(579,884)` — rectilinear, abuts the family room north and the laundry/bathroom east. **4.43 × 4.48 m ≈ 19.8 m²** (measured from the markup; small for two cars, so the map's extent is the limit — flag if wrong) |
+| grey concrete floor | `FLOORS["garage"] = (168,166,162)`, deliberately lighter than the surround so the "outside" check can tell them apart |
+| interior door | opening in the east wall, y 448–532 (opposite the hall's west arm) |
+| exterior door | opening in the west wall, y 690–772 |
+| GD L / GD R | two `kind: "garage"` openings in the south wall (x 176–344, 382–550), drawn as a sectional panel line |
+| shelves + bikes on the side near the family room | shelving 152–336 and two bikes at 352–430 / 446–524, all along the north wall |
+
+Entity map gained the room with real hardware: `cover.gdo_{left,right}_garage_door`,
+`lock.gdo_{left,right}_lock`, `light.gdo_{left,right}_garage_light` — **51 entities
+validated**.
+
+Card changes for these domains (both were wrong as a blind "toggle"):
+- `cover` → `cover/toggle`, button reads **Open / Close**;
+- `lock` → `lock.lock` or `lock.unlock` chosen from state, button reads **Lock / Unlock** —
+  a lock that silently toggles is a security surprise, not a UI nicety.
+Verified in the harness: garage sheet shows 2 doors + 2 locks + 2 lights, and clicking
+produced `lock.lock lock.gdo_left_lock` and `cover.toggle cover.gdo_left_garage_door`.
+
+Hotspots on the new render: **6 of 8 pass**. Flagged:
+- garage 5.5 % — but the crop shows the polygon fully inside the room; the concrete's darker
+  mottling is within colour range of the surround, so this is the metric over-reporting on
+  a low-saturation floor (same false positive the laundry tile produced, partially fixed by
+  the border-connected test).
+- bathroom 2.1 % — a sliver at an exterior wall.
+
+552 tests pass (room counts updated 7 → 8; garage has no photograph, so photos stay 7).

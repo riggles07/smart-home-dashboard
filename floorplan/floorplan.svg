@@ -213,6 +213,7 @@
   <path id="laundry" class="room gold has-photo" fill="#8a6d1f" d="M 586,533 L 744,533 L 744,622 L 586,622 Z"/>
   <path id="bathroom" class="room orange has-photo" fill="#a8542f" d="M 579,680 L 744,680 L 744,782 L 579,782 Z"/>
   <path id="living_room" class="room gold has-photo" fill="#8a6d1f" d="M 980,590 L 1186,590 L 1186,884 L 980,884 Z"/>
+  <path id="garage" class="room slate" fill="#4a5560" d="M 136,436 L 579,436 L 579,884 L 136,884 Z"/>
   <!-- Stair flight in the top-right corner of the foyer. Drawn in plan
        view: two strings + evenly spaced treads. Not a tap target. -->
   <g class="stairs" pointer-events="none">
@@ -233,4 +234,5 @@
   <text x="665" y="578" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Laundry</text>
   <text x="662" y="731" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Bathroom</text>
   <text x="1083" y="737" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Living Room</text>
+  <text x="358" y="660" class="room-label" text-anchor="middle" dominant-baseline="middle" pointer-events="none">Garage</text>
 </svg>

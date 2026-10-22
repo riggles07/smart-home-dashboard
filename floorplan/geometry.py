@@ -56,6 +56,11 @@ ROOMS = {
     "laundry": [(586, 533), (744, 533), (744, 622), (586, 622)],
     "bathroom": [(579, 680), (744, 680), (744, 782), (579, 782)],
     "living_room": [(980, 590), (1186, 590), (1186, 884), (980, 884)],
+    # The bottom-left quadrant is not outside the house -- it is the two-car garage
+    # (confirmed by the user's markup 2026-10-22). It was previously left as void, which
+    # is what made the image model squeeze the middle of the plan: it saw empty space and
+    # filled it. Abuts the family room on the north and the laundry/bathroom on the east.
+    "garage": [(136, 436), (579, 436), (579, 884), (136, 884)],
 }
 
 # The stair flight sits in the top-right corner of the foyer, i.e. inside the

@@ -93,12 +93,14 @@ HUE = {
     "kitchen": "#a8542f", "bathroom": "#a8542f",
     "dining_room": "#177a74",
     "laundry": "#8a6d1f", "living_room": "#8a6d1f",
+    "garage": "#4a5560",          # concrete slate, distinct from every living space
 }
 CLASS = {
     "study": "room blue", "corridor": "room blue",
     "kitchen": "room orange", "bathroom": "room orange",
     "dining_room": "room teal",
     "laundry": "room gold", "living_room": "room gold",
+    "garage": "room slate",
 }
 # Visible names. The SVG ids are deliberately NOT renamed: floorplan.yaml binds
 # rules by id, and renaming an id silently breaks every tap on that room.
@@ -112,6 +114,7 @@ LABELS = {
     "laundry": "Laundry",
     "bathroom": "Bathroom",
     "living_room": "Living Room",
+    "garage": "Garage",
 }
 
 css = open(CSS).read()
@@ -126,7 +129,7 @@ if bad:
                      f"the inlined stylesheet at that point")
 
 order = ["study", "kitchen", "dining_room", "corridor", "laundry", "bathroom",
-         "living_room"]
+         "living_room", "garage"]
 assert set(order) == set(ROOMS), "order list out of sync with geometry.ROOMS"
 
 lines = [

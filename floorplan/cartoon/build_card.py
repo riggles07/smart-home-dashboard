@@ -45,6 +45,8 @@ def build(require_pass: bool = True) -> dict:
         switches = room.get("switches") or []
         media = room.get("media") or []
         appliances = room.get("appliances") or []
+        covers = room.get("covers") or []
+        locks = room.get("locks") or []
         rooms[rid] = {
             "label": room["label"],
             "points_norm": hs["points_norm"],
@@ -52,12 +54,15 @@ def build(require_pass: bool = True) -> dict:
             "switches": switches,
             "media": media,
             "appliances": appliances,
+            "covers": covers,
+            "locks": locks,
             "temp": room.get("temp"),
             "humidity": room.get("humidity"),
             "motion": room.get("motion"),
             "climate": room.get("climate"),
-            "device_count": len(lights) + len(switches) + len(media) + len(appliances)
-                            + (1 if room.get("climate") else 0),
+            "device_count": (len(lights) + len(switches) + len(media) + len(appliances)
+                             + len(covers) + len(locks)
+                             + (1 if room.get("climate") else 0)),
         }
 
     art_bytes = ART.read_bytes()

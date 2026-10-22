@@ -95,7 +95,7 @@ def test_hotspots_cover_every_room_with_devices():
 
 def test_hotspot_polygons_are_sane():
     hs = _hotspots()["rooms"]
-    assert len(hs) == 7
+    assert len(hs) == 8
     for rid, room in hs.items():
         pts = room["points_norm"]
         assert len(pts) >= 3, rid
@@ -124,7 +124,7 @@ def test_no_two_rooms_share_a_centroid():
 def test_hotspots_report_is_recorded_even_when_imperfect():
     """The gate may fail for a room; what is not allowed is silence about which one."""
     hs = _hotspots()
-    assert "report" in hs and len(hs["report"]) == 7
+    assert "report" in hs and len(hs["report"]) == 8
     for row in hs["report"]:
         assert "room" in row and "ok" in row
 

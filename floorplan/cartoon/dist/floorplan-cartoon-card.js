@@ -1,6 +1,6 @@
-/* built 2263646 B art, version 06850ea8;
+/* built 2504545 B art, version ebcf511f;
  * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */
-window.__FPC_DATA__ = {"version":"06850ea8","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01701,0.03096],[0.01701,0.38775],[0.30821,0.38775],[0.30821,0.339],[0.29061,0.33418],[0.29061,0.03096]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.29432,0.02013],[0.29432,0.31638],[0.31272,0.3212],[0.31272,0.36727],[0.49432,0.36727],[0.49912,0.3962],[0.68792,0.3962],[0.68792,0.02013]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.70947,0.03099],[0.70947,0.3799],[0.94345,0.3974],[0.94345,0.03099]],"lights":[],"switches":[],"media":[],"appliances":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.40944,0.38347],[0.40944,0.49558],[0.55562,0.5005],[0.55562,0.91121],[0.75448,0.91121],[0.75489,0.56722],[0.91781,0.56339],[0.91781,0.3955],[0.49968,0.413],[0.49478,0.38347]],"lights":["light.foyer_candelabra_1","light.foyer_candelabra_2","light.foyer_candelabra_3","light.foyer_d1","light.foyer_d2","light.foyer_d3","light.foyer_d4"],"switches":[],"media":[],"appliances":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":8},"laundry":{"label":"Laundry","points_norm":[[0.42031,0.50574],[0.42031,0.60307],[0.55844,0.60307],[0.55844,0.50574]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.41721,0.70145],[0.41721,0.81361],[0.56029,0.81361],[0.56029,0.70145]],"lights":[],"switches":[],"media":[],"appliances":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.76805,0.57932],[0.76805,0.9151],[0.94404,0.9151],[0.94404,0.57932]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
+window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_candelabra_1","light.foyer_candelabra_2","light.foyer_candelabra_3","light.foyer_d1","light.foyer_d2","light.foyer_d3","light.foyer_d4"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":8},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
 /* floorplan-cartoon-card — interactive cartoon floor plan for Home Assistant.
  *
  * Single file, no build step, no dependencies. Data (hotspots + entity map) is injected
@@ -28,7 +28,9 @@ window.__FPC_DATA__ = {"version":"06850ea8","image":"/local/floorplan/cartoon/fl
     light: 'light/toggle',
     switch: 'switch/toggle',
     media_player: 'media_player/media_play_pause',
+    cover: 'cover/toggle',
   };
+  const ON_STATES = new Set(['on', 'open', 'playing', 'unlocked']);
 
   const css = `
     :host {
@@ -327,6 +329,8 @@ window.__FPC_DATA__ = {"version":"06850ea8","image":"/local/floorplan/cartoon/fl
 
     _deviceRows(host, room) {
       const groups = [
+        ['Doors', room.covers],
+        ['Locks', room.locks],
         ['Lights', room.lights],
         ['Switches', room.switches],
         ['Appliances', room.appliances],
@@ -417,6 +421,11 @@ window.__FPC_DATA__ = {"version":"06850ea8","image":"/local/floorplan/cartoon/fl
         <button data-toggle="${id}" aria-label="Toggle ${label}"></button>`;
       const btn = row.querySelector('button');
       btn.onclick = () => {
+        const st = this._state(id);
+        if (dom === 'lock') {
+          this._call(`lock/${st === 'locked' ? 'unlock' : 'lock'}`, { entity_id: id });
+          return;
+        }
         if (!SVC[dom]) { this._toast(`No control for ${dom}`); return; }
         const [d, s] = SVC[dom].split('/');
         this._call(`${d}/${s}`, { entity_id: id });
@@ -513,10 +522,19 @@ window.__FPC_DATA__ = {"version":"06850ea8","image":"/local/floorplan/cartoon/fl
       sh.querySelectorAll('[data-toggle]').forEach((btn) => {
         const id = btn.dataset.toggle;
         const st = this._state(id);
-        const on = st === 'on';
-        btn.textContent = on ? 'On' : 'Off';
-        btn.classList.toggle('on', on);
+        const dom = id.split('.')[0];
+        const active = ON_STATES.has(st);
+        const words = dom === 'lock' ? ['Locked', 'Unlocked']
+          : dom === 'cover' ? ['Open', 'Closed']
+          : ['On', 'Off'];
+        // the button shows the ACTION, not the state: on a lock "Unlocked" as a button
+        // label reads as "press to unlock", which is the opposite of what happens.
+        btn.textContent = dom === 'lock' ? (st === 'locked' ? 'Unlock' : 'Lock')
+          : dom === 'cover' ? (active ? 'Close' : 'Open')
+          : (active ? 'Off' : 'On');
+        btn.classList.toggle('on', active);
         btn.disabled = ['unavailable', 'unknown'].includes(st);
+        void words;
       });
       sh.querySelectorAll('[data-state]').forEach((el) => {
         el.textContent = this._state(el.dataset.state);

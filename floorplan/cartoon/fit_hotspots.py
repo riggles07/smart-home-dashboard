@@ -186,7 +186,7 @@ def fit(render_path: Path, control_path: Path) -> dict:
         # wall thickness -- and the RENDER is used only to VERIFY (drift + edge-band
         # purity). That is a deterministic transform, not an estimate, and it cannot
         # mistake an island for a wall.
-        inset_px = max(3.0, 7.0 * sx)          # 7 cm half-wall, in render px
+        inset_px = max(3.0, 10.0 * sx)         # 10 cm: half-wall plus the render's wall shadow
         mask = np.zeros((rh, rw), np.uint8)
         cv2.fillPoly(mask, [mapped.astype(np.int32).reshape(-1, 1, 2)], 1)
         k = int(round(inset_px)) * 2 + 1

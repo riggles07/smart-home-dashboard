@@ -21,6 +21,9 @@ FLOORS = {
     "living_room": WOOD,
     "bathroom":    WOOD,
     "laundry":     (186, 196, 200),   # stays as set: cool grey tile
+    # garage: bare grey concrete, deliberately lighter than the surround so the two greys
+    # cannot be confused by the "outside the house" check
+    "garage":      (168, 166, 162),
 }
 
 # Open plan / doorways. Each rect is painted in the floor colour so the model renders
@@ -51,6 +54,19 @@ OPENINGS = [
     # "Front door" (red, bottom edge): door in the south wall of the foyer.
     {"id": "front_door", "rooms": ("corridor",), "kind": "door",
      "rect": (800, 872, 884, 890)},
+
+    # --- garage (markup round 3, 2026-10-22) --------------------------------
+    # "Garage interior door": east wall, top, opening into the hall by the laundry.
+    {"id": "garage_interior_door", "rooms": ("garage",), "kind": "door",
+     "rect": (571, 448, 587, 532)},
+    # exterior pedestrian door, west wall
+    {"id": "garage_exterior_door", "rooms": ("garage",), "kind": "door",
+     "rect": (128, 690, 144, 772)},
+    # GD L / GD R: the two overhead doors on the south wall
+    {"id": "garage_door_left", "rooms": ("garage",), "kind": "garage",
+     "rect": (176, 876, 344, 892)},
+    {"id": "garage_door_right", "rooms": ("garage",), "kind": "garage",
+     "rect": (382, 876, 550, 892)},
 ]
 
 # kind: shape language in the control image and in the prompt.
@@ -91,6 +107,11 @@ FURNITURE = [
     {"room": "bathroom", "kind": "basin", "colour": "white", "rect": (660, 692, 730, 730)},
     {"room": "bathroom", "kind": "shower", "colour": "glass", "rect": (595, 745, 700, 775)},
 
+    # --- garage: shelves and bikes along the side nearest the family room ----
+    {"room": "garage", "kind": "shelf", "colour": "wood", "rect": (152, 444, 336, 492)},
+    {"room": "garage", "kind": "bike", "colour": "dark", "rect": (352, 446, 430, 500)},
+    {"room": "garage", "kind": "bike", "colour": "dark", "rect": (446, 446, 524, 500)},
+
     # --- living room --------------------------------------------------------
     {"room": "living_room", "kind": "rug", "colour": "blue", "rect": (1012, 660, 1148, 820)},
     {"room": "living_room", "kind": "bookshelf", "colour": "wood", "rect": (1150, 640, 1182, 800)},
@@ -108,12 +129,13 @@ KIND_FILL = {
     "sink": (176, 182, 188), "console": (128, 88, 52), "washer": (240, 240, 240),
     "dryer": (240, 240, 240), "toilet": (245, 245, 245), "basin": (245, 245, 245),
     "shower": (196, 214, 222), "bookshelf": (110, 76, 46), "island": (222, 218, 210),
-    "fridge": (188, 194, 200),
+    "fridge": (188, 194, 200), "shelf": (150, 110, 74), "bike": (72, 76, 82),
 }
 COLOUR_OVERRIDE = {
     "blue": (78, 110, 170), "golden": (214, 178, 96), "grey": (120, 126, 134),
     "wood": (128, 88, 52), "pale": (226, 222, 214), "steel": (176, 182, 188),
     "stone": (150, 145, 140), "white": (240, 240, 240), "glass": (196, 214, 222),
+    "dark": (72, 76, 82),
 }
 
 

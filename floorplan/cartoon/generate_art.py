@@ -50,8 +50,9 @@ WALLS
 
 FLOORS
 - Every room is MEDIUM BROWN WOOD PLANK flooring -- the same warm medium brown
-  throughout, with visible plank lines and a subtle grain.
-- The ONLY tiled floor in the whole plan is the laundry. Of the two small rooms on
+  throughout, with visible plank lines and a subtle grain. The GARAGE is the one
+  exception besides the laundry: it has plain GREY CONCRETE.
+- The only tiled floor in the whole plan is the laundry. Of the two small rooms on
   the left of the hall, the laundry is the UPPER one -- the room containing the white
   washer and dryer, directly below the hall's upper arm. Its floor is COOL GREY
   CERAMIC TILE with a visible square grid of grout lines.
@@ -97,6 +98,16 @@ Small middle-left room (laundry):
 
 Small lower-left room (bathroom):
 - A white toilet, a white basin with a small counter, and a glass shower enclosure.
+
+Garage (the large bottom-left room, below the family room, bare concrete):
+- Grey concrete floor with a faint swept texture, and a visible floor slab edge.
+- TWO OVERHEAD SECTIONAL GARAGE DOORS in the SOUTH wall, side by side, closed, with
+  horizontal panel lines.
+- ONE INTERIOR DOOR in the EAST wall near the top, opening into the house, with a step up.
+- ONE EXTERIOR PEDESTRIAN DOOR in the WEST wall, mid-height.
+- WOODEN SHELVING UNITS along the NORTH wall (the side nearest the family room), and TWO
+  BICYCLES leaning/standing beside them against the same wall.
+- Nothing else: no cars, no workbench, no boxes scattered on the floor.
 
 Bottom-right room (living room):
 - A BLUE area RUG in the centre.
