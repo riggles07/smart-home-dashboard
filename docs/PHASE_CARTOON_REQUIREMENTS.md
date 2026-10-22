@@ -681,3 +681,51 @@ Failures, unchanged in kind and still P1 work:
 
 Both are fixed by the same P1 change: detect walls as *lines* (Hough/continuity) rather
 than as "bright neutral pixels", and let a room polygon span open boundaries.
+
+## 15.5 Art v3 — markup round 2 applied (2026-10-22)
+
+The user annotated the render directly. Every mark is now a named entry in
+`room_spec.py`, so the reason a block sits where it does is traceable:
+
+| Annotation | Change |
+|---|---|
+| **Kitchen Door** (red ellipse, kitchen north wall, west end) | door opening added in the north wall; the counter run now starts east of it |
+| **Counter** (thick black line) | counter is an **L**: north wall, then a return down the east wall |
+| **Island** (black box, kitchen centre) | pale stone island added, walkway around it |
+| **Fridge** (black outline, kitchen south wall) | fridge moved to the south wall, east of the hall opening |
+| **Open doorway** (green, kitchen lower-left) | opening punched kitchen → hall |
+| unlabelled green marks at kitchen/dining wall | opening punched kitchen → dining room |
+| **Stair direction** (arrow, east) | treads rotated 90°: the flight now ascends toward +x |
+| **Front door** (red, bottom edge) | door opening added in the south wall of the foyer |
+
+Two engineering findings from this round, both now fixed in code:
+
+1. **Variable shadowing silently deleted the furniture.** The door branch rebound
+   `x0/y0/x1/y1`, which are the plan-bounds captured by the coordinate transform, so
+   every later draw used a door rect as its origin and furniture rendered off-canvas.
+   The confirmation diagram came out as bare floors — caught only by looking at it.
+2. **A pure-white surround hides walls on the exterior edge.** The bathroom and laundry
+   west walls face the void; white-on-white made them invisible and the model rendered
+   those rooms floating. The control image surround is now `(231,231,229)`.
+
+Process note: corrections were applied as **three targeted edits** after the
+regeneration (bathroom duplicate fixtures, laundry tile restored, bathroom floor to
+wood). Each edit is one paid call; a full re-roll would have re-randomised everything
+already accepted. The accepted asset is `art/floorplan_render.jpg` (2400×1792).
+
+Remaining known art deviations, accepted for now: the washer and dryer stand front-to-back
+rather than side by side, and the "fridge" reads as a low cabinet rather than a tall unit.
+
+### Hotspot status — regressed, and the diagnosis is narrower
+
+On the v3 render the fitter returns **2 of 7** (laundry, living room). The inset is now
+deterministic (area ratio 0.83–0.95, centroid drift 0.000–0.002), so the remaining error
+is entirely in the **anchor**: the house bbox is detected from the background silhouette,
+and on this render that picks up the drop shadow, stretching the mapped box ~7 % too low.
+A uniform bbox map then cannot be right for both axes, and every polygon lands short.
+
+`hotspots.json` from this run is therefore **not trustworthy** and must not be wired into
+the card. P1's job is now precise: replace bbox anchoring with multi-scale template
+matching of the control's wall mask against the render's edge map (the control *is* the
+ground truth, so this is a registration problem, not a segmentation one), then keep the
+drift + edge-band gates as the acceptance test.

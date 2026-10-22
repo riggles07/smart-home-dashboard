@@ -40,10 +40,13 @@ WALLS
 - Light warm grey (#E8E5DF) with visible thickness of about 12 cm, tops slightly
   lighter. The outer wall is continuous.
 - Interior walls follow the white wall bands in the input exactly.
-- TWO PLACES ARE OPEN PLAN and must have NO wall across them: the wide opening
-  between the top-left room (family room) and the top-centre room (kitchen), and the
-  wide opening between the bottom-right room (living room) and the central hall
-  (foyer). There the floor runs continuously from one room into the next.
+- OPENINGS. These must be open gaps with floor running continuously through them,
+  not walls: between the family room (top-left) and the kitchen (top-centre); between
+  the kitchen and the central hall below it; between the kitchen and the dining room
+  (top-right); and between the living room (bottom-right) and the central hall.
+- DOORWAYS with a visible door: one in the NORTH outside wall at the kitchen's west
+  end (the kitchen door), and one in the SOUTH outside wall of the central hall
+  (the front door).
 
 FLOORS
 - Every room is MEDIUM BROWN WOOD PLANK flooring -- the same warm medium brown
@@ -74,16 +77,20 @@ Between the family room and the kitchen:
   two chairs; it sits in the opening, half in the family room, half in the kitchen.
 
 Top-centre room (kitchen):
-- A white counter run along the NORTH wall only, with a stainless sink and a tall
-  fridge at its east end. No island, and no counter along the east wall -- the
-  kitchen floor is wood everywhere except under the north counter run.
+- A white counter run along the NORTH wall starting east of the kitchen door, with a
+  stainless sink, turning the corner and continuing DOWN THE EAST wall as an L.
+- A pale stone KITCHEN ISLAND in the middle of the room, roughly centred, with a
+  clear walkway around it.
+- A stainless FRIDGE standing against the SOUTH wall of the kitchen, to the east of
+  the opening to the hall.
 
 Top-right room (dining room):
 - A wooden dining table with a chair on its west and east sides.
 
 Central hall (foyer):
-- A stair flight with visible treads in the upper-right of the hall, a slim wooden
-  console table against the hall's west wall. Keep the hall floor clear.
+- A stair flight in the upper-right of the hall whose steps ascend toward the EAST
+  (the treads run north-south, and the flight rises to the right). A slim wooden
+  console table against the hall's west wall. Keep the rest of the hall floor clear.
 
 Small middle-left room (laundry):
 - A white washer and a white dryer side by side against the north wall of that room.

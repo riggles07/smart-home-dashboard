@@ -41,6 +41,7 @@ from geometry import ROOMS, STAIRS, bounds  # noqa: E402
 import room_spec as spec  # noqa: E402
 
 WALL = (250, 250, 250)
+SURROUND = (231, 231, 229)   # "outside": light neutral, so white walls read against it
 PAD = 40
 SCALE = 1.6
 WALL_PX = 14
@@ -58,7 +59,7 @@ def _check_spec():
         assert f["room"] in ROOMS, f"FURNITURE references unknown room {f['room']!r}"
 
 
-def render(out: Path, size=(1600, 1168)) -> dict:
+def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
     _check_spec()
     x0, y0, x1, y1 = bounds()
     w = int((x1 - x0) * SCALE) + PAD * 2
@@ -71,7 +72,7 @@ def render(out: Path, size=(1600, 1168)) -> dict:
         a, b = T(rect[0], rect[1]), T(rect[2], rect[3])
         return [a[0], a[1], b[0], b[1]]
 
-    im = Image.new("RGB", (w, h), (255, 255, 255))
+    im = Image.new("RGB", (w, h), SURROUND)
     d = ImageDraw.Draw(im)
 
     # 1. floors
@@ -84,10 +85,17 @@ def render(out: Path, size=(1600, 1168)) -> dict:
         pts = [T(*p) for p in poly]
         d.line(pts + [pts[0]], fill=WALL, width=WALL_PX, joint="curve")
 
-    # 3. open plan: paint the openings in the room's own floor colour
+    # 3. openings: paint in the room's own floor colour, then mark doors with a leaf
     for o in spec.OPENINGS:
         rid = o["rooms"][0]
         d.rectangle(TR(o["rect"]), fill=spec.FLOORS[rid])
+        if o.get("kind") == "door":
+            dx0, dy0, dx1, dy1 = TR(o["rect"])
+            across = abs(o["rect"][2] - o["rect"][0]) > abs(o["rect"][3] - o["rect"][1])
+            if across:        # door in a horizontal wall -> leaf drawn along the wall
+                d.line([(dx0 + 4, dy0 + 3), (dx1 - 4, dy0 + 3)], fill=(122, 86, 54), width=7)
+            else:             # door in a vertical wall
+                d.line([(dx0 + 3, dy0 + 4), (dx0 + 3, dy1 - 4)], fill=(122, 86, 54), width=7)
 
     # 3b. tile hint in the laundry only: a visible grid, because the model kept
     #     swapping the two small rooms' floors when the cue was a flat grey fill.
@@ -103,13 +111,20 @@ def render(out: Path, size=(1600, 1168)) -> dict:
         d.line([T(lx0, py), T(lx1, py)], fill=(168, 178, 184), width=2)
         py += step
 
-    # 4. stairs
+    # 4. stairs -- treads are perpendicular to the direction of travel. The user's
+    #    "Stair direction" arrow points east, so the treads run north-south and the
+    #    flight ascends toward +x. Earlier the treads were horizontal, i.e. climbing
+    #    north, which is what the arrow corrected.
     s = STAIRS
     sx0, sy0 = T(s["x0"], s["y0"])
     sx1, sy1 = T(s["x1"], s["y1"])
     for i in range(s["treads"] + 1):
-        y = sy0 + (sy1 - sy0) * i / s["treads"]
-        d.line([(sx0, y), (sx1, y)], fill=(226, 210, 188), width=5)
+        if spec.STAIR_DIRECTION == "east":
+            x = sx0 + (sx1 - sx0) * i / s["treads"]
+            d.line([(x, sy0), (x, sy1)], fill=(226, 210, 188), width=5)
+        else:
+            y = sy0 + (sy1 - sy0) * i / s["treads"]
+            d.line([(sx0, y), (sx1, y)], fill=(226, 210, 188), width=5)
 
     # 5. furniture blocks
     for f in spec.FURNITURE:
@@ -124,6 +139,23 @@ def render(out: Path, size=(1600, 1168)) -> dict:
                 d.rounded_rectangle(inset, radius=r, outline=(255, 255, 255), width=2)
 
     im = im.resize(size, Image.LANCZOS)
+
+    if labels:
+        # Only for the confirmation diagram sent to the user -- these strings must
+        # never reach the control image used for generation, or the model renders them.
+        d2 = ImageDraw.Draw(im)
+        for o in spec.OPENINGS:
+            lx0, ly0, lx1, ly1 = TR(o["rect"])
+            d2.rectangle([lx0, ly0, lx1, ly1], outline=(200, 30, 30), width=3)
+            d2.text((lx0, max(2, ly0 - 16)), o["kind"].upper(), fill=(200, 30, 30))
+        for f in spec.FURNITURE:
+            if f["kind"] in ("island", "fridge", "counter"):
+                lx0, ly0, _, _ = TR(f["rect"])
+                d2.text((lx0, ly0), f["kind"].upper(), fill=(20, 90, 200))
+        sx, sy = T(STAIRS["x1"], (STAIRS["y0"] + STAIRS["y1"]) / 2)
+        d2.line([(sx - 30, sy), (sx + 40, sy)], fill=(20, 140, 40), width=6)
+        d2.text((sx + 44, sy - 8), "UP", fill=(20, 140, 40))
+
     im.save(out)
     return {"control": str(out), "size": list(im.size),
             "plan_bounds": [x0, y0, x1, y1], "scale": SCALE, "pad": PAD,
@@ -132,5 +164,6 @@ def render(out: Path, size=(1600, 1168)) -> dict:
 
 
 if __name__ == "__main__":
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else "control_plan.png")
-    print(json.dumps(render(out), indent=2))
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    out = Path(args[0] if args else "control_plan.png")
+    print(json.dumps(render(out, labels="--labels" in sys.argv), indent=2))
