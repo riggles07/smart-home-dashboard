@@ -36,7 +36,8 @@ ENV = Path("/root/.hermes/.env")
 
 ENTITY_KEYS = ("primary_light", "temp", "humidity", "motion", "climate",
                "front_door", "door", "weather", "sun", "alarm_primary")
-ENTITY_LIST_KEYS = ("lights", "switches", "media", "appliances", "alarm_secondary")
+ENTITY_LIST_KEYS = ("lights", "switches", "media", "appliances", "covers", "locks",
+                    "alarm_secondary")
 
 
 def _env() -> tuple[str, str]:

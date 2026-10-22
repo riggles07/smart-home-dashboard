@@ -29,7 +29,8 @@ SVG = open(os.path.join(FP, "floorplan.svg")).read()
 CSS = open(os.path.join(FP, "floorplan.css")).read()
 PY_SRC = open(os.path.join(FP, "render_floorplan.py")).read()
 
-ROOMS = ["bathroom", "corridor", "dining_room", "kitchen", "laundry", "living_room", "study"]
+ROOMS = ["bathroom", "corridor", "dining_room", "garage", "kitchen", "laundry",
+         "living_room", "study"]
 BOUND = ["study", "corridor", "living_room", "laundry"]
 
 
@@ -124,7 +125,7 @@ def test_unbound_rooms_stay_inert():
 def test_every_room_path_carries_its_own_fill():
     paths = re.findall(r'<path id="(\w+)" class="([^"]*)" fill="(#[0-9a-f]{6})"', SVG)
     assert sorted(p[0] for p in paths) == sorted(ROOMS)
-    assert len(paths) == 7
+    assert len(paths) == 8
     for _id, _cls, fill in paths:
         assert fill not in ("#000000", "#000"), "SVG default fill would win if CSS failed"
 

@@ -1,21 +1,15 @@
-CARTOON FLOORPLAN -- UPLOAD BUNDLE
-=================================
-Upload BOTH files to /config/www/floorplan/cartoon/   (create the folder if needed).
-Use a binary-safe uploader: the .jpg must not be re-encoded.
+CARTOON FLOORPLAN -- UPLOAD BUNDLE (version ebcf511f)
+====================================================
+Upload BOTH files to /config/www/floorplan/cartoon/  (binary-safe; do not re-encode the jpg)
 
   floorplan_render.jpg          -> /config/www/floorplan/cartoon/floorplan_render.jpg
   floorplan-cartoon-card.js     -> /config/www/floorplan/cartoon/floorplan-cartoon-card.js
 
-Then, from the project root:
+The card file name is unchanged, so the existing Lovelace resource keeps working -- but
+/local is cached for 31 days, so the resource URL must carry the new version:
 
-  python3 tools/deploy_cartoon_card.py --check-only   # confirms HA serves both files
-  python3 tools/deploy_cartoon_card.py                # registers the resource + creates
-                                                      # a separate  /cartoon  dashboard
+  python3 tools/deploy_cartoon_card.py        # re-points the resource at ?v=ebcf511f
+                                              # and refreshes the /cartoon-plan view
 
-The new dashboard sits alongside the existing /floor-plan, so nothing the kiosk uses
-changes until you decide to switch it over (point that view at
-custom:floorplan-cartoon-card).
-
-The .js is self-contained: hotspot polygons and the entity map are compiled into it, and
-the image URL carries a hash of both. If the art is regenerated, run build_card.py and
-upload the new .js too -- the polygons are fitted to that exact image.
+This build adds the GARAGE: 8 rooms, garage doors (cover), deadbolts (lock) and the two
+garage lights are all in the room sheet.

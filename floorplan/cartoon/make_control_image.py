@@ -89,7 +89,14 @@ def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
     for o in spec.OPENINGS:
         rid = o["rooms"][0]
         d.rectangle(TR(o["rect"]), fill=spec.FLOORS[rid])
-        if o.get("kind") == "door":
+        if o.get("kind") == "garage":
+            gx0, gy0, gx1, gy1 = TR(o["rect"])
+            across = abs(o["rect"][2] - o["rect"][0]) > abs(o["rect"][3] - o["rect"][1])
+            if across:      # door in a horizontal (south) wall
+                d.line([(gx0 + 4, gy0 + 4), (gx1 - 4, gy0 + 4)], fill=(120, 124, 130), width=9)
+            else:
+                d.line([(gx0 + 4, gy0 + 4), (gx0 + 4, gy1 - 4)], fill=(120, 124, 130), width=9)
+        elif o.get("kind") == "door":
             dx0, dy0, dx1, dy1 = TR(o["rect"])
             across = abs(o["rect"][2] - o["rect"][0]) > abs(o["rect"][3] - o["rect"][1])
             if across:        # door in a horizontal wall -> leaf drawn along the wall

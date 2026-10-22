@@ -25,7 +25,9 @@
     light: 'light/toggle',
     switch: 'switch/toggle',
     media_player: 'media_player/media_play_pause',
+    cover: 'cover/toggle',
   };
+  const ON_STATES = new Set(['on', 'open', 'playing', 'unlocked']);
 
   const css = `
     :host {
@@ -324,6 +326,8 @@
 
     _deviceRows(host, room) {
       const groups = [
+        ['Doors', room.covers],
+        ['Locks', room.locks],
         ['Lights', room.lights],
         ['Switches', room.switches],
         ['Appliances', room.appliances],
@@ -414,6 +418,11 @@
         <button data-toggle="${id}" aria-label="Toggle ${label}"></button>`;
       const btn = row.querySelector('button');
       btn.onclick = () => {
+        const st = this._state(id);
+        if (dom === 'lock') {
+          this._call(`lock/${st === 'locked' ? 'unlock' : 'lock'}`, { entity_id: id });
+          return;
+        }
         if (!SVC[dom]) { this._toast(`No control for ${dom}`); return; }
         const [d, s] = SVC[dom].split('/');
         this._call(`${d}/${s}`, { entity_id: id });
@@ -510,10 +519,19 @@
       sh.querySelectorAll('[data-toggle]').forEach((btn) => {
         const id = btn.dataset.toggle;
         const st = this._state(id);
-        const on = st === 'on';
-        btn.textContent = on ? 'On' : 'Off';
-        btn.classList.toggle('on', on);
+        const dom = id.split('.')[0];
+        const active = ON_STATES.has(st);
+        const words = dom === 'lock' ? ['Locked', 'Unlocked']
+          : dom === 'cover' ? ['Open', 'Closed']
+          : ['On', 'Off'];
+        // the button shows the ACTION, not the state: on a lock "Unlocked" as a button
+        // label reads as "press to unlock", which is the opposite of what happens.
+        btn.textContent = dom === 'lock' ? (st === 'locked' ? 'Unlock' : 'Lock')
+          : dom === 'cover' ? (active ? 'Close' : 'Open')
+          : (active ? 'Off' : 'On');
+        btn.classList.toggle('on', active);
         btn.disabled = ['unavailable', 'unknown'].includes(st);
+        void words;
       });
       sh.querySelectorAll('[data-state]').forEach((el) => {
         el.textContent = this._state(el.dataset.state);
