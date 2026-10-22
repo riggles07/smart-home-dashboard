@@ -5,15 +5,63 @@ rules:
   entity: light.family_room_family_room
   tap_action:
     action: toggle
+  hold_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data:
+      class: '${entity.state === ''on'' ? ''room-on'' : ''room-off''}'
 - element: kitchen
   entity: light.z_wave_plus_s2_dimmer_light_switch
   tap_action:
     action: toggle
+  hold_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data:
+      class: '${entity.state === ''on'' ? ''room-on'' : ''room-off''}'
 - element: corridor
   entity: light.foyer_candelabra_1
   tap_action:
     action: toggle
+  hold_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data:
+      class: '${entity.state === ''on'' ? ''room-on'' : ''room-off''}'
 - element: laundry
   entity: switch.laundry_laundry_relay
   tap_action:
     action: toggle
+  hold_action:
+    action: call-service
+    service: floorplan.class_set
+    service_data:
+      class: '${entity.state === ''on'' ? ''room-on'' : ''room-off''}'
+- element: temp_study
+  entity: sensor.family_room_family_room_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      text: "${entity.state} \xB0F"
+- element: temp_kitchen
+  entity: sensor.kitchen_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      text: "${entity.state} \xB0F"
+- element: temp_corridor
+  entity: sensor.hallway_motion_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      text: "${entity.state} \xB0F"
+- element: temp_laundry
+  entity: sensor.laundry_door_temperature
+  state_action:
+    action: call-service
+    service: floorplan.text_set
+    service_data:
+      text: "${entity.state} \xB0F"
