@@ -118,10 +118,14 @@ EXCLUDE
   outside the rooms, no watermark, no border, no vignette, no grass or landscape
   around the house.
 
-FRAMING
+FRAMING AND PROPORTIONS
 - Keep the whole plan inside the frame with a small even margin, and keep every
   room's footprint, proportions and position identical to the input. Do not merge,
   split, add or remove rooms.
+- The house is an irregular L-shaped footprint: the lower-left quadrant is OUTSIDE the
+  house. Keep that area empty -- flat neutral background, no floor, no furniture, no
+  shadow. Do not stretch or rearrange rooms to fill it, and do not change the relative
+  width of one room against another.
 """
 
 
