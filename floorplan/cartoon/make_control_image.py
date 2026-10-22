@@ -41,7 +41,7 @@ from geometry import ROOMS, STAIRS, bounds  # noqa: E402
 import room_spec as spec  # noqa: E402
 
 WALL = (250, 250, 250)
-SURROUND = (231, 231, 229)   # "outside": light neutral, so white walls read against it
+SURROUND = (108, 112, 118)   # "outside": mid grey, clearly not floor and not wall
 PAD = 40
 SCALE = 1.6
 WALL_PX = 14

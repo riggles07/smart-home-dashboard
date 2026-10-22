@@ -729,3 +729,101 @@ the card. P1's job is now precise: replace bbox anchoring with multi-scale templ
 matching of the control's wall mask against the render's edge map (the control *is* the
 ground truth, so this is a registration problem, not a segmentation one), then keep the
 drift + edge-band gates as the acceptance test.
+
+---
+
+# 20. Execution log — 2026-10-22 (P0–P3 built, P4 partially)
+
+Autonomous run per the user's "execute until you need something blocking".
+
+## P0 — data contract + validator: DONE
+
+`floorplan/cartoon/entity_map.json` (45 entities, 7 rooms) and
+`tools/validate_entity_map.py`.
+
+```
+checked 45 unique entities from 50 references
+RESULT: PASS
+```
+
+The validator gates on existence (HTTP 200 per entity), on a stale `excluded` list, and on
+a shape rule that specifically catches the bug that started this: a room whose
+`primary_light` is a `switch.*` while it also lists `lights`. `tests/test_cartoon_card.py`
+asserts `switch.laundry_laundry_relay` appears nowhere in the repo — it was in
+`floorplan.yaml` twice and is now `switch.double_relay`.
+
+## P1 — art + hotspots: DONE, with one room flagged
+
+Art v3 (`art/floorplan_render.jpg`, 2400×1792) matches the markup round-2 annotations, and
+the accepted image was built as one generation plus three targeted edits (see §15.5).
+
+Hotspot fit: **6 of 7 rooms pass**, all four failing approaches documented in
+`fit_hotspots.py`:
+
+| method | measured outcome |
+|---|---|
+| bbox anchor | L-shaped footprint breaks mid-line scans (reported the house starting at x=1003); silhouette bbox includes the drop shadow, stretching the map ~7 % |
+| colour region-grow | covered 3–70 % of a room; furniture and lighting break uniform colour |
+| wall-mask IoU | 0.13 — bright furniture dominates a "light-neutral" mask |
+| **chamfer registration + geometric inset + bounded snap** | 6/7 at `outside ≤ 0.019`, drift ≤ 0.08 |
+
+The laundry is the flag: the model drew that room ~8 % smaller than measured, so ~10 % of
+its hotspot area lands on the surround. It is still on the room (a sliver spills), so taps
+work; the polygon is honest about being imperfect.
+
+Two validation metrics were also wrong before they were right, and both are recorded
+because they nearly sent me re-warping *correct* polygons:
+- edge-band "is it floor?" purity measures **furnishing**, not alignment — the fireplace is
+  ON the family room's wall, the island fills the kitchen. Replaced by "share of the
+  hotspot outside the house", using the background component **connected to the image
+  border** (a plain colour test called 29 % of the grey-tiled laundry "outside").
+- the snap objective minimised "outside" alone, which is best satisfied by collapsing the
+  polygon to a dot (measured: every room collapsed to 0.66 area). Now penalised.
+
+## P2/P3 — the card: DONE, verified in a browser harness
+
+`floorplan/cartoon/card.src.js` → `build_card.py` → `dist/floorplan-cartoon-card.js`
+(28 kB, self-contained: polygons + entity map + art hash compiled in).
+
+Verified by DOM assertions and synthetic events against a mock `hass` at 800 px:
+
+```
+room tap (kitchen)  -> sheet "Kitchen", 6 rows, title/rows correct
+toggle button       -> light.toggle light.z_wave_plus_s2_dimmer_light_switch
+long-press (living) -> light.turn_on light.living_room_ceiling
+empty room (dining) -> "No devices in this room."
+alarm chip          -> 3 panels, modes Home/Away/Night/Disarm from supported_features
+                    -> click -> alarm_control_panel.alarm_arm_home (house)
+night toggle        -> art dims, lamp pools brighten
+```
+
+One real rendering bug found this way and fixed: the SVG used `viewBox="0 0 1 1"`, so a
+13 px label became **13 user units ≈ 10,400 screen px** and painted the card dark. The
+viewBox is now the art's pixel space and every size is scaled by `--k = artW / rendered
+width`.
+
+## P4 — alarm/climate/weather: PARTIAL
+
+Alarm sheet (real Alarmo, modes derived from `supported_features`), climate row in the
+foyer sheet, weather + clock chips, sun-driven night mode: all in and verified above.
+NOT done: colour-contrast audit per palette (§8) — the card inherits the dashboard's dark
+chrome and has not been measured against the existing suite's palettes yet.
+
+## BLOCKED — file upload
+
+HA exposes only port 80 from here (22, 2222, 1880, 8123, 8099 all closed) and `/config` is
+not mounted on this host, so the two files cannot be written into `/config/www/`. The card
+JS and art are packaged at `floorplan/cartoon/dist/cartoon_deploy.zip`.
+
+`tools/deploy_cartoon_card.py --check-only` confirms the state:
+
+```
+MISS /local/floorplan/cartoon/floorplan_render.jpg  (404, 0 kB)
+MISS /local/floorplan/cartoon/floorplan-cartoon-card.js  (404, 0 kB)
+```
+
+The deploy script verifies both files are actually served *before* touching config,
+registers the resource as `module`, and creates a **separate** `/cartoon` dashboard so
+`/floor-plan` keeps working until the user chooses to switch.
+
+Tests: **545 pass** (12 new in `tests/test_cartoon_card.py`).
