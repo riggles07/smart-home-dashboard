@@ -1,0 +1,90 @@
+{
+  "views": [
+    {
+      "title": "Main Floor",
+      "path": "main",
+      "panel": true,
+      "cards": [
+        {
+          "type": "custom:floorplan-card",
+          "config": {
+            "image": {
+              "location": "/local/floorplan/floorplan.svg?v=10",
+              "cache": false
+            },
+            "rules": [
+              {
+                "element": "study",
+                "entity": "light.family_room_family_room",
+                "state_action": {
+                  "action": "call-service",
+                  "service": "floorplan.class_set",
+                  "service_data": "${entity.state === \"on\" ? \"room-on\" : \"room-off\"}"
+                },
+                "tap_action": {
+                  "action": "call-service",
+                  "service": "light.toggle",
+                  "service_data": {
+                    "entity_id": "light.family_room_family_room"
+                  }
+                }
+              },
+              {
+                "element": "corridor",
+                "entity": "light.foyer_candelabra_1",
+                "state_action": {
+                  "action": "call-service",
+                  "service": "floorplan.class_set",
+                  "service_data": "${entity.state === \"on\" ? \"room-on\" : \"room-off\"}"
+                },
+                "tap_action": {
+                  "action": "call-service",
+                  "service": "light.toggle",
+                  "service_data": {
+                    "entity_id": [
+                      "light.foyer_candelabra_1",
+                      "light.foyer_candelabra_2",
+                      "light.foyer_candelabra_3"
+                    ]
+                  }
+                }
+              },
+              {
+                "element": "living_room",
+                "entity": "light.living_room_ceiling",
+                "state_action": {
+                  "action": "call-service",
+                  "service": "floorplan.class_set",
+                  "service_data": "${entity.state === \"on\" ? \"room-on\" : \"room-off\"}"
+                },
+                "tap_action": {
+                  "action": "call-service",
+                  "service": "light.toggle",
+                  "service_data": {
+                    "entity_id": "light.living_room_ceiling"
+                  }
+                }
+              },
+              {
+                "element": "laundry",
+                "entity": "switch.laundry_laundry_relay",
+                "state_action": {
+                  "action": "call-service",
+                  "service": "floorplan.class_set",
+                  "service_data": "${entity.state === \"on\" ? \"room-on\" : \"room-off\"}"
+                },
+                "tap_action": {
+                  "action": "call-service",
+                  "service": "homeassistant.toggle",
+                  "service_data": {
+                    "entity_id": "switch.laundry_laundry_relay"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

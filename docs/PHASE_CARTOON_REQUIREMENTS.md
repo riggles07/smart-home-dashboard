@@ -874,3 +874,54 @@ sit behind a month-long cache — the same class of bug as the floorplan image d
 
 Lesson for the requirements doc: **adding a resource requires a page reload; a green
 `resources/create` result does not mean the browser has the card.**
+
+## 20.3 Switched over, and P4's contrast gate closed (2026-10-22)
+
+User confirmed `/cartoon-plan` looks good. `/floor-plan` now uses the cartoon card:
+
+```
+action: switch
+to:     custom:floorplan-cartoon-card
+backup: floorplan/backups/floor-plan-20261022T201011Z.json
+cards_now: ["custom:floorplan-cartoon-card"]      (read back from HA)
+```
+
+Rollback is one command and does not depend on this session:
+
+```
+python3 tools/switch_floorplan_to_cartoon.py --restore
+```
+
+The switch script backs up the live view config before touching it, and both dashboards
+exist side by side, so the kiosk is never left without a plan.
+
+### Contrast (requirements §8) — measured, not asserted
+
+Ratios computed from the tokens in `card.src.js`, composited over the *palest pixels of the
+actual render* rather than over the panel colour (text on this card sits on translucent
+panels above a photograph):
+
+```
+chip text on art, bright wood        11.55:1
+chip text on art, pale counter        9.70:1
+room row name on panel               14.96:1
+room row meta on panel                7.78:1
+temp label on bright wood             7.20:1
+temp label on pale counter            5.12:1   <- worst case
+alarm-triggered label                 7.03:1
+toggle text on tint                  11.09:1
+```
+
+Worst case 5.12:1 against the 4.5:1 floor. Locked as 7 tests in
+`tests/test_cartoon_contrast.py` — changing a token without re-checking fails the suite.
+
+**552 tests pass.**
+
+## 20.4 What is left, and its real status
+
+| Item | Status |
+|---|---|
+| Laundry hotspot ~10 % oversize | open, cosmetic; taps land on the room |
+| Per-fixture tapping (D4 "tap a fixture") | **implemented as room + sheet**, not per-lamp: the art draws no lamp glyphs, so a per-fixture target would be an invented hit area. Honest deviation, needs a decision. |
+| Basement / garage (8c fast-follow) | blocked on a second source map |
+| Cameras | out of scope (N1) |
