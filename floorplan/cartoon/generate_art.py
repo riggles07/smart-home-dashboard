@@ -30,31 +30,88 @@ ENV = Path("/root/.hermes/.env")
 
 PROMPT = """\
 Redraw the supplied flat floor plan as a high-quality 3D architectural "dollhouse"
-visualisation, the style of a Floorplanner top-down render:
+visualisation, in the style of a Floorplanner top-down render.
 
-- Camera: viewed from directly above with a very slight tilt, orthographic
-  projection. NOT a wide-angle perspective, NOT isometric at 45 degrees.
-- Walls: light warm grey (#E8E5DF) with visible thickness (about 12 cm), tops
-  slightly lighter. The outer wall is continuous. Interior walls follow the white
-  wall bands in the input exactly.
-- Floors, room by room, matching the input's floor colours: soft beige carpet
-  (top-left room), pale stone tile (top-centre), medium oak (top-right), light oak
-  (the central L-shaped hall), cool grey tile (small room, middle-left), cool
-  blue-grey tile (small room, lower-left), warm oak (bottom-right room).
-- Furniture: simple, modern, blocky. One bed or desk+shelf in the top-left room;
-  kitchen counters, sink and island in the top-centre; a dining table with four
-  chairs in the top-right; a sofa, rug and side table in the bottom-right living
-  room; a washer and dryer in the middle-left room; a toilet, basin and shower in
-  the lower-left room; a console table and a stair flight with visible treads in
-  the central hall.
-- Lighting: bright, even, daylight. Soft ambient occlusion in corners, gentle
-  contact shadows under furniture. No harsh spotlights, no dramatic shadows, no
-  sunbeams across the floor.
-- Finish: clean stylised realism, slightly softened edges, like a polished mobile
-  game interior. NOT photorealistic, NOT sketched, NOT cel-shaded with heavy black
+CAMERA
+- Viewed from directly above with a very slight tilt, orthographic projection.
+- NOT a wide-angle perspective. NOT a 45-degree isometric.
+
+WALLS
+- Light warm grey (#E8E5DF) with visible thickness of about 12 cm, tops slightly
+  lighter. The outer wall is continuous.
+- Interior walls follow the white wall bands in the input exactly.
+- TWO PLACES ARE OPEN PLAN and must have NO wall across them: the wide opening
+  between the top-left room (family room) and the top-centre room (kitchen), and the
+  wide opening between the bottom-right room (living room) and the central hall
+  (foyer). There the floor runs continuously from one room into the next.
+
+FLOORS
+- Every room is MEDIUM BROWN WOOD PLANK flooring -- the same warm medium brown
+  throughout, with visible plank lines and a subtle grain.
+- The ONLY tiled floor in the whole plan is the laundry. Of the two small rooms on
+  the left of the hall, the laundry is the UPPER one -- the room containing the white
+  washer and dryer, directly below the hall's upper arm. Its floor is COOL GREY
+  CERAMIC TILE with a visible square grid of grout lines.
+- The bathroom is the LOWER of the two small rooms -- the one with the toilet, basin
+  and glass shower, below the laundry. Its floor is MEDIUM BROWN WOOD, like every
+  other room. Do not tile the bathroom.
+- Do NOT create an extra tiled room. The hall floor is wood right up to the
+  laundry's walls. The laundry is a single small room; do not split it in two and do
+  not extend its tile into the hall.
+
+FURNITURE, by room. Match these positions exactly; do not add large items that are
+not listed, and do not remove listed items.
+
+Top-left room (family room):
+- A FIREPLACE with a stone surround and a dark firebox on the LEFT (west) wall,
+  centred vertically.
+- TWO BLUE ARMCHAIRS side by side along the NORTH (top) edge, facing south.
+- A GREY SOFA along the SOUTH (bottom) edge, facing north.
+- A GOLDEN / OCHRE area RUG in the centre, between the chairs and the sofa.
+
+Between the family room and the kitchen:
+- A WOODEN KITCHEN TABLE spanning the open boundary between the two rooms, with
+  two chairs; it sits in the opening, half in the family room, half in the kitchen.
+
+Top-centre room (kitchen):
+- A white counter run along the NORTH wall only, with a stainless sink and a tall
+  fridge at its east end. No island, and no counter along the east wall -- the
+  kitchen floor is wood everywhere except under the north counter run.
+
+Top-right room (dining room):
+- A wooden dining table with a chair on its west and east sides.
+
+Central hall (foyer):
+- A stair flight with visible treads in the upper-right of the hall, a slim wooden
+  console table against the hall's west wall. Keep the hall floor clear.
+
+Small middle-left room (laundry):
+- A white washer and a white dryer side by side against the north wall of that room.
+
+Small lower-left room (bathroom):
+- A white toilet, a white basin with a small counter, and a glass shower enclosure.
+
+Bottom-right room (living room):
+- A BLUE area RUG in the centre.
+- A tall wooden BOOKSHELF against the RIGHT (east) wall.
+- TWO SMALL BLUE CHAIRS side by side at the SOUTHERN (bottom) end, facing north.
+- No sofa in this room.
+
+LIGHTING
+- Bright, even daylight. Soft ambient occlusion in corners, gentle contact shadows
+  under furniture. No harsh spotlights, no sunbeams across the floor.
+
+FINISH
+- Clean stylised realism, slightly softened edges, like a polished mobile game
+  interior. NOT photorealistic, NOT a sketch, NOT cel-shaded with heavy black
   outlines.
+
+EXCLUDE
 - Absolutely no text, no labels, no numbers, no UI, no people, no pets, no plants
-  outside the rooms, no watermark, no border, no vignette.
+  outside the rooms, no watermark, no border, no vignette, no grass or landscape
+  around the house.
+
+FRAMING
 - Keep the whole plan inside the frame with a small even margin, and keep every
   room's footprint, proportions and position identical to the input. Do not merge,
   split, add or remove rooms.

@@ -1,0 +1,5 @@
+art/*.response.json
+art/render_v*.jpg
+art/render_pro.*
+art/render_2k.*
+__pycache__/
