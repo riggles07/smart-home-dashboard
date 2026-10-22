@@ -3,102 +3,17 @@ stylesheet: /local/floorplan/floorplan.css
 rules:
 - element: study
   entity: light.family_room_family_room
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
   tap_action:
-    action: call-service
-    service: light.toggle
-    service_data:
-      entity_id: light.family_room_family_room
-- element: corridor
-  entity: light.foyer_candelabra_1
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-  tap_action:
-    action: call-service
-    service: light.toggle
-    service_data:
-      entity_id:
-      - light.foyer_candelabra_1
-      - light.foyer_candelabra_2
-      - light.foyer_candelabra_3
-- element: living_room
-  entity: light.living_room_ceiling
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-  tap_action:
-    action: call-service
-    service: light.toggle
-    service_data:
-      entity_id: light.living_room_ceiling
-- element: laundry
-  entity: switch.laundry_laundry_relay
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-  tap_action:
-    action: call-service
-    service: homeassistant.toggle
-    service_data:
-      entity_id: switch.laundry_laundry_relay
-- element: bathroom
-  entity: switch.z_wave_plus_on_off_toggle_switch_2
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
-  tap_action:
-    action: call-service
-    service: homeassistant.toggle
-    service_data:
-      entity_id: switch.z_wave_plus_on_off_toggle_switch_2
+    action: toggle
 - element: kitchen
   entity: light.z_wave_plus_s2_dimmer_light_switch
-  state_action:
-    action: call-service
-    service: floorplan.class_set
-    service_data: '${entity.state === "on" ? "room-on" : "room-off"}'
   tap_action:
-    action: call-service
-    service: light.toggle
-    service_data:
-      entity_id: light.z_wave_plus_s2_dimmer_light_switch
-- element: temp_study
-  entity: sensor.family_room_family_room_motion_temperature
-  state_action:
-    action: call-service
-    service: floorplan.text_set
-    service_data:
-      element: temp_study
-      text: "${entity.state} \xB0F"
-- element: temp_kitchen
-  entity: sensor.kitchen_motion_temperature
-  state_action:
-    action: call-service
-    service: floorplan.text_set
-    service_data:
-      element: temp_kitchen
-      text: "${entity.state} \xB0F"
-- element: temp_corridor
-  entity: sensor.hallway_motion_temperature
-  state_action:
-    action: call-service
-    service: floorplan.text_set
-    service_data:
-      element: temp_corridor
-      text: "${entity.state} \xB0F"
-- element: temp_laundry
-  entity: sensor.laundry_door_temperature
-  state_action:
-    action: call-service
-    service: floorplan.text_set
-    service_data:
-      element: temp_laundry
-      text: "${entity.state} \xB0F"
+    action: toggle
+- element: corridor
+  entity: light.foyer_candelabra_1
+  tap_action:
+    action: toggle
+- element: laundry
+  entity: switch.laundry_laundry_relay
+  tap_action:
+    action: toggle
