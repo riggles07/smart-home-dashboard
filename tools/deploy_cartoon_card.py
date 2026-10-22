@@ -112,11 +112,19 @@ async def wire(base: str, token: str) -> dict:
 
         # --- resource -------------------------------------------------------
         res = await cmd({"type": "lovelace/resources/list"})
-        existing = next((r for r in res["result"] if r.get("url") == CARD), None)
-        if existing:
-            r = await cmd({"type": "lovelace/resources/update", "resource_id": existing["id"],
+        base_path = CARD.split("?")[0]
+        same_file = [r for r in res["result"] if r.get("url", "").split("?")[0] == base_path]
+        if same_file:
+            # keep one, update it in place, delete any duplicates left by earlier runs
+            # (a duplicate module re-runs customElements.define and throws)
+            keep = same_file[0]
+            r = await cmd({"type": "lovelace/resources/update", "resource_id": keep["id"],
                            "res_type": "module", "url": CARD})
             result["resource"] = "updated" if r.get("success") else f"error {r}"
+            for dup in same_file[1:]:
+                d = await cmd({"type": "lovelace/resources/delete", "resource_id": dup["id"]})
+                result.setdefault("deleted_duplicates", []).append(
+                    {"url": dup["url"], "ok": bool(d.get("success"))})
         else:
             r = await cmd({"type": "lovelace/resources/create",
                            "res_type": "module", "url": CARD})

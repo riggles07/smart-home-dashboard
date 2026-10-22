@@ -961,3 +961,30 @@ Hotspots on the new render: **6 of 8 pass**. Flagged:
 - bathroom 2.1 % — a sliver at an exterior wall.
 
 552 tests pass (room counts updated 7 → 8; garage has no photograph, so photos stay 7).
+
+## 21.1 Redeploy after the garage — and the duplicate-resource bug
+
+Uploading the new build exposed a bug in the deploy script itself: the resource lookup
+matched the **exact URL**, and the URL now carries `?v=ebcf511f`, so the script *created* a
+second resource for the same file instead of updating the first.
+
+That is not cosmetic — two copies of the module both call `customElements.define()`, and the
+second throws `NotSupportedError`. Fixed two ways:
+
+1. reconcile on the **query-stripped path**, update the survivor, delete any duplicates
+   (result now reports `deleted_duplicates`);
+2. the script is idempotent: re-running reports `updated`, not `created`.
+
+Final verified state:
+
+```
+served vs local    floorplan_render.jpg            2,504,545 B  IDENTICAL
+                   floorplan-cartoon-card.js?v=…      29,456 B  IDENTICAL
+payload            version ebcf511f, 8 rooms
+resources          1 cartoon resource (type=module, ?v=ebcf511f)
+floor-plan         ['custom:floorplan-cartoon-card']
+cartoon-plan       ['custom:floorplan-cartoon-card']
+```
+
+Note for the next deploy: changing the card file means changing `?v=`, which means the
+browser only picks it up on a **full page reload** — the same lesson as §20.2.
