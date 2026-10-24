@@ -988,3 +988,52 @@ cartoon-plan       ['custom:floorplan-cartoon-card']
 
 Note for the next deploy: changing the card file means changing `?v=`, which means the
 browser only picks it up on a **full page reload** — the same lesson as §20.2.
+
+## 22. Kiosk mode on the wall panel (2026-10-24)
+
+The panel is a Samsung SM-T227U (Galaxy Tab A7 Lite) running the WallPanel app. Chrome
+(sidebar + header) was covering most of the cartoon plan, so kiosk mode was installed and
+wired to the dashboard itself rather than to the device.
+
+**Install** — via the HACS websocket API, not a manual upload:
+
+```
+hacs/repositories/list  -> NemesisRE/kiosk-mode, category=plugin, id 497319128
+hacs/repository/download {repository: 497319128}   -> success
+```
+
+HACS registered the Lovelace module itself:
+`/hacsfiles/kiosk-mode/kiosk-mode.js?hacstag=4973191281500`
+
+**Config** — `kiosk_mode:` on the `cartoon-plan` dashboard (dashboard-scoped, so
+`/floor-plan` keeps its chrome for desktop use):
+
+```yaml
+kiosk_mode:
+  hide_header: true
+  hide_sidebar: true
+  hide_overflow: true
+  hide_menubutton: true
+  hide_settings: true
+  hide_notifications: true
+  hide_search: true
+  hide_edit_dashboard: true
+  hide_refresh: true
+  hide_reload_resources: true
+```
+
+Placement verified against the installed bundle, not the docs: the code reads
+`processConfig(hass.lovelace.config.kiosk_mode || {})`, so the key must sit at the
+dashboard root — which is where it was written and read back from.
+
+Old config backed up to `floorplan/backups/cartoon-plan-20261024T232012Z.json`.
+
+**Applying it to the panel** — the panel's own discovery entities make this scriptable:
+`button.my_wall_panel_reload_page` publishes `{"reload": true}` to
+`wallpanel/mywallpanel/command`. Delivered and confirmed on the wire. If the sidebar
+survives, the module was served from the frontend cache: use
+`button.my_wall_panel_restart_app` or `button.my_wall_panel_clear_cache` instead.
+
+**Escape hatch:** with sidebar and header hidden there is no on-device way off this
+dashboard, so the WallPanel buttons (reload / restart / open settings) are the recovery
+path — they are reachable from HA on any other device.
