@@ -8,6 +8,29 @@ pytest-cov>=4.0.0
 jsonschema>=4.0.0
 
 # ---------------------------------------------------------------------------
+# Needed by the TEST SUITE, not by the Node-RED flows.
+#
+# tests/test_cartoon_card.py imports PIL directly and execs
+# tools/validate_entity_map.py, which imports requests at module level. Neither
+# was listed here, so CI died at "Run test suite" with
+#     ModuleNotFoundError: No module named 'requests' / 'PIL'
+# while passing locally, where both happen to be installed for other reasons.
+# ---------------------------------------------------------------------------
+requests>=2.28.0
+Pillow>=10.0.0
+
+# ---------------------------------------------------------------------------
+# Ops / deploy tooling (tools/*.py) -- not imported by the test suite today, but
+# listed so `pip install -r requirements.txt` yields a working toolchain:
+#   paho-mqtt  -- tools/mqtt_*.py broker probes
+#   websockets -- tools/deploy_cartoon_card.py, tools/switch_floorplan_to_cartoon.py
+# `paho-mqtt` 2.x still accepts the v1 callback style used here (with a
+# DeprecationWarning), so the floor intentionally allows 2.x.
+# ---------------------------------------------------------------------------
+paho-mqtt>=2.0.0
+websockets>=11.0
+
+# ---------------------------------------------------------------------------
 # NOT a pip dependency: `ws`
 #
 # The Home Assistant tab's WebSocket client uses the **`ws` npm module**, which
