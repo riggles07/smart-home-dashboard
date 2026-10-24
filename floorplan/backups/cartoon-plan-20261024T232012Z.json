@@ -1,0 +1,16 @@
+{
+  "title": "Cartoon",
+  "views": [
+    {
+      "title": "Cartoon",
+      "path": "cartoon-plan",
+      "icon": "mdi:home-floor-a",
+      "cards": [
+        {
+          "type": "custom:floorplan-cartoon-card",
+          "image": "/local/floorplan/cartoon/floorplan_render.jpg"
+        }
+      ]
+    }
+  ]
+}
