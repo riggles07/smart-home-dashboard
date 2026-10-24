@@ -148,12 +148,12 @@ console.log('\n== HA WebSocket Client: control path ==');
   let c = f.invoke({ payload: true });
   check('switch ON -> array on out0, null on out1', Array.isArray(c) && c[1] === null && c[0].topic === 'ha/control', c);
   check('url is .../api/services/light/turn_on',
-    c && c[0].payload.url === 'http://ha.local:8123/api/services/light/turn_on', c && c[0].payload.url);
-  check('body carries entity_id', c && c[0].payload.body.entity_id === 'light.kitchen', c && c[0].payload.body);
-  check('method POST', c && c[0].payload.method === 'POST');
+    c && c[0].url === 'http://ha.local:8123/api/services/light/turn_on', c && c[0].url);
+  check('body carries entity_id', c && c[0].body.entity_id === 'light.kitchen', c && c[0].body);
+  check('method POST', c && c[0].method === 'POST');
 
   c = f.invoke({ payload: false });
-  check('switch OFF -> turn_off', c && c[0].payload.url === 'http://ha.local:8123/api/services/light/turn_off', c && c[0].payload.url);
+  check('switch OFF -> turn_off', c && c[0].url === 'http://ha.local:8123/api/services/light/turn_off', c && c[0].url);
 }
 
 // ---- 4. explicit request + read-only guard --------------------------------
@@ -163,8 +163,8 @@ console.log('\n== HA WebSocket Client: explicit request ==');
   f.invoke(TICK);
   let c = f.invoke({ topic: 'ha/control', payload: { domain: 'light', service: 'turn_on', entityId: 'light.hall', serviceData: { brightness_pct: 30 } } });
   check('honours explicit domain/service/entityId',
-    c && c[0].payload.url === 'http://ha.local:8123/api/services/light/turn_on' && c[0].payload.body.entity_id === 'light.hall', c);
-  check('merges serviceData', c && c[0].payload.body.brightness_pct === 30, c && c[0].payload.body);
+    c && c[0].url === 'http://ha.local:8123/api/services/light/turn_on' && c[0].body.entity_id === 'light.hall', c);
+  check('merges serviceData', c && c[0].body.brightness_pct === 30, c && c[0].body);
 
   c = f.invoke({ topic: 'ha/control', payload: { domain: 'sensor', service: 'turn_on', entityId: 'sensor.x' } });
   check('refuses read-only domains', c === null && f.statuses.some(s => s.text === 'read-only'), f.statuses);

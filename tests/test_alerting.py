@@ -35,8 +35,13 @@ def check(nodes):
     banners = [n for n in nodes if n.get("type") == "ui_template"
                and "alert-" in (n.get("format") or "")
                and "severity" in (n.get("format") or "")]
+    # Match the evaluator FAMILY, not one exact string. The Activity tab's evaluator
+    # is named "Evaluate activity alerts" while the other four are "Evaluate alerts";
+    # an exact-name match silently excluded it from this set, so the catch-wiring
+    # check below reported its (correctly wired) catch node as a false failure.
     evals = {n["id"]: n for n in nodes
-             if n.get("type") == "function" and n.get("name") == "Evaluate alerts"}
+             if n.get("type") == "function"
+             and re.match(r"^Evaluate\b.*\balerts$", n.get("name") or "", re.I)}
     catches = [n for n in nodes if n.get("type") == "catch"]
 
     # 4 tabs carry alerts: Home Lab, Network, System Health, Home Assistant
