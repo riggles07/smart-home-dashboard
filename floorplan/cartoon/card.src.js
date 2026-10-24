@@ -32,6 +32,8 @@
   const css = `
     :host {
       display: block;
+      height: 100%;          /* panel-mode views hand the card the whole viewport */
+      min-height: 0;
       --fpc-ink: #f2f5f8;
       --fpc-ink-dim: #a9b4c0;
       --fpc-panel: #10161d;
@@ -42,13 +44,25 @@
       position: relative;
     }
     :host([night]) { --fpc-ink: #e8eef6; --fpc-panel: #0a0f14; --fpc-floor-glow: 0.8; }
-    .wrap { position: relative; background: #1a1f26; border-radius: var(--fpc-radius); overflow: hidden; }
+    /* height:100% + flex centring: the plan is fitted by JS to the SHORTER axis, so a
+       3:2 render on a wider-than-3:2 tablet letterboxes instead of running off the
+       bottom. Before this, .stage was width:100% and the art's height simply overflowed
+       the viewport (measured: 813px of content in a 601px viewport). */
+    .wrap { position: relative; background: #1a1f26; border-radius: var(--fpc-radius);
+            overflow: hidden; height: 100%;
+            display: flex; align-items: center; justify-content: center; }
     :host([night]) .wrap { background: #0c1116; }
     /* one composited layer, no animation: cheap enough for the tablet */
     :host([night]) .stage img { filter: brightness(.62) saturate(.82) hue-rotate(-8deg); }
     :host([night]) .stage svg { mix-blend-mode: normal; }
-    .stage { position: relative; width: 100%; display: block; }
-    .stage img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+    /* aspect-ratio holds the correct shape before _fit() runs (and in a plain masonry
+       column), so the image can safely fill BOTH axes: a width:auto height mismatch
+       between img and .stage would slide the hotspot overlay off the art. flex:0 0 auto
+       stops the card's flex centring from shrinking the stage -- measured 805px inline
+       being rendered at 687px, which also pushed it off-centre. */
+    .stage { position: relative; width: 100%; aspect-ratio: ${ART_W} / ${ART_H};
+             flex: 0 0 auto; min-width: 0; display: block; }
+    .stage img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
     .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .room { fill: rgba(78,161,255,0); stroke: rgba(78,161,255,0);
             stroke-width: calc(2.5 * var(--k, 3) * 1px);
@@ -70,8 +84,10 @@
                  font-size: calc(12 * var(--k, 3) * 1px);
                  text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
 
+    /* Pinned, not in flow. As a flex item the HUD (309px wide) stole width from the
+       centred .stage and shoved the plan 54px past the right edge. */
     .hud { display: flex; gap: 8px; align-items: center; padding: 8px 10px;
-           position: relative; z-index: 2; }
+           position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
     .chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px;
             background: rgba(12,17,22,.78); border: 1px solid rgba(255,255,255,.14);
             color: var(--fpc-ink); border-radius: 999px; padding: 6px 11px;
@@ -127,6 +143,7 @@
       this._built = false;
       this._pressTimer = null;
       this._longPressed = false;
+      this._ro = null;
     }
 
     setConfig(config) {
@@ -143,6 +160,28 @@
       this._hass = hass;
       if (!this._built) this._build();
       this._update();
+    }
+
+    // Fit the art inside the card box on BOTH axes. Width-only sizing (the old
+    // behaviour) is correct in a masonry column but overflows a panel-mode view, where
+    // the card is as wide as the screen and the 3:2 art is taller than the viewport.
+    // When the container has no height yet (masonry), fall back to width-only.
+    _fit() {
+      const sh = this.shadowRoot;
+      if (!sh) return;
+      const wrap = sh.querySelector('.wrap');
+      const stage = sh.querySelector('.stage');
+      if (!wrap || !stage) return;
+      const aw = wrap.clientWidth || 0;
+      const ah = wrap.clientHeight || 0;
+      if (!aw) return;
+      const scale = ah > 40 ? Math.min(aw / ART_W, ah / ART_H) : aw / ART_W;
+      stage.style.width = Math.round(ART_W * scale) + 'px';
+      stage.style.height = Math.round(ART_H * scale) + 'px';
+    }
+
+    disconnectedCallback() {
+      if (this._ro) { this._ro.disconnect(); this._ro = null; }
     }
 
     _build() {
@@ -175,6 +214,12 @@
           </div>
           <div class="toast" id="toast"></div>
         </div>`;
+
+      this._fit();
+      if (window.ResizeObserver) {
+        this._ro = new ResizeObserver(() => this._fit());
+        this._ro.observe(sh.querySelector('.wrap'));
+      }
 
       const svg = sh.querySelector('svg');
       const gRooms = svg.querySelector('.rooms');

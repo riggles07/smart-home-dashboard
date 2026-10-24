@@ -1,0 +1,28 @@
+{
+  "title": "Cartoon",
+  "views": [
+    {
+      "title": "Cartoon",
+      "path": "cartoon-plan",
+      "icon": "mdi:home-floor-a",
+      "cards": [
+        {
+          "type": "custom:floorplan-cartoon-card",
+          "image": "/local/floorplan/cartoon/floorplan_render.jpg"
+        }
+      ]
+    }
+  ],
+  "kiosk_mode": {
+    "hide_header": true,
+    "hide_sidebar": true,
+    "hide_overflow": true,
+    "hide_menubutton": true,
+    "hide_settings": true,
+    "hide_notifications": true,
+    "hide_search": true,
+    "hide_edit_dashboard": true,
+    "hide_refresh": true,
+    "hide_reload_resources": true
+  }
+}

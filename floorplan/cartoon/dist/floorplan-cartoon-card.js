@@ -1,6 +1,6 @@
-/* built 2504545 B art, version ebcf511f;
+/* built 2504545 B art, version 032a7d8b;
  * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */
-window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_candelabra_1","light.foyer_candelabra_2","light.foyer_candelabra_3","light.foyer_d1","light.foyer_d2","light.foyer_d3","light.foyer_d4"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":8},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
+window.__FPC_DATA__ = {"version":"032a7d8b","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_candelabra_1","light.foyer_candelabra_2","light.foyer_candelabra_3","light.foyer_d1","light.foyer_d2","light.foyer_d3","light.foyer_d4"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":8},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
 /* floorplan-cartoon-card — interactive cartoon floor plan for Home Assistant.
  *
  * Single file, no build step, no dependencies. Data (hotspots + entity map) is injected
@@ -35,6 +35,8 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
   const css = `
     :host {
       display: block;
+      height: 100%;          /* panel-mode views hand the card the whole viewport */
+      min-height: 0;
       --fpc-ink: #f2f5f8;
       --fpc-ink-dim: #a9b4c0;
       --fpc-panel: #10161d;
@@ -45,13 +47,25 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
       position: relative;
     }
     :host([night]) { --fpc-ink: #e8eef6; --fpc-panel: #0a0f14; --fpc-floor-glow: 0.8; }
-    .wrap { position: relative; background: #1a1f26; border-radius: var(--fpc-radius); overflow: hidden; }
+    /* height:100% + flex centring: the plan is fitted by JS to the SHORTER axis, so a
+       3:2 render on a wider-than-3:2 tablet letterboxes instead of running off the
+       bottom. Before this, .stage was width:100% and the art's height simply overflowed
+       the viewport (measured: 813px of content in a 601px viewport). */
+    .wrap { position: relative; background: #1a1f26; border-radius: var(--fpc-radius);
+            overflow: hidden; height: 100%;
+            display: flex; align-items: center; justify-content: center; }
     :host([night]) .wrap { background: #0c1116; }
     /* one composited layer, no animation: cheap enough for the tablet */
     :host([night]) .stage img { filter: brightness(.62) saturate(.82) hue-rotate(-8deg); }
     :host([night]) .stage svg { mix-blend-mode: normal; }
-    .stage { position: relative; width: 100%; display: block; }
-    .stage img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+    /* aspect-ratio holds the correct shape before _fit() runs (and in a plain masonry
+       column), so the image can safely fill BOTH axes: a width:auto height mismatch
+       between img and .stage would slide the hotspot overlay off the art. flex:0 0 auto
+       stops the card's flex centring from shrinking the stage -- measured 805px inline
+       being rendered at 687px, which also pushed it off-centre. */
+    .stage { position: relative; width: 100%; aspect-ratio: ${ART_W} / ${ART_H};
+             flex: 0 0 auto; min-width: 0; display: block; }
+    .stage img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
     .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .room { fill: rgba(78,161,255,0); stroke: rgba(78,161,255,0);
             stroke-width: calc(2.5 * var(--k, 3) * 1px);
@@ -73,8 +87,10 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
                  font-size: calc(12 * var(--k, 3) * 1px);
                  text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
 
+    /* Pinned, not in flow. As a flex item the HUD (309px wide) stole width from the
+       centred .stage and shoved the plan 54px past the right edge. */
     .hud { display: flex; gap: 8px; align-items: center; padding: 8px 10px;
-           position: relative; z-index: 2; }
+           position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
     .chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px;
             background: rgba(12,17,22,.78); border: 1px solid rgba(255,255,255,.14);
             color: var(--fpc-ink); border-radius: 999px; padding: 6px 11px;
@@ -130,6 +146,7 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
       this._built = false;
       this._pressTimer = null;
       this._longPressed = false;
+      this._ro = null;
     }
 
     setConfig(config) {
@@ -146,6 +163,28 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
       this._hass = hass;
       if (!this._built) this._build();
       this._update();
+    }
+
+    // Fit the art inside the card box on BOTH axes. Width-only sizing (the old
+    // behaviour) is correct in a masonry column but overflows a panel-mode view, where
+    // the card is as wide as the screen and the 3:2 art is taller than the viewport.
+    // When the container has no height yet (masonry), fall back to width-only.
+    _fit() {
+      const sh = this.shadowRoot;
+      if (!sh) return;
+      const wrap = sh.querySelector('.wrap');
+      const stage = sh.querySelector('.stage');
+      if (!wrap || !stage) return;
+      const aw = wrap.clientWidth || 0;
+      const ah = wrap.clientHeight || 0;
+      if (!aw) return;
+      const scale = ah > 40 ? Math.min(aw / ART_W, ah / ART_H) : aw / ART_W;
+      stage.style.width = Math.round(ART_W * scale) + 'px';
+      stage.style.height = Math.round(ART_H * scale) + 'px';
+    }
+
+    disconnectedCallback() {
+      if (this._ro) { this._ro.disconnect(); this._ro = null; }
     }
 
     _build() {
@@ -178,6 +217,12 @@ window.__FPC_DATA__ = {"version":"ebcf511f","image":"/local/floorplan/cartoon/fl
           </div>
           <div class="toast" id="toast"></div>
         </div>`;
+
+      this._fit();
+      if (window.ResizeObserver) {
+        this._ro = new ResizeObserver(() => this._fit());
+        this._ro.observe(sh.querySelector('.wrap'));
+      }
 
       const svg = sh.querySelector('svg');
       const gRooms = svg.querySelector('.rooms');
