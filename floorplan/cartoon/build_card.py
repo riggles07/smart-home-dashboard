@@ -70,6 +70,10 @@ def build(require_pass: bool = True) -> dict:
     digest.update(art_bytes)
     digest.update(json.dumps(rooms, sort_keys=True).encode())
     digest.update(json.dumps(ents["house"], sort_keys=True).encode())
+    # The card's own source must be part of the version too. It was not, so changing
+    # the JS/CSS produced the SAME ?v= and Home Assistant kept serving the cached
+    # bundle for up to 31 days -- the change simply never reached the tablet.
+    digest.update(SRC.read_bytes())
     version = digest.hexdigest()[:8]
 
     from PIL import Image
