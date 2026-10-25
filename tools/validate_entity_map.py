@@ -72,6 +72,11 @@ def collect(m: dict) -> list[tuple[str, str]]:
         for k in ENTITY_LIST_KEYS:
             for v in room.get(k, []) or []:
                 out.append((v, f"rooms.{rid}.{k}"))
+    # camera pins are top-level: they sit at plan coordinates, not inside a room polygon
+    for c in m.get("cameras") or []:
+        eid = (c or {}).get("entity")
+        if eid:
+            out.append((eid, f"cameras.{c.get('id')}"))
     for eid in (m.get("excluded") or {}):
         if eid != "_comment":
             out.append((eid, "excluded"))

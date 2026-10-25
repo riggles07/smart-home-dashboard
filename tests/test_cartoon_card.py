@@ -84,6 +84,30 @@ def test_entity_map_contract():
 
 
 # --- hotspots -----------------------------------------------------------------------
+def test_camera_pins_are_declared_and_inside_the_art():
+    """Every camera the markup pointed at must be a pin with in-range plan coordinates.
+
+    The pins are positioned by hand from an annotated screenshot, so the two ways this
+    breaks are silent: a typo'd entity (pin opens nothing) and a coordinate outside
+    0..1 (pin renders off the art, or under the HUD).
+    """
+    cams = _payload().get("cameras")
+    assert cams, "no camera pins in the payload"
+    assert len(cams) == 6, f"expected 6 camera pins, got {len(cams)}"
+    assert len({c["id"] for c in cams}) == len(cams), "duplicate camera ids"
+    for c in cams:
+        assert c["entity"].startswith("camera."), c
+        assert 0.0 <= c["x"] <= 1.0 and 0.0 <= c["y"] <= 1.0, f"{c['id']} off the art: {c}"
+        assert c["label"], f"{c['id']} has no label"
+
+
+def test_camera_pins_come_from_the_entity_map():
+    """The payload must not invent cameras: the map is the single source."""
+    mapped = {c["entity"] for c in _entities().get("cameras") or []}
+    baked = {c["entity"] for c in _payload().get("cameras") or []}
+    assert baked == mapped, f"payload/map camera mismatch: {baked ^ mapped}"
+
+
 def test_hotspots_cover_every_room_with_devices():
     hs = _hotspots()["rooms"]
     ents = _entities()["rooms"]

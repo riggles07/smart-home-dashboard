@@ -65,11 +65,22 @@ def build(require_pass: bool = True) -> dict:
                              + (1 if room.get("climate") else 0)),
         }
 
+    cams = []
+    for c in (ents.get("cameras") or []):
+        eid = c.get("entity") or ""
+        if not eid.startswith("camera."):
+            raise SystemExit(f"camera entry {c.get('id')!r} is not a camera.* entity: {eid!r}")
+        # clamp into the art: the two exterior pins were drawn just past the bottom edge
+        cams.append({"id": c["id"], "label": c.get("label", c["id"]), "entity": eid,
+                     "x": min(0.99, max(0.01, float(c["x"]))),
+                     "y": min(0.99, max(0.01, float(c["y"])))})
+
     art_bytes = ART.read_bytes()
     digest = hashlib.sha256()
     digest.update(art_bytes)
     digest.update(json.dumps(rooms, sort_keys=True).encode())
     digest.update(json.dumps(ents["house"], sort_keys=True).encode())
+    digest.update(json.dumps(cams, sort_keys=True).encode())
     # The card's own source must be part of the version too. It was not, so changing
     # the JS/CSS produced the SAME ?v= and Home Assistant kept serving the cached
     # bundle for up to 31 days -- the change simply never reached the tablet.
@@ -80,7 +91,7 @@ def build(require_pass: bool = True) -> dict:
     with Image.open(ART) as im:
         art_w, art_h = im.size
     data = {"version": version, "image": IMAGE_URL, "art_w": art_w, "art_h": art_h,
-            "rooms": rooms, "house": ents["house"]}
+            "rooms": rooms, "house": ents["house"], "cameras": cams}
 
     js = SRC.read_text()
     banner = (f"/* built {len(art_bytes)} B art, version {version};\n"

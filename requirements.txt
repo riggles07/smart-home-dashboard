@@ -27,8 +27,10 @@ Pillow>=10.0.0
 # `paho-mqtt` 2.x still accepts the v1 callback style used here (with a
 # DeprecationWarning), so the floor intentionally allows 2.x.
 # ---------------------------------------------------------------------------
+#   numpy      -- tools/camera_markup_map.py (red-dot extraction from markup shots)
 paho-mqtt>=2.0.0
 websockets>=11.0
+numpy>=1.24
 
 # ---------------------------------------------------------------------------
 # NOT a pip dependency: `ws`
