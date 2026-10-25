@@ -1,6 +1,6 @@
-/* built 2504545 B art, version b575eae7;
+/* built 2504545 B art, version a258523d;
  * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */
-window.__FPC_DATA__ = {"version":"b575eae7","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
+window.__FPC_DATA__ = {"version":"a258523d","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun"}};
 /* floorplan-cartoon-card — interactive cartoon floor plan for Home Assistant.
  *
  * Single file, no build step, no dependencies. Data (hotspots + entity map) is injected
@@ -36,6 +36,7 @@ window.__FPC_DATA__ = {"version":"b575eae7","image":"/local/floorplan/cartoon/fl
     :host {
       display: block;
       height: 100%;          /* panel-mode views hand the card the whole viewport */
+      max-height: 100vh;     /* ...but HA computes that view as taller than the window */
       min-height: 0;
       --fpc-ink: #f2f5f8;
       --fpc-ink-dim: #a9b4c0;
@@ -178,13 +179,34 @@ window.__FPC_DATA__ = {"version":"b575eae7","image":"/local/floorplan/cartoon/fl
       const aw = wrap.clientWidth || 0;
       const ah = wrap.clientHeight || 0;
       if (!aw) return;
-      const scale = ah > 40 ? Math.min(aw / ART_W, ah / ART_H) : aw / ART_W;
+      // Cap by window.innerHeight: the panel view measures 691px in a 601px window
+      // (HA leaves header space even when kiosk-mode hides the header), so trusting the
+      // container alone scaled the plan 90px past the bottom of the screen.
+      const ahCap = Math.min(ah, window.innerHeight || ah);
+      const scale = ahCap > 40 ? Math.min(aw / ART_W, ahCap / ART_H) : aw / ART_W;
       stage.style.width = Math.round(ART_W * scale) + 'px';
       stage.style.height = Math.round(ART_H * scale) + 'px';
     }
 
     disconnectedCallback() {
       if (this._ro) { this._ro.disconnect(); this._ro = null; }
+    }
+
+    // HA sizes the lovelace view taller than the viewport when the header is hidden
+    // (measured 691px vs 601px), which leaves a scrollable band under the card. The card
+    // cannot style its ancestors through the shadow boundary, but it can pin the host
+    // element it lives in. Guarded: only touches elements that really are HA views.
+    _pinViewHeight() {
+      try {
+        const root = this.getRootNode && this.getRootNode();
+        const host = root && root.host;
+        const tag = host && host.tagName ? host.tagName.toLowerCase() : '';
+        if (tag === 'hui-view' || tag === 'hui-panel-view') {
+          host.style.height = '100vh';
+          host.style.minHeight = '0';
+          host.style.overflow = 'hidden';
+        }
+      } catch (e) { /* never let cosmetics break the card */ }
     }
 
     _build() {
@@ -218,6 +240,7 @@ window.__FPC_DATA__ = {"version":"b575eae7","image":"/local/floorplan/cartoon/fl
           <div class="toast" id="toast"></div>
         </div>`;
 
+      this._pinViewHeight();
       this._fit();
       if (window.ResizeObserver) {
         this._ro = new ResizeObserver(() => this._fit());
