@@ -9,7 +9,8 @@
       "alarm_control_panel.master"
     ],
     "weather": "weather.forecast_home",
-    "sun": "sun.sun"
+    "sun": "sun.sun",
+    "guest_mode": "input_boolean.guest_mode"
   },
   "rooms": {
     "study": {
@@ -162,5 +163,49 @@
     "binary_sensor.foyer_alarm_panel_pro_zone_10": "unconfigured loop, reads on",
     "binary_sensor.foyer_alarm_panel_pro_zone_11": "unconfigured loop, reads on",
     "binary_sensor.foyer_alarm_panel_pro_zone_12": "unconfigured loop, reads on"
-  }
+  },
+  "cameras": [
+    {
+      "id": "driveway",
+      "label": "Driveway",
+      "entity": "camera.outside_driveway_camera",
+      "x": 0.02,
+      "y": 0.972
+    },
+    {
+      "id": "backyard_upper",
+      "label": "Backyard Upper",
+      "entity": "camera.backyard_backyard_upper_camera",
+      "x": 0.7001,
+      "y": 0.0952
+    },
+    {
+      "id": "kitchen",
+      "label": "Kitchen",
+      "entity": "camera.kitchen_kitchen_hub",
+      "x": 0.4351,
+      "y": 0.0764
+    },
+    {
+      "id": "garage",
+      "label": "Garage",
+      "entity": "camera.garage_garage_camera",
+      "x": 0.2125,
+      "y": 0.4803
+    },
+    {
+      "id": "front_door",
+      "label": "Front Door",
+      "entity": "camera.outside_front_door",
+      "x": 0.6901,
+      "y": 0.972
+    },
+    {
+      "id": "living_room",
+      "label": "Living Room",
+      "entity": "camera.living_room_living_room_camera",
+      "x": 0.9434,
+      "y": 0.7409
+    }
+  ]
 }

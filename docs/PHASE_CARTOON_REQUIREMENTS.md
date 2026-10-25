@@ -1108,3 +1108,36 @@ lives in, so it now does both:
 Verified in a 1006x601 iframe (frame fidelity matters: `100vh` and `innerHeight` must be
 the real viewport, so a plain div harness proves nothing):
 `host 601, stage/img 805x601, bottomOverflow 0, scrollHeight 601, side margins 100.5`.
+
+## 25. Camera pins (2026-10-24)
+
+Six Google Nest cameras, placed at the locations from the annotated screenshot.
+
+**Positions come from the markup, measured rather than eyeballed.**
+`tools/camera_markup_map.py` finds the red dots (flood-fill clustering, ≥25 px), finds the
+art's bounding box in the screenshot (the plan is bright, the page behind it near-black),
+normalises each dot against that box, and then **validates** the result against
+`hotspots.json`: the indoor dots must land inside their room polygon. Three did
+(kitchen 0.435/0.076, garage 0.213/0.480, living 0.943/0.741); the three exterior dots
+(backyard, driveway, front door) sit outside the house, as they should. The two bottom
+dots were drawn just past the art edge (y ≈ 1.011) so the build clamps pins into 0.01–0.99.
+
+| pin | entity | norm |
+|---|---|---|
+| Driveway | camera.outside_driveway_camera | 0.020, 0.972 |
+| Backyard Upper | camera.backyard_backyard_upper_camera | 0.700, 0.095 |
+| Kitchen | camera.kitchen_kitchen_hub | 0.435, 0.076 |
+| Garage | camera.garage_garage_camera | 0.213, 0.480 |
+| Front Door | camera.outside_front_door | 0.690, 0.972 |
+| Living Room | camera.living_room_living_room_camera | 0.943, 0.741 |
+
+**Interaction.** Pin `pointer-events:auto` inside a `pointer-events:none` layer, so room
+taps still work between pins. Tap → overlay with `entity_picture` re-fetched every 5 s
+with a `?_=` cache-buster (without it the browser serves the same frame forever).
+"Live view" dispatches the standard `hass-more-info` event, so HA's own player handles the
+Nest stream — a second WebRTC player inside the card would only fight the first.
+Pins carrying an `unavailable` camera render grey rather than as a dead tap target.
+
+Validator now walks `cameras` too: **51 entities / 57 references**, PASS.
+Tests: pins declared, 6 of them, ids unique, coordinates in 0..1, payload matches the map
+(554 total).
