@@ -1037,3 +1037,36 @@ survives, the module was served from the frontend cache: use
 **Escape hatch:** with sidebar and header hidden there is no on-device way off this
 dashboard, so the WallPanel buttons (reload / restart / open settings) are the recovery
 path — they are reachable from HA on any other device.
+
+## 23. Foyer commands a light group (2026-10-24)
+
+The foyer had seven individual lights, of which D1–D4 are one fixture set. A group now
+carries them, and the dashboard commands the group rather than four separate entities.
+
+Created through the group config flow over REST (the UI path, scripted):
+
+```
+POST /api/config/config_entries/flow            {"handler":"group"}
+POST .../flow/<id>                              {"next_step_id":"light"}
+POST .../flow/<id>                              {"name":"Foyer Hall",
+                                                 "entities":["light.foyer_d1".."d4"],
+                                                 "hide_members":false, "all":false}
+-> create_entry, title "Foyer Hall"
+```
+
+Result: `light.foyer_hall`, members `light.foyer_d1..d4`, `all:false` so turning the group
+on does not force every member on.
+
+**Naming note:** HA's group helper creates a grouped **entity**, not a device — the entity
+registry entry has `device_id: null` and there is no device-registry object named "Foyer
+Hall". That is how HA models groups; there is no device to create.
+
+`entity_map.json` foyer (`corridor`):
+- `primary_light` → `light.foyer_hall`
+- `lights` → `[light.foyer_hall, candelabra_1..3]` — D1–D4 removed so the group is the
+  only path to them (listing both the group and its members would double-command).
+
+Card interaction on the plan: tap opens the room sheet (rows: Foyer Hall + the three
+candelabras), long-press toggles every light in the room. Validator: 48 entities, PASS.
+The Node-RED flows never referenced the foyer dimmers individually, so nothing to change
+there.
