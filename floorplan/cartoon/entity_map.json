@@ -65,15 +65,12 @@
     },
     "corridor": {
       "label": "Foyer",
-      "primary_light": "light.foyer_candelabra_1",
+      "primary_light": "light.foyer_hall",
       "lights": [
+        "light.foyer_hall",
         "light.foyer_candelabra_1",
         "light.foyer_candelabra_2",
-        "light.foyer_candelabra_3",
-        "light.foyer_d1",
-        "light.foyer_d2",
-        "light.foyer_d3",
-        "light.foyer_d4"
+        "light.foyer_candelabra_3"
       ],
       "switches": [],
       "media": [],
