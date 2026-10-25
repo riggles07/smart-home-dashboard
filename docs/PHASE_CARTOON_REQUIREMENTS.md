@@ -1070,3 +1070,41 @@ Card interaction on the plan: tap opens the room sheet (rows: Foyer Hall + the t
 candelabras), long-press toggles every light in the room. Validator: 48 entities, PASS.
 The Node-RED flows never referenced the foyer dimmers individually, so nothing to change
 there.
+
+## 24. The deploy script was eating the dashboard config
+
+Deploying `b575eae7` broke kiosk mode and the panel layout, and the panel proved it:
+immediately after the deploy the card measured **492x367 at top:64** — a masonry column
+with a header above it — instead of 1006x601 at top:0.
+
+Cause: `tools/deploy_cartoon_card.py` unconditionally saved
+
+```python
+{"title": "Cartoon", "views": [VIEW]}
+```
+
+over `/cartoon-plan` on every run, so anything added to that dashboard afterwards —
+`kiosk_mode`, `panel: true`, the icon — was silently reverted by the next deploy. This is
+the same class of failure as the duplicate-resource bug in §21.1: the tool assumed it was
+the only writer.
+
+Now: it only seeds the config when the dashboard is **created**, and otherwise reports
+`config preserved; kept ['kiosk_mode']` (or a warning if the card is missing from the
+existing config). Restored both keys; a copy of the restored config is in
+`floorplan/backups/cartoon-plan-restore.json`.
+
+## 24.1 HA sizes the hidden-header view taller than the window
+
+With kiosk mode hiding the header, HA still returns `691px` for `hui-view` in a `601px`
+viewport (measured on the tablet: `huiroot:691/auto`, `huiview:691/690.998px`,
+`--header-height:56px`). The card trusts its container, so it scaled the plan to 925x691
+and the bottom 90px went off-screen — the second round of "cutting off the bottom".
+
+The card cannot style ancestors across the shadow boundary, but it can pin the view it
+lives in, so it now does both:
+- `_fit()` caps the height at `min(container, window.innerHeight)`
+- `_pinViewHeight()` sets the hosting `hui-view`/`hui-panel-view` to `height:100vh`
+
+Verified in a 1006x601 iframe (frame fidelity matters: `100vh` and `innerHeight` must be
+the real viewport, so a plain div harness proves nothing):
+`host 601, stage/img 805x601, bottomOverflow 0, scrollHeight 601, side margins 100.5`.

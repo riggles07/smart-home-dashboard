@@ -145,10 +145,25 @@ async def wire(base: str, token: str) -> dict:
         else:
             result["dashboard"] = "exists"
 
-        save = await cmd({"type": "lovelace/config/save", "url_path": URL_PATH,
-                          "config": {"title": "Cartoon", "views": [VIEW]}})
-        if not save.get("success"):
-            result["dashboard"] += f" (config save failed: {save})"
+        # Never overwrite an existing dashboard's config. It carries state this script
+        # does not own -- kiosk_mode, panel:true, icon -- and re-seeding it from VIEW
+        # silently reverted kiosk mode and the panel layout on every single deploy.
+        if result["dashboard"] == "created":
+            save = await cmd({"type": "lovelace/config/save", "url_path": URL_PATH,
+                              "config": {"title": "Cartoon", "views": [VIEW]}})
+            if not save.get("success"):
+                result["dashboard"] += f" (config seed failed: {save})"
+        else:
+            existing = await cmd({"type": "lovelace/config", "url_path": URL_PATH})
+            cfg = existing.get("result") or {}
+            views = cfg.get("views") or []
+            has_card = any(cd.get("type") == "custom:floorplan-cartoon-card"
+                           for v in views for cd in (v.get("cards") or []))
+            keep = sorted(k for k in cfg if k not in ("title", "views"))
+            result["dashboard"] += " (config preserved"
+            result["dashboard"] += f"; kept {keep}" if keep else ""
+            result["dashboard"] += ")" if has_card else \
+                "; WARNING card not found in the existing config)"
         return result
 
 

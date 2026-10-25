@@ -1,15 +1,15 @@
-CARTOON FLOORPLAN -- UPLOAD BUNDLE (version b575eae7)
+CARTOON FLOORPLAN -- UPLOAD BUNDLE (version a258523d)
 ==================================================
-ONLY floorplan-cartoon-card.js CHANGED (art is unchanged, included for a clean install).
+ONLY floorplan-cartoon-card.js CHANGED (art unchanged, included for a clean install).
 
   floorplan-cartoon-card.js -> /config/www/floorplan/cartoon/floorplan-cartoon-card.js
   floorplan_render.jpg      -> /config/www/floorplan/cartoon/floorplan_render.jpg
 
-Then, on the box:
-  python3 tools/deploy_cartoon_card.py        # re-points the resource at ?v=b575eae7
+Then on the box:  python3 tools/deploy_cartoon_card.py     # -> ?v=a258523d
 
 CHANGES IN THIS BUILD
-1. Layout: plan fitted to the shorter screen axis (panel-mode 1006x601: whole plan,
-   centred, 0px bottom clipping). Verified at that viewport: 805x601.
-2. Foyer commands light.foyer_hall ONLY (new HA light group over foyer_d1..d4).
-   Candelabras removed from the foyer room -- they belong to the living-room device.
+1. Fit: plan scaled to the shorter screen axis. HA's lovelace view measures 691px in a
+   601px window (header hidden by kiosk-mode but still reserved), so the card now caps
+   itself at min(container, window.innerHeight) AND pins its ancestor view to 100vh.
+   Verified in a 1006x601 viewport: host 601, stage/img 805x601, 0px overflow, scroll 601.
+2. Foyer commands light.foyer_hall only; candelabras removed (living-room device).

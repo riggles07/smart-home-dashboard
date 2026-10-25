@@ -33,6 +33,7 @@
     :host {
       display: block;
       height: 100%;          /* panel-mode views hand the card the whole viewport */
+      max-height: 100vh;     /* ...but HA computes that view as taller than the window */
       min-height: 0;
       --fpc-ink: #f2f5f8;
       --fpc-ink-dim: #a9b4c0;
@@ -175,13 +176,34 @@
       const aw = wrap.clientWidth || 0;
       const ah = wrap.clientHeight || 0;
       if (!aw) return;
-      const scale = ah > 40 ? Math.min(aw / ART_W, ah / ART_H) : aw / ART_W;
+      // Cap by window.innerHeight: the panel view measures 691px in a 601px window
+      // (HA leaves header space even when kiosk-mode hides the header), so trusting the
+      // container alone scaled the plan 90px past the bottom of the screen.
+      const ahCap = Math.min(ah, window.innerHeight || ah);
+      const scale = ahCap > 40 ? Math.min(aw / ART_W, ahCap / ART_H) : aw / ART_W;
       stage.style.width = Math.round(ART_W * scale) + 'px';
       stage.style.height = Math.round(ART_H * scale) + 'px';
     }
 
     disconnectedCallback() {
       if (this._ro) { this._ro.disconnect(); this._ro = null; }
+    }
+
+    // HA sizes the lovelace view taller than the viewport when the header is hidden
+    // (measured 691px vs 601px), which leaves a scrollable band under the card. The card
+    // cannot style its ancestors through the shadow boundary, but it can pin the host
+    // element it lives in. Guarded: only touches elements that really are HA views.
+    _pinViewHeight() {
+      try {
+        const root = this.getRootNode && this.getRootNode();
+        const host = root && root.host;
+        const tag = host && host.tagName ? host.tagName.toLowerCase() : '';
+        if (tag === 'hui-view' || tag === 'hui-panel-view') {
+          host.style.height = '100vh';
+          host.style.minHeight = '0';
+          host.style.overflow = 'hidden';
+        }
+      } catch (e) { /* never let cosmetics break the card */ }
     }
 
     _build() {
@@ -215,6 +237,7 @@
           <div class="toast" id="toast"></div>
         </div>`;
 
+      this._pinViewHeight();
       this._fit();
       if (window.ResizeObserver) {
         this._ro = new ResizeObserver(() => this._fit());
