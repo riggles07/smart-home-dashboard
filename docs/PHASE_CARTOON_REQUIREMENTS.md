@@ -1141,3 +1141,27 @@ Pins carrying an `unavailable` camera render grey rather than as a dead tap targ
 Validator now walks `cameras` too: **51 entities / 57 references**, PASS.
 Tests: pins declared, 6 of them, ids unique, coordinates in 0..1, payload matches the map
 (554 total).
+
+## 26. Nest cameras: no stills, live view only
+
+Measured on 2026-10-25, after the user confirmed live views work in HA's own viewer:
+
+- **Snapshots do not exist for these cameras.** `camera_proxy` returns the identical
+  640x480 near-black PNG (2689 B, mean RGB (5,5,5), md5 86a16300) for every Nest camera.
+  That is HA's "no image" placeholder, not a frame. So a snapshot-based overlay can only
+  ever look dead here.
+- **Live view works on demand.** The stream starts when the viewer presses play; HA's
+  capability call reports `frontend_stream_types: ["web_rtc"]`. Nothing is broken about
+  the stream path.
+
+So the overlay was rebuilt around live view rather than the still:
+- a "Live view" button sits on the frame (a placeholder still now reads as tappable
+  instead of broken)
+- it dispatches `hass-more-info` and then nudges the dialog's own play control once
+  (scoped to `ha-more-info-dialog`, only a control whose aria-label/title matches "play")
+- snapshot refresh slowed 5 s -> 15 s; refreshing every 5 s was hammering the API for an
+  image that never arrives
+
+Separately, the SDM event subscriber still logs ~1 exception/min with zero events since a
+core restart. That affects *events* (state updates), not on-demand streams: the cameras
+stream fine without it. Left as a known integration-side issue, not a card issue.

@@ -1,6 +1,6 @@
-/* built 2504545 B art, version 53d684e0;
+/* built 2504545 B art, version 8ddfa0cf;
  * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */
-window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun","guest_mode":"input_boolean.guest_mode"},"cameras":[{"id":"driveway","label":"Driveway","entity":"camera.outside_driveway_camera","x":0.02,"y":0.972},{"id":"backyard_upper","label":"Backyard Upper","entity":"camera.backyard_backyard_upper_camera","x":0.7001,"y":0.0952},{"id":"kitchen","label":"Kitchen","entity":"camera.kitchen_kitchen_hub","x":0.4351,"y":0.0764},{"id":"garage","label":"Garage","entity":"camera.garage_garage_camera","x":0.2125,"y":0.4803},{"id":"front_door","label":"Front Door","entity":"camera.outside_front_door","x":0.6901,"y":0.972},{"id":"living_room","label":"Living Room","entity":"camera.living_room_living_room_camera","x":0.9434,"y":0.7409}]};
+window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun","guest_mode":"input_boolean.guest_mode"},"cameras":[{"id":"driveway","label":"Driveway","entity":"camera.outside_driveway_camera","x":0.02,"y":0.972},{"id":"backyard_upper","label":"Backyard Upper","entity":"camera.backyard_backyard_upper_camera","x":0.7001,"y":0.0952},{"id":"kitchen","label":"Kitchen","entity":"camera.kitchen_kitchen_hub","x":0.4351,"y":0.0764},{"id":"garage","label":"Garage","entity":"camera.garage_garage_camera","x":0.2125,"y":0.4803},{"id":"front_door","label":"Front Door","entity":"camera.outside_front_door","x":0.6901,"y":0.972},{"id":"living_room","label":"Living Room","entity":"camera.living_room_living_room_camera","x":0.9434,"y":0.7409}]};
 /* floorplan-cartoon-card — interactive cartoon floor plan for Home Assistant.
  *
  * Single file, no build step, no dependencies. Data (hotspots + entity map) is injected
@@ -159,6 +159,17 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
                   color: var(--fpc-ink-dim); }
     .camview .frame { flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 8px; }
     .camview img { max-width: 100%; max-height: 100%; border-radius: 10px; background: #000; }
+    /* HA returns a still, 640x480, near-black placeholder for these Nest cams, so the
+       frame always looks dead. Put the action ON the frame instead of asking the user to
+       find it in the footer. */
+    .camview .frame { position: relative; }
+    .camview .playbig { position: absolute; inset: 0; margin: auto; width: 150px; height: 54px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer; border-radius: 999px; padding: 0 18px;
+        background: rgba(12,17,22,.72); border: 1px solid rgba(120,190,255,.55);
+        color: #dcecff; font: 600 14px/1 system-ui, sans-serif;
+        -webkit-tap-highlight-color: transparent; }
+    .camview .playbig svg { width: 22px; height: 22px; }
     .camview footer { display: flex; align-items: center; gap: 10px; padding: 8px 12px 12px; }
     .camview .meta { flex: 1; color: var(--fpc-ink-dim); font: 500 12px/1 system-ui, sans-serif; }
     .camview footer button { all: unset; cursor: pointer; padding: 8px 14px; min-height: 38px;
@@ -283,7 +294,13 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
           </div>
           <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
             <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="frame"><img id="camImg" alt="" draggable="false"></div>
+            <div class="frame">
+              <img id="camImg" alt="" draggable="false">
+              <button id="camPlay" class="playbig" aria-label="Start live view">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                <span>Live view</span>
+              </button>
+            </div>
             <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
           </div>
           <div class="toast" id="toast"></div>
@@ -367,6 +384,7 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
       });
       sh.querySelector('#camview .x').addEventListener('click', () => this._closeCam());
       sh.querySelector('#camLive').addEventListener('click', () => this._liveCam());
+      sh.querySelector('#camPlay').addEventListener('click', () => this._liveCam());
       sh.querySelector('.sheet .x').addEventListener('click', () => this._closeSheet());
       sh.getElementById('sheet').addEventListener('click', (e) => {
         if (e.target.id === 'sheet') this._closeSheet();
@@ -430,6 +448,21 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
     }
 
     // ---- cameras -----------------------------------------------------------
+    _deepFind(sel, maxDepth) {
+      let found = null;
+      const walk = (root, d) => {
+        if (found || !root || d > maxDepth) return;
+        const hit = root.querySelector ? root.querySelector(sel) : null;
+        if (hit) { found = hit; return; }
+        const all = root.querySelectorAll ? root.querySelectorAll('*') : [];
+        for (let i = 0; i < all.length; i += 1) {
+          if (all[i].shadowRoot) { walk(all[i].shadowRoot, d + 1); if (found) return; }
+        }
+      };
+      walk(document, 0);
+      return found;
+    }
+
     _camEntry(id) { return cameras.find((c) => c.id === id); }
 
     _openCam(id) {
@@ -442,7 +475,7 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
       sh.getElementById('camImg').alt = cam.label + ' camera snapshot';
       this._snap();
       clearInterval(this._camTimer);
-      this._camTimer = setInterval(() => this._snap(), 5000);
+      this._camTimer = setInterval(() => this._snap(), 15000);
       sh.getElementById('camview').classList.add('open');
     }
 
@@ -473,9 +506,25 @@ window.__FPC_DATA__ = {"version":"53d684e0","image":"/local/floorplan/cartoon/fl
       if (!this._cam) return;
       // Hand off to HA's own dialog: it owns the WebRTC/HLS player, the audio track and the
       // Nest stream lifecycle. A second player inside the card would only fight it.
+      const entity = this._cam.entity;
       this.dispatchEvent(new CustomEvent('hass-more-info',
-        { detail: { entityId: this._cam.entity }, bubbles: true, composed: true }));
+        { detail: { entityId: entity }, bubbles: true, composed: true }));
       this._closeCam();
+      // HA's camera dialog opens PAUSED (autoplay with audio is blocked), so the user
+      // otherwise has to press play again. Nudge it once, scoped to the dialog and only
+      // for a control that is explicitly a play button.
+      let tries = 0;
+      const iv = setInterval(() => {
+        tries += 1;
+        const dlg = this._deepFind('ha-more-info-dialog', 8);
+        let hit = null;
+        if (dlg) {
+          hit = dlg.querySelector('button[aria-label*="lay" i], button[title*="lay" i], '
+                + '[role="button"][aria-label*="lay" i]');
+        }
+        if (hit) { try { hit.click(); } catch (e) {} clearInterval(iv); return; }
+        if (tries > 12) clearInterval(iv);
+      }, 350);
     }
 
     _closeCam() {
