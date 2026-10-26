@@ -156,6 +156,17 @@
                   color: var(--fpc-ink-dim); }
     .camview .frame { flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 8px; }
     .camview img { max-width: 100%; max-height: 100%; border-radius: 10px; background: #000; }
+    /* HA returns a still, 640x480, near-black placeholder for these Nest cams, so the
+       frame always looks dead. Put the action ON the frame instead of asking the user to
+       find it in the footer. */
+    .camview .frame { position: relative; }
+    .camview .playbig { position: absolute; inset: 0; margin: auto; width: 150px; height: 54px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer; border-radius: 999px; padding: 0 18px;
+        background: rgba(12,17,22,.72); border: 1px solid rgba(120,190,255,.55);
+        color: #dcecff; font: 600 14px/1 system-ui, sans-serif;
+        -webkit-tap-highlight-color: transparent; }
+    .camview .playbig svg { width: 22px; height: 22px; }
     .camview footer { display: flex; align-items: center; gap: 10px; padding: 8px 12px 12px; }
     .camview .meta { flex: 1; color: var(--fpc-ink-dim); font: 500 12px/1 system-ui, sans-serif; }
     .camview footer button { all: unset; cursor: pointer; padding: 8px 14px; min-height: 38px;
@@ -280,7 +291,13 @@
           </div>
           <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
             <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="frame"><img id="camImg" alt="" draggable="false"></div>
+            <div class="frame">
+              <img id="camImg" alt="" draggable="false">
+              <button id="camPlay" class="playbig" aria-label="Start live view">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                <span>Live view</span>
+              </button>
+            </div>
             <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
           </div>
           <div class="toast" id="toast"></div>
@@ -364,6 +381,7 @@
       });
       sh.querySelector('#camview .x').addEventListener('click', () => this._closeCam());
       sh.querySelector('#camLive').addEventListener('click', () => this._liveCam());
+      sh.querySelector('#camPlay').addEventListener('click', () => this._liveCam());
       sh.querySelector('.sheet .x').addEventListener('click', () => this._closeSheet());
       sh.getElementById('sheet').addEventListener('click', (e) => {
         if (e.target.id === 'sheet') this._closeSheet();
@@ -427,6 +445,21 @@
     }
 
     // ---- cameras -----------------------------------------------------------
+    _deepFind(sel, maxDepth) {
+      let found = null;
+      const walk = (root, d) => {
+        if (found || !root || d > maxDepth) return;
+        const hit = root.querySelector ? root.querySelector(sel) : null;
+        if (hit) { found = hit; return; }
+        const all = root.querySelectorAll ? root.querySelectorAll('*') : [];
+        for (let i = 0; i < all.length; i += 1) {
+          if (all[i].shadowRoot) { walk(all[i].shadowRoot, d + 1); if (found) return; }
+        }
+      };
+      walk(document, 0);
+      return found;
+    }
+
     _camEntry(id) { return cameras.find((c) => c.id === id); }
 
     _openCam(id) {
@@ -439,7 +472,7 @@
       sh.getElementById('camImg').alt = cam.label + ' camera snapshot';
       this._snap();
       clearInterval(this._camTimer);
-      this._camTimer = setInterval(() => this._snap(), 5000);
+      this._camTimer = setInterval(() => this._snap(), 15000);
       sh.getElementById('camview').classList.add('open');
     }
 
@@ -470,9 +503,25 @@
       if (!this._cam) return;
       // Hand off to HA's own dialog: it owns the WebRTC/HLS player, the audio track and the
       // Nest stream lifecycle. A second player inside the card would only fight it.
+      const entity = this._cam.entity;
       this.dispatchEvent(new CustomEvent('hass-more-info',
-        { detail: { entityId: this._cam.entity }, bubbles: true, composed: true }));
+        { detail: { entityId: entity }, bubbles: true, composed: true }));
       this._closeCam();
+      // HA's camera dialog opens PAUSED (autoplay with audio is blocked), so the user
+      // otherwise has to press play again. Nudge it once, scoped to the dialog and only
+      // for a control that is explicitly a play button.
+      let tries = 0;
+      const iv = setInterval(() => {
+        tries += 1;
+        const dlg = this._deepFind('ha-more-info-dialog', 8);
+        let hit = null;
+        if (dlg) {
+          hit = dlg.querySelector('button[aria-label*="lay" i], button[title*="lay" i], '
+                + '[role="button"][aria-label*="lay" i]');
+        }
+        if (hit) { try { hit.click(); } catch (e) {} clearInterval(iv); return; }
+        if (tries > 12) clearInterval(iv);
+      }, 350);
     }
 
     _closeCam() {
