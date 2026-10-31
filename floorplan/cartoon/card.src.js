@@ -18,7 +18,27 @@
     console.error('[floorplan-cartoon] data payload missing');
     return;
   }
-  const { rooms, house, image, version, art_w: ART_W, art_h: ART_H, cameras = [] } = DATA;
+  const { house, version, art_w: ART_W, art_h: ART_H, cameras = [] } = DATA;
+
+  // Three layers, one plan frame. Every floor was traced and fitted in the SAME
+  // coordinates (136..1186 x 118..884) and every render is 2400x1792, so switching floor
+  // swaps the image and the room set without touching the projection -- the hotspots stay
+  // pixel-accurate. `rooms` and `ART` are module-level and mutable because every renderer
+  // below reads them; `FI` is the active floor index.
+  const FLOORS = (DATA.floors && DATA.floors.length)
+    ? DATA.floors
+    : [{ id: 'main', label: 'Main', image: DATA.image, rooms: DATA.rooms }];
+  const ART_V = (p) => `${p}?v=${version}`;
+  const STORE = 'fpc.floor';
+  let FI = 0;
+  try {
+    const saved = FLOORS.findIndex((f) => f.id === localStorage.getItem(STORE));
+    if (saved > 0) FI = saved;
+  } catch (e) { /* private mode: start on the main floor */ }
+  let rooms = FLOORS[FI].rooms;
+  let ART = ART_V(FLOORS[FI].image);
+  const isMain = () => (FLOORS[FI].id || 'main') === 'main';
+
 
   // Camera pins sit at plan coordinates (normalised to the art), not inside room polygons:
   // driveway and front door are exterior mounts, so they sit on the plan's edge.
@@ -28,7 +48,6 @@
   const camPins = cameras.map((c) =>
     `<button class="cam" data-cam="${c.id}" style="left:${(c.x * 100).toFixed(2)}%;top:${(c.y * 100).toFixed(2)}%"`
     + ` aria-label="${c.label} camera" title="${c.label}">${CAM_ICON}</button>`).join('');
-  const ART = `${image}?v=${version}`;
 
   const SVC = {
     light: 'light/toggle',
@@ -175,11 +194,28 @@
         font: 600 13px/1 system-ui, sans-serif; }
     .camview footer button:disabled { opacity: .45; }
 
-    .toast { position: absolute; left: 50%; bottom: 18px; transform: translate(-50%, 20px);
+    /* bottom: 66px clears the floor switcher that sits in the bottom-right corner;
+       a toast that lands under a tab bar reads as decoration, not as feedback. */
+    .toast { position: absolute; left: 50%; bottom: 66px; transform: translate(-50%, 20px);
              background: rgba(150,30,24,.95); color: #fff; padding: 9px 14px; border-radius: 10px;
              font: 600 13px/1.2 system-ui, sans-serif; opacity: 0; pointer-events: none;
              transition: opacity .2s, transform .2s; }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    /* Red is reserved for failures. A floor change is information, not an alarm. */
+    .toast.info { background: rgba(22,30,40,.94); }
+    /* Floor switcher: bottom-RIGHT on purpose. The HUD owns the top strip, and the
+       driveway camera pin sits on the bottom-left corner of the main-floor art. */
+    .floors { position: absolute; right: 8px; bottom: 8px; z-index: 3; display: flex;
+              gap: 4px; padding: 4px; border-radius: 13px;
+              background: rgba(12,17,23,.62); backdrop-filter: blur(8px);
+              box-shadow: 0 4px 14px rgba(0,0,0,.28); }
+    .floors button { font: 600 13px/1 system-ui, sans-serif; letter-spacing: .01em;
+                     min-height: 42px; min-width: 58px; padding: 0 12px; border: 0;
+                     border-radius: 10px; background: transparent; color: #c4cfdb;
+                     cursor: pointer; transition: background .15s, color .15s; }
+    .floors button.on { background: #e6edf5; color: #0b1117; }
+    .floors button:focus-visible { outline: 2px solid var(--fpc-accent); outline-offset: 2px; }
+    .floors button:active { transform: scale(.97); }
     @media (prefers-reduced-motion: reduce) {
       .room.motion, .chip.alarm-triggered { animation: none; }
       .sheet { transition: none; }
@@ -187,6 +223,17 @@
   `;
 
   const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1);
+
+  // A pill reading "68°" beside "21°" is a lie about units. The house is Celsius, so a
+  // Fahrenheit sensor keeps its °F suffix rather than being silently relabelled -- the
+  // number stays the one HA shows in more-info, which is what gets compared.
+  const tempLabel = (st) => {
+    const v = st ? parseFloat(st.state) : NaN;
+    if (!isFinite(v)) return '';
+    const u = ((st.attributes && st.attributes.unit_of_measurement) || '°C').trim();
+    const bare = u.replace(/^°/, '');
+    return `${fmt(v)}°${bare === 'C' ? '' : bare}`;
+  };
 
   class FloorplanCartoonCard extends HTMLElement {
     constructor() {
@@ -259,61 +306,16 @@
       } catch (e) { /* never let cosmetics break the card */ }
     }
 
-    _build() {
+    // Paint polygons, glow pools and temperature pills for the CURRENT floor. Split out of
+    // _build so a floor switch can repaint the overlay without rebuilding the DOM -- a
+    // rebuild would drop the wiring, the ResizeObserver and the camera timers.
+    _paint() {
       const sh = this.shadowRoot;
-      sh.innerHTML = `<style>${css}</style>
-        <div class="wrap">
-          <div class="hud">
-            <span class="chip" id="clock"></span>
-            <span class="chip" id="wx"><span class="dot off"></span><span class="t">—</span></span>
-            <span class="chip" id="alarm"><button><span class="dot off"></span><span class="t">Alarm</span></button></span>
-            <span class="chip" id="guest"><button title="Guest mode — keeps the house occupied so the alarm will not arm"><span class="dot off"></span><span class="t">Guest</span></button></span>
-            <span class="spacer"></span>
-            <span class="chip" id="mode"><button title="Toggle day/night">◐</button></span>
-          </div>
-          <div class="stage">
-            <img alt="Floor plan" src="${ART}" draggable="false">
-            <svg viewBox="0 0 ${ART_W} ${ART_H}" preserveAspectRatio="none" aria-hidden="false">
-              <defs>
-                <radialGradient id="lamp"><stop offset="0%" stop-color="#ffd79a" stop-opacity=".85"/>
-                  <stop offset="60%" stop-color="#ffbc63" stop-opacity=".35"/>
-                  <stop offset="100%" stop-color="#ffbc63" stop-opacity="0"/></radialGradient>
-              </defs>
-              <g class="glow"></g>
-              <g class="rooms"></g>
-              <g class="labels"></g>
-            </svg>
-            <div class="cams">${camPins}</div>
-          </div>
-          <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Room devices">
-            <header><h2 id="sheetTitle">Room</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="rows" id="rows"></div>
-          </div>
-          <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
-            <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="frame">
-              <img id="camImg" alt="" draggable="false">
-              <button id="camPlay" class="playbig" aria-label="Start live view">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
-                <span>Live view</span>
-              </button>
-            </div>
-            <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
-          </div>
-          <div class="toast" id="toast"></div>
-        </div>`;
-
-      this._pinViewHeight();
-      this._fit();
-      if (window.ResizeObserver) {
-        this._ro = new ResizeObserver(() => this._fit());
-        this._ro.observe(sh.querySelector('.wrap'));
-      }
-
       const svg = sh.querySelector('svg');
       const gRooms = svg.querySelector('.rooms');
       const gLabels = svg.querySelector('.labels');
       const gGlow = svg.querySelector('.glow');
+      for (const g of [gRooms, gLabels, gGlow]) g.textContent = '';
 
       let i = 0;
       for (const [rid, room] of Object.entries(rooms)) {
@@ -363,7 +365,101 @@
         i++;
       }
 
-      // interactions
+      this._update();
+      this._setCamVisibility();
+    }
+
+    // Camera pins are placed in MAIN-floor art coordinates. On the upper and lower layers
+    // they would float over unrelated rooms, so they are hidden rather than mismapped --
+    // every camera in this house is a main-floor or exterior mount.
+    _setCamVisibility() {
+      const cams = this.shadowRoot && this.shadowRoot.querySelector('.cams');
+      if (cams) cams.style.display = isMain() ? '' : 'none';
+    }
+
+    // Swap layers. The art and the room set change together; the projection does not,
+    // because all three floors were fitted in one frame.
+    _setFloor(k) {
+      if (!FLOORS[k] || k === FI) return;
+      FI = k;
+      rooms = FLOORS[k].rooms;
+      ART = ART_V(FLOORS[k].image);
+      try { localStorage.setItem(STORE, FLOORS[k].id); } catch (e) { /* private mode */ }
+      const sh = this.shadowRoot;
+      this._closeSheet();
+      this._closeCam();
+      const img = sh.querySelector('.stage img');
+      if (img) img.src = ART;                 // alt text stays generic; the tab name carries the floor
+      sh.querySelectorAll('.floors button').forEach((btn) => {
+        const on = Number(btn.dataset.floor) === k;
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-selected', String(on));
+      });
+      this._paint();
+      this._toast(`${FLOORS[k].label} floor`, true);
+    }
+
+    _build() {
+      const sh = this.shadowRoot;
+      sh.innerHTML = `<style>${css}</style>
+        <div class="wrap">
+          <div class="hud">
+            <span class="chip" id="clock"></span>
+            <span class="chip" id="wx"><span class="dot off"></span><span class="t">—</span></span>
+            <span class="chip" id="alarm"><button><span class="dot off"></span><span class="t">Alarm</span></button></span>
+            <span class="chip" id="guest"><button title="Guest mode — keeps the house occupied so the alarm will not arm"><span class="dot off"></span><span class="t">Guest</span></button></span>
+            <span class="spacer"></span>
+            <span class="chip" id="mode"><button title="Toggle day/night">◐</button></span>
+          </div>
+          <div class="stage">
+            <img alt="Floor plan" src="${ART}" draggable="false">
+            <svg viewBox="0 0 ${ART_W} ${ART_H}" preserveAspectRatio="none" aria-hidden="false">
+              <defs>
+                <radialGradient id="lamp"><stop offset="0%" stop-color="#ffd79a" stop-opacity=".85"/>
+                  <stop offset="60%" stop-color="#ffbc63" stop-opacity=".35"/>
+                  <stop offset="100%" stop-color="#ffbc63" stop-opacity="0"/></radialGradient>
+              </defs>
+              <g class="glow"></g>
+              <g class="rooms"></g>
+              <g class="labels"></g>
+            </svg>
+            <div class="cams">${camPins}</div>
+            ${FLOORS.length > 1 ? `<div class="floors" role="tablist" aria-label="Floor">
+              ${FLOORS.map((f, k) => `<button role="tab" data-floor="${k}" aria-selected="${k === FI}"`
+                + ` class="${k === FI ? 'on' : ''}">${f.label}</button>`).join('')}
+            </div>` : ''}
+          </div>
+          <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Room devices">
+            <header><h2 id="sheetTitle">Room</h2><button class="x" aria-label="Close">×</button></header>
+            <div class="rows" id="rows"></div>
+          </div>
+          <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
+            <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
+            <div class="frame">
+              <img id="camImg" alt="" draggable="false">
+              <button id="camPlay" class="playbig" aria-label="Start live view">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                <span>Live view</span>
+              </button>
+            </div>
+            <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>`;
+
+      this._pinViewHeight();
+      this._fit();
+      if (window.ResizeObserver) {
+        this._ro = new ResizeObserver(() => this._fit());
+        this._ro.observe(sh.querySelector('.wrap'));
+      }
+
+      const svg = sh.querySelector('svg');
+      this._paint();
+
+      // interactions -- bound to the persistent <g> children, so a floor repaint (which only
+      // clears grandchildren) never has to rewire them.
+      const gRooms = svg.querySelector('.rooms');
       gRooms.addEventListener('pointerdown', (e) => this._down(e));
       gRooms.addEventListener('pointerup', (e) => this._up(e));
       gRooms.addEventListener('pointercancel', () => clearTimeout(this._pressTimer));
@@ -382,6 +478,9 @@
       sh.querySelector('#camview .x').addEventListener('click', () => this._closeCam());
       sh.querySelector('#camLive').addEventListener('click', () => this._liveCam());
       sh.querySelector('#camPlay').addEventListener('click', () => this._liveCam());
+      sh.querySelectorAll('.floors button').forEach((b2) => {
+        b2.addEventListener('click', (e) => { e.stopPropagation(); this._setFloor(Number(b2.dataset.floor)); });
+      });
       sh.querySelector('.sheet .x').addEventListener('click', () => this._closeSheet());
       sh.getElementById('sheet').addEventListener('click', (e) => {
         if (e.target.id === 'sheet') this._closeSheet();
@@ -405,6 +504,7 @@
       if (window.ResizeObserver) new ResizeObserver(setK).observe(svg);
 
       this._built = true;
+      this._setCamVisibility();
     }
 
     disconnectedCallback() {
@@ -758,7 +858,7 @@
           const st = hass.states[room.temp];
           const pill = sh.querySelector(`rect[data-tempbg="${rid}"]`);
           const has = st && !['unknown', 'unavailable'].includes(st.state);
-          if (t) t.textContent = has ? `${fmt(parseFloat(st.state))}°` : '';
+          if (t) t.textContent = has ? tempLabel(st) : '';
           if (pill) pill.setAttribute('opacity', has ? '1' : '0');
         }
       }
@@ -819,10 +919,11 @@
       });
     }
 
-    _toast(msg) {
+    _toast(msg, info) {
       const t = this.shadowRoot.getElementById('toast');
       if (!t) return;
       t.textContent = msg;
+      t.classList.toggle('info', !!info);
       t.classList.add('show');
       clearTimeout(this._toastTimer);
       this._toastTimer = setTimeout(() => t.classList.remove('show'), 1800);

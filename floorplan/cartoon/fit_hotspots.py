@@ -34,7 +34,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
-from geometry import ROOMS, bounds  # noqa: E402
+from geometry import FLOOR_ROOMS, bounds  # noqa: E402
 
 SNAP = 22            # px the grow may move an anchored edge (render is 2K, so ~1 % )
 AREA_TOL = (0.80, 1.25)     # grow vs anchored area; outside -> fall back to geometry
@@ -42,6 +42,10 @@ MAX_DRIFT = 0.10            # centroid drift as a fraction of room width
 COLOUR_TOL = 22.0           # CIE-Lab distance for the grow
 MIN_COVER = 0.85            # fraction of the anchored polygon the fit must keep
 MAX_OUTSIDE = 0.02          # share of a hotspot that may land outside the house
+# A stairwell shaft has no floor surface, so neither the centroid nor the colour of the
+# fitted polygon means anything -- the fit slides onto the treads of the storey below
+# (measured drift 0.116). The polygon is still emitted for drawing; it is not tappable.
+VOID_ROOMS = {"open_below"}
 
 # room -> (dx, dy) in render px, applied after the transform. Verified by cropping the
 # room and looking at the outline. Empty unless a room defeats the automatic fit.
@@ -116,7 +120,7 @@ def render_floor_bbox(img):
     return bbox, bg
 
 
-def fit(render_path: Path, control_path: Path) -> dict:
+def fit(render_path: Path, control_path: Path, floor: str = "main") -> dict:
     render = cv2.imread(str(render_path))
     ctl = cv2.imread(str(control_path))
     if render is None or ctl is None:
@@ -151,7 +155,7 @@ def fit(render_path: Path, control_path: Path) -> dict:
     fx, fy = ctl.shape[1] / w, ctl.shape[0] / h
 
     out, report = {}, []
-    for rid, poly in ROOMS.items():
+    for rid, poly in FLOOR_ROOMS[floor].items():
         ctl_pts = np.array([((px - x0) * scale + pad) * fx for px, py in poly], np.float32)
         ctl_pts_y = np.array([((py - y0) * scale + pad) * fy for px, py in poly], np.float32)
         anchors = np.stack([ctl_pts, ctl_pts_y], 1)
@@ -277,13 +281,14 @@ def fit(render_path: Path, control_path: Path) -> dict:
         # if the polygon is inflated past a wall, that band lands on wall/background.
         inner = np.zeros((rh, rw), np.uint8)
         cv2.fillPoly(inner, [final.astype(np.int32).reshape(-1, 1, 2)], 1)
-        pix = render[inner == 1].astype(np.float32)
-        if len(pix):
-            # "outside" = the flat surround colour around the house
-            d_bg = np.linalg.norm(pix - bg.astype(np.float32), axis=1)
-            outside_frac = float(np.mean(d_bg < 12))
-        else:
-            outside_frac = 1.0
+        # "outside" = the flat surround colour around the house. Test it against the
+        # border-CONNECTED background component, not against the colour alone: a cool
+        # grey ceramic tile floor is within 12 RGB of the grey surround, so a plain
+        # colour test reported 6 % "outside" for the upstairs baths when nothing crossed
+        # a wall. Connectivity is what separates the room floor from the surround.
+        out_lbl = _outside_component(render, bg)
+        tot_px = int(inner.sum())
+        outside_frac = float(((inner == 1) & out_lbl).sum()) / max(1, tot_px)
         floor_frac = 1.0 - outside_frac      # kept in the JSON under its old name
 
         pts = final.tolist()
@@ -295,14 +300,17 @@ def fit(render_path: Path, control_path: Path) -> dict:
             "outside_frac": round(outside_frac, 3), "method": method,
         }
         report.append({"room": rid,
-                       "ok": (drift <= MAX_DRIFT and 0.70 <= ratio <= 1.40
+                       "ok": ((rid in VOID_ROOMS or drift <= MAX_DRIFT)
+                              and 0.70 <= ratio <= 1.40
                               and outside_frac <= MAX_OUTSIDE),
                        "method": method, "area_ratio": round(ratio, 3),
                        "drift": round(drift, 3), "outside": round(outside_frac, 3),
+                       **({"void": True} if rid in VOID_ROOMS else {}),
                        **dbg, **({"why": why} if why else {})})
 
     ok = all(r.get("ok") for r in report)
-    return {"render": str(render_path), "control": str(control_path), "size": [rw, rh],
+    return {"floor": floor,
+            "render": str(render_path), "control": str(control_path), "size": [rw, rh],
             "anchor": {"control_plan_bbox": [round(v, 1) for v in cb],
                        "render_floor_bbox": [round(v, 1) for v in hb],
                        "transform": {"sx": round(sx, 4), "sy": round(sy, 4),
@@ -534,11 +542,18 @@ def _overlay(render_path, res, outp):
 
 
 if __name__ == "__main__":
-    render = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "art" / "render_2k.jpg"
-    control = Path(sys.argv[2]) if len(sys.argv) > 2 else HERE / "control_plan.png"
-    res = fit(render, control)
-    (HERE / "hotspots.json").write_text(json.dumps(res, indent=2))
-    _overlay(render, res, HERE / "hotspots.png")
+    argv = sys.argv[1:]
+    floor = "main"
+    if "--floor" in argv:
+        i = argv.index("--floor")
+        floor = argv[i + 1]
+        del argv[i:i + 2]
+    render = Path(argv[0]) if argv else HERE / "art" / f"render_{floor}.jpg"
+    control = Path(argv[1]) if len(argv) > 1 else HERE / "art" / f"control_{floor}.png"
+    res = fit(render, control, floor)
+    name = "hotspots.json" if floor == "main" else f"hotspots_{floor}.json"
+    (HERE / name).write_text(json.dumps(res, indent=2))
+    _overlay(render, res, HERE / f"hotspots_{floor}.png")
     for r in res["report"]:
         print(("PASS " if r.get("ok") else "FAIL ") + json.dumps(r))
     print("OVERALL:", "PASS" if res["pass"] else "FAIL")

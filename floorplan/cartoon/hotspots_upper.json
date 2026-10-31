@@ -1,0 +1,504 @@
+{
+  "floor": "upper",
+  "render": "/root/.hermes/projects/smart-home-dashboard/floorplan/cartoon/art/render_upper.jpg",
+  "control": "/root/.hermes/projects/smart-home-dashboard/floorplan/cartoon/art/control_upper.png",
+  "size": [
+    2400,
+    1792
+  ],
+  "anchor": {
+    "control_plan_bbox": [
+      30.0,
+      29.5,
+      1570.0,
+      1138.5
+    ],
+    "render_floor_bbox": [
+      29.0,
+      27.0,
+      2375.0,
+      1768.0
+    ],
+    "transform": {
+      "sx": 1.5234,
+      "sy": 1.5228,
+      "tx": -11.0,
+      "ty": -3.0,
+      "score": -1.5011
+    }
+  },
+  "rooms": {
+    "master_bath": {
+      "points_px": [
+        [
+          490.0,
+          37.0
+        ],
+        [
+          490.0,
+          611.0
+        ],
+        [
+          852.0,
+          611.0
+        ],
+        [
+          852.0,
+          37.0
+        ]
+      ],
+      "points_norm": [
+        [
+          0.20417,
+          0.02065
+        ],
+        [
+          0.20417,
+          0.34096
+        ],
+        [
+          0.355,
+          0.34096
+        ],
+        [
+          0.355,
+          0.02065
+        ]
+      ],
+      "area_px": 207788.0,
+      "anchor_area_px": 236808.1,
+      "area_ratio": 0.877,
+      "centroid_drift": 0.069,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "walk_in_closet": {
+      "points_px": [
+        [
+          488.2,
+          601.2
+        ],
+        [
+          488.2,
+          955.8
+        ],
+        [
+          853.8,
+          955.8
+        ],
+        [
+          853.8,
+          601.2
+        ]
+      ],
+      "points_norm": [
+        [
+          0.20341,
+          0.33552
+        ],
+        [
+          0.20341,
+          0.53335
+        ],
+        [
+          0.35575,
+          0.53335
+        ],
+        [
+          0.35575,
+          0.33552
+        ]
+      ],
+      "area_px": 129615.9,
+      "anchor_area_px": 149608.0,
+      "area_ratio": 0.866,
+      "centroid_drift": 0.079,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "master_bedroom": {
+      "points_px": [
+        [
+          887.8,
+          24.7
+        ],
+        [
+          887.8,
+          587.3
+        ],
+        [
+          1451.2,
+          587.3
+        ],
+        [
+          1451.2,
+          24.7
+        ]
+      ],
+      "points_norm": [
+        [
+          0.3699,
+          0.01381
+        ],
+        [
+          0.3699,
+          0.32771
+        ],
+        [
+          0.60469,
+          0.32771
+        ],
+        [
+          0.60469,
+          0.01381
+        ]
+      ],
+      "area_px": 316980.0,
+      "anchor_area_px": 365246.4,
+      "area_ratio": 0.868,
+      "centroid_drift": 0.037,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "hall_bath": {
+      "points_px": [
+        [
+          1485.8,
+          24.1
+        ],
+        [
+          1485.8,
+          603.9
+        ],
+        [
+          1726.2,
+          603.9
+        ],
+        [
+          1726.2,
+          24.1
+        ]
+      ],
+      "points_norm": [
+        [
+          0.61909,
+          0.01347
+        ],
+        [
+          0.61909,
+          0.33698
+        ],
+        [
+          0.71925,
+          0.33698
+        ],
+        [
+          0.71925,
+          0.01347
+        ]
+      ],
+      "area_px": 139357.8,
+      "anchor_area_px": 161885.7,
+      "area_ratio": 0.861,
+      "centroid_drift": 0.085,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "jj_room": {
+      "points_px": [
+        [
+          1760.3,
+          24.7
+        ],
+        [
+          1760.3,
+          587.3
+        ],
+        [
+          2282.7,
+          587.3
+        ],
+        [
+          2282.7,
+          24.7
+        ]
+      ],
+      "points_norm": [
+        [
+          0.73347,
+          0.01381
+        ],
+        [
+          0.73347,
+          0.32771
+        ],
+        [
+          0.95111,
+          0.32771
+        ],
+        [
+          0.95111,
+          0.01381
+        ]
+      ],
+      "area_px": 293826.7,
+      "anchor_area_px": 339826.3,
+      "area_ratio": 0.865,
+      "centroid_drift": 0.039,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "upstairs_hall": {
+      "points_px": [
+        [
+          896.1,
+          606.5
+        ],
+        [
+          896.1,
+          950.5
+        ],
+        [
+          2273.9,
+          950.5
+        ],
+        [
+          2273.9,
+          606.5
+        ]
+      ],
+      "points_norm": [
+        [
+          0.37336,
+          0.33845
+        ],
+        [
+          0.37336,
+          0.53041
+        ],
+        [
+          0.94747,
+          0.53041
+        ],
+        [
+          0.94747,
+          0.33845
+        ]
+      ],
+      "area_px": 473963.1,
+      "anchor_area_px": 547717.5,
+      "area_ratio": 0.865,
+      "centroid_drift": 0.022,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "evie_room": {
+      "points_px": [
+        [
+          884.1,
+          987.3
+        ],
+        [
+          884.1,
+          1635.7
+        ],
+        [
+          1299.9,
+          1635.7
+        ],
+        [
+          1299.9,
+          987.3
+        ]
+      ],
+      "points_norm": [
+        [
+          0.36837,
+          0.55093
+        ],
+        [
+          0.36837,
+          0.91279
+        ],
+        [
+          0.54163,
+          0.91279
+        ],
+        [
+          0.54163,
+          0.55093
+        ]
+      ],
+      "area_px": 269625.5,
+      "anchor_area_px": 307871.3,
+      "area_ratio": 0.876,
+      "centroid_drift": 0.069,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "open_below": {
+      "points_px": [
+        [
+          1330.8,
+          980.7
+        ],
+        [
+          1330.8,
+          1642.3
+        ],
+        [
+          1571.2,
+          1642.3
+        ],
+        [
+          1571.2,
+          980.7
+        ]
+      ],
+      "points_norm": [
+        [
+          0.5545,
+          0.54728
+        ],
+        [
+          0.5545,
+          0.91645
+        ],
+        [
+          0.65466,
+          0.91645
+        ],
+        [
+          0.65466,
+          0.54728
+        ]
+      ],
+      "area_px": 159023.3,
+      "anchor_area_px": 183509.5,
+      "area_ratio": 0.867,
+      "centroid_drift": 0.116,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "colette_room": {
+      "points_px": [
+        [
+          1606.9,
+          990.5
+        ],
+        [
+          1606.9,
+          1632.4
+        ],
+        [
+          2281.1,
+          1632.4
+        ],
+        [
+          2281.1,
+          990.5
+        ]
+      ],
+      "points_norm": [
+        [
+          0.66953,
+          0.55276
+        ],
+        [
+          0.66953,
+          0.91097
+        ],
+        [
+          0.95047,
+          0.91097
+        ],
+        [
+          0.95047,
+          0.55276
+        ]
+      ],
+      "area_px": 432794.7,
+      "anchor_area_px": 491380.6,
+      "area_ratio": 0.881,
+      "centroid_drift": 0.043,
+      "outside_frac": 0.0,
+      "method": "inset"
+    }
+  },
+  "report": [
+    {
+      "room": "master_bath",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.877,
+      "drift": 0.069,
+      "outside": 0.0
+    },
+    {
+      "room": "walk_in_closet",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.866,
+      "drift": 0.079,
+      "outside": 0.0
+    },
+    {
+      "room": "master_bedroom",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.868,
+      "drift": 0.037,
+      "outside": 0.0
+    },
+    {
+      "room": "hall_bath",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.861,
+      "drift": 0.085,
+      "outside": 0.0
+    },
+    {
+      "room": "jj_room",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.865,
+      "drift": 0.039,
+      "outside": 0.0
+    },
+    {
+      "room": "upstairs_hall",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.865,
+      "drift": 0.022,
+      "outside": 0.0
+    },
+    {
+      "room": "evie_room",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.876,
+      "drift": 0.069,
+      "outside": 0.0
+    },
+    {
+      "room": "open_below",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.867,
+      "drift": 0.116,
+      "outside": 0.0,
+      "void": true
+    },
+    {
+      "room": "colette_room",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.881,
+      "drift": 0.043,
+      "outside": 0.0
+    }
+  ],
+  "pass": true
+}

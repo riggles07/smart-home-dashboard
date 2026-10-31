@@ -1,7 +1,24 @@
 {
-  "_comment": "The dashboard's data contract. Every id here is validated against live HA by tools/validate_entity_map.py (P0 gate). Nothing in the card may reference an entity that is not in this file.",
-  "version": 3,
-  "generated": "2026-10-22",
+  "_comment": "The dashboard's data contract. Every id here is validated against live HA by tools/validate_entity_map.py (P0 gate). Nothing in the card may reference an entity that is not in this file. Rooms are grouped by the render layer they live on: main / upper / lower. Only rooms that have at least one real device are listed -- a room with no devices still appears in the art (and in geometry.py), it just has no interactive polygon.",
+  "version": 6,
+  "generated": "2026-10-31",
+  "floors": [
+    {
+      "id": "main",
+      "label": "Main",
+      "art": "floorplan_render.jpg"
+    },
+    {
+      "id": "upper",
+      "label": "2nd",
+      "art": "render_upper.jpg"
+    },
+    {
+      "id": "lower",
+      "label": "Basement",
+      "art": "render_lower.jpg"
+    }
+  ],
   "house": {
     "alarm_primary": "alarm_control_panel.house",
     "alarm_secondary": [
@@ -14,6 +31,7 @@
   },
   "rooms": {
     "study": {
+      "floor": "main",
       "label": "Family Room",
       "primary_light": "light.family_room_family_room",
       "lights": [
@@ -27,13 +45,10 @@
         "media_player.family_room_tv"
       ],
       "temp": "sensor.family_room_family_room_motion_temperature",
-      "motion": "binary_sensor.family_room_family_room_motion_motion",
-      "marker": [
-        0.5,
-        0.3
-      ]
+      "motion": "binary_sensor.family_room_family_room_motion_motion"
     },
     "kitchen": {
+      "floor": "main",
       "label": "Kitchen",
       "primary_light": "light.z_wave_plus_s2_dimmer_light_switch",
       "lights": [
@@ -48,23 +63,23 @@
         "media_player.kitchen_display"
       ],
       "temp": "sensor.kitchen_motion_temperature",
-      "motion": "binary_sensor.kitchen_motion_motion",
-      "marker": [
-        0.5,
-        0.12
-      ]
+      "motion": "binary_sensor.kitchen_motion_motion"
     },
     "dining_room": {
+      "floor": "main",
       "label": "Dining Room",
       "primary_light": null,
       "lights": [],
       "switches": [],
       "media": [],
-      "temp": null,
-      "motion": null,
-      "marker": null
+      "appliances": [],
+      "covers": [],
+      "locks": [],
+      "temp": "sensor.basement_motion_temperature",
+      "motion": "binary_sensor.basement_motion_motion"
     },
     "corridor": {
+      "floor": "main",
       "label": "Foyer",
       "primary_light": "light.foyer_hall",
       "lights": [
@@ -76,13 +91,10 @@
       "humidity": "sensor.hallway_hallway_humidity",
       "motion": "binary_sensor.hallway_motion_motion",
       "climate": "climate.hallway_hallway",
-      "front_door": "binary_sensor.foyer_alarm_panel_pro_zone_1",
-      "marker": [
-        0.6,
-        0.1
-      ]
+      "front_door": "binary_sensor.foyer_alarm_panel_pro_zone_1"
     },
     "laundry": {
+      "floor": "main",
       "label": "Laundry",
       "primary_light": "switch.double_relay",
       "lights": [],
@@ -95,23 +107,25 @@
         "switch.laundry_dryer_power"
       ],
       "temp": null,
-      "door": "binary_sensor.laundry_door_contact",
-      "marker": [
-        0.5,
-        0.5
-      ]
+      "door": "binary_sensor.laundry_door_contact"
     },
     "bathroom": {
+      "floor": "main",
       "label": "Bathroom",
       "primary_light": null,
       "lights": [],
-      "switches": [],
+      "switches": [
+        "switch.z_wave_plus_on_off_toggle_switch_2"
+      ],
       "media": [],
+      "appliances": [],
+      "covers": [],
+      "locks": [],
       "temp": null,
-      "motion": null,
-      "marker": null
+      "motion": null
     },
     "living_room": {
+      "floor": "main",
       "label": "Living Room",
       "primary_light": "light.living_room_ceiling",
       "lights": [
@@ -122,13 +136,10 @@
         "media_player.living_room_speaker"
       ],
       "temp": null,
-      "motion": null,
-      "marker": [
-        0.5,
-        0.2
-      ]
+      "motion": null
     },
     "garage": {
+      "floor": "main",
       "label": "Garage",
       "primary_light": "light.gdo_left_garage_light",
       "lights": [
@@ -146,10 +157,179 @@
       ],
       "media": [],
       "temp": null,
-      "motion": null,
+      "motion": null
+    },
+    "master_bedroom": {
+      "floor": "upper",
+      "label": "Master Bedroom",
+      "primary_light": "light.master_bedroom",
+      "lights": [
+        "light.master_bedroom",
+        "light.bedroom_bedside"
+      ],
+      "switches": [
+        "switch.bedroom_bd_l",
+        "switch.bedroom_bd_r",
+        "switch.bedroom_dresser"
+      ],
+      "media": [],
+      "climate": "climate.master_bedroom_master_bedroom",
+      "temp": "sensor.master_bedroom_master_bedroom_temperature",
+      "motion": "binary_sensor.bedroom_bedroom_motion_motion"
+    },
+    "master_bath": {
+      "floor": "upper",
+      "label": "Master Bath",
+      "primary_light": null,
+      "lights": [],
+      "switches": [
+        "switch.z_wave_plus_on_off_toggle_switch",
+        "switch.z_wave_plus_on_off_toggle_switch_2"
+      ],
+      "media": [],
+      "temp": null,
+      "motion": null
+    },
+    "jj_room": {
+      "floor": "upper",
+      "label": "JJ's Room",
+      "primary_light": "light.kids_rooms_jj_lamp",
+      "lights": [
+        "light.kids_rooms_jj_lamp"
+      ],
+      "switches": [],
+      "media": [
+        "media_player.jj_s_room_speaker"
+      ],
+      "temp": null,
+      "motion": null
+    },
+    "colette_room": {
+      "floor": "upper",
+      "label": "Colette's Room",
+      "primary_light": "light.kids_rooms_colette_lamp",
+      "lights": [
+        "light.kids_rooms_colette_lamp"
+      ],
+      "switches": [],
+      "media": [],
+      "temp": null,
+      "motion": null
+    },
+    "evie_room": {
+      "floor": "upper",
+      "label": "Evie's Room",
+      "primary_light": null,
+      "lights": [],
+      "switches": [],
+      "media": [
+        "media_player.evie_s_room"
+      ],
+      "temp": null,
+      "motion": null
+    },
+    "upstairs_hall": {
+      "floor": "upper",
+      "label": "Upstairs Hall",
+      "primary_light": "light.illumino_dimmer_switch",
+      "lights": [
+        "light.illumino_dimmer_switch",
+        "light.upstairs_motion_light_2"
+      ],
+      "switches": [],
+      "media": [],
+      "temp": null,
+      "motion": null
+    },
+    "media_room": {
+      "floor": "lower",
+      "label": "Media Room",
+      "primary_light": "light.media_media_room_floor",
+      "lights": [
+        "light.media_media_room_floor",
+        "light.media_m1",
+        "light.m2",
+        "light.m3",
+        "light.m4",
+        "light.m5",
+        "light.m6",
+        "light.seat_v",
+        "light.h619a",
+        "light.h618e",
+        "light.h619c",
+        "light.basement_media_room",
+        "light.basement_movie_dim"
+      ],
+      "switches": [
+        "switch.movie_seating_light_cycle",
+        "switch.nightime_lighting",
+        "switch.basement_movie_lighting",
+        "switch.basement_tv_lighting",
+        "light.basement_movie_dim",
+        "switch.rainbow_lights",
+        "switch.christmas_media_room",
+        "switch.z_wave_plus_s2_on_off_switch_2"
+      ],
+      "media": [
+        "media_player.shield",
+        "media_player.media_room_speaker"
+      ],
+      "temp": null,
+      "motion": null
+    },
+    "rec_room": {
+      "floor": "lower",
+      "label": "Recreation Room",
+      "primary_light": "light.h619e",
+      "lights": [
+        "light.h619e",
+        "light.basement_motion_light_1"
+      ],
+      "switches": [
+        "switch.basement_gameday",
+        "switch.basement_daylight",
+        "switch.basement_daytime_lighting"
+      ],
+      "media": [
+        "media_player.basement_tv",
+        "media_player.basement_audio",
+        "media_player.basement_speaker",
+        "media_player.golf_sim"
+      ],
+      "temp": "sensor.basement_motion_temperature",
+      "motion": "binary_sensor.basement_motion_motion"
+    },
+    "office": {
+      "floor": "lower",
+      "label": "Office",
+      "primary_light": "light.a1_03919c471500682_chamber_light",
+      "lights": [
+        "light.a1_03919c471500682_chamber_light"
+      ],
+      "switches": [],
+      "media": [],
+      "temp": null,
+      "motion": null
+    },
+    "basement_hall": {
+      "floor": "lower",
+      "label": "Basement Hall",
+      "primary_light": "light.basement_motion_light_1",
+      "lights": [
+        "light.basement_motion_light_1"
+      ],
+      "switches": [
+        "switch.z_wave_plus_s2_on_off_switch"
+      ],
+      "media": [],
+      "appliances": [],
+      "covers": [],
+      "locks": [],
+      "temp": null,
+      "motion": "binary_sensor.basement_motion_light_1_motion",
       "marker": [
-        0.5,
-        0.5
+        0.55,
+        0.72
       ]
     }
   },
@@ -162,7 +342,8 @@
     "binary_sensor.foyer_alarm_panel_pro_zone_9": "unconfigured loop, reads on",
     "binary_sensor.foyer_alarm_panel_pro_zone_10": "unconfigured loop, reads on",
     "binary_sensor.foyer_alarm_panel_pro_zone_11": "unconfigured loop, reads on",
-    "binary_sensor.foyer_alarm_panel_pro_zone_12": "unconfigured loop, reads on"
+    "binary_sensor.foyer_alarm_panel_pro_zone_12": "unconfigured loop, reads on",
+    "fan.a1_03919c471500682_cooling_fan": "part-cooling fan on a running 3D print; toggling it ruins the print"
   },
   "cameras": [
     {
@@ -207,5 +388,14 @@
       "x": 0.9434,
       "y": 0.7409
     }
-  ]
+  ],
+  "_notes": {
+    "lower_garage": "The lower sheet shows a two-car garage in the same footprint as the main-floor garage. Until that is confirmed to be a second physical room, the lower garage is drawn (geometry.py) but NOT bound here, so the GDO doors and locks never appear on two floors at once.",
+    "bathroom": "The only bathroom entity in HA is switch.z_wave_plus_on_off_toggle_switch_2 (friendly name 'Bathroom'); it is a Z-Wave toggle, so it is bound as a switch, not as primary_light. switch.z_wave_plus_on_off_toggle_switch ('Bathroom Toilet') is the toilet's own switch and is deliberately not on the plan.",
+    "dining_room": "The dining room's sensors carry a 'basement_motion_' entity_id but are friendly-named 'Dining room Motion'; bound as temp + motion on that basis. Its temperature reports in Fahrenheit, so the pill carries °F rather than being converted -- the number matches HA's more-info dialog.",
+    "basement_hall": "Stair/hall wiring: switch.z_wave_plus_s2_on_off_switch ('Basement Stairs') and light.basement_motion_light_1 ('Motion light 1'). The generic switch.z_wave_plus_s2_on_off_switch_3 ('Basement') is deliberately not on the plan -- its load cannot be identified from its name.",
+    "utility": "Draw-only: the utility room holds a leak sensor (binary_sensor.basement_leak_sensor_utility_room_water) but no switchable load.",
+    "ll_bath": "Draw-only: HA has no light or switch for the lower bath.",
+    "corridor_b": "Draw-only: a passage, not a room; no devices."
+  }
 }

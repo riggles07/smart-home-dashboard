@@ -1,0 +1,467 @@
+{
+  "floor": "lower",
+  "render": "/root/.hermes/projects/smart-home-dashboard/floorplan/cartoon/art/render_lower.jpg",
+  "control": "/root/.hermes/projects/smart-home-dashboard/floorplan/cartoon/art/control_lower.png",
+  "size": [
+    2400,
+    1792
+  ],
+  "anchor": {
+    "control_plan_bbox": [
+      30.0,
+      29.5,
+      1570.0,
+      1138.5
+    ],
+    "render_floor_bbox": [
+      38.0,
+      48.0,
+      2364.0,
+      1748.0
+    ],
+    "transform": {
+      "sx": 1.5255,
+      "sy": 1.5481,
+      "tx": -22.0,
+      "ty": -7.0,
+      "score": -2.4377
+    }
+  },
+  "rooms": {
+    "media_room": {
+      "points_px": [
+        [
+          32.6,
+          39.0
+        ],
+        [
+          32.6,
+          631.0
+        ],
+        [
+          1070.4,
+          631.0
+        ],
+        [
+          1070.4,
+          39.0
+        ]
+      ],
+      "points_norm": [
+        [
+          0.01358,
+          0.02179
+        ],
+        [
+          0.01358,
+          0.3521
+        ],
+        [
+          0.446,
+          0.3521
+        ],
+        [
+          0.446,
+          0.02179
+        ]
+      ],
+      "area_px": 614306.5,
+      "anchor_area_px": 689072.7,
+      "area_ratio": 0.891,
+      "centroid_drift": 0.024,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "rec_room": {
+      "points_px": [
+        [
+          1081.3,
+          39.6
+        ],
+        [
+          1081.3,
+          635.7
+        ],
+        [
+          947.9,
+          648.2
+        ],
+        [
+          947.9,
+          918.9
+        ],
+        [
+          2245.8,
+          918.9
+        ],
+        [
+          2245.8,
+          39.6
+        ]
+      ],
+      "points_norm": [
+        [
+          0.45055,
+          0.02209
+        ],
+        [
+          0.45055,
+          0.35477
+        ],
+        [
+          0.39495,
+          0.36173
+        ],
+        [
+          0.39495,
+          0.5128
+        ],
+        [
+          0.93575,
+          0.5128
+        ],
+        [
+          0.93575,
+          0.02209
+        ]
+      ],
+      "area_px": 1060954.8,
+      "anchor_area_px": 1219438.5,
+      "area_ratio": 0.87,
+      "centroid_drift": 0.022,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "garage_lower": {
+      "points_px": [
+        [
+          28.4,
+          649.7
+        ],
+        [
+          28.4,
+          1642.3
+        ],
+        [
+          911.6,
+          1642.3
+        ],
+        [
+          911.6,
+          649.7
+        ]
+      ],
+      "points_norm": [
+        [
+          0.01183,
+          0.36254
+        ],
+        [
+          0.01183,
+          0.91647
+        ],
+        [
+          0.37983,
+          0.91647
+        ],
+        [
+          0.37983,
+          0.36254
+        ]
+      ],
+      "area_px": 876699.6,
+      "anchor_area_px": 1007794.6,
+      "area_ratio": 0.87,
+      "centroid_drift": 0.025,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "ll_bath": {
+      "points_px": [
+        [
+          1248.2,
+          939.4
+        ],
+        [
+          1248.2,
+          1099.6
+        ],
+        [
+          1640.8,
+          1099.6
+        ],
+        [
+          1640.8,
+          939.4
+        ]
+      ],
+      "points_norm": [
+        [
+          0.52006,
+          0.52424
+        ],
+        [
+          0.52006,
+          0.6136
+        ],
+        [
+          0.68369,
+          0.6136
+        ],
+        [
+          0.68369,
+          0.52424
+        ]
+      ],
+      "area_px": 62887.0,
+      "anchor_area_px": 77236.7,
+      "area_ratio": 0.814,
+      "centroid_drift": 0.075,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "corridor_b": {
+      "points_px": [
+        [
+          925.1,
+          939.4
+        ],
+        [
+          925.1,
+          1099.6
+        ],
+        [
+          1224.9,
+          1099.6
+        ],
+        [
+          1224.9,
+          939.4
+        ]
+      ],
+      "points_norm": [
+        [
+          0.38544,
+          0.52424
+        ],
+        [
+          0.38544,
+          0.6136
+        ],
+        [
+          0.51039,
+          0.6136
+        ],
+        [
+          0.51039,
+          0.52424
+        ]
+      ],
+      "area_px": 48022.8,
+      "anchor_area_px": 60302.5,
+      "area_ratio": 0.796,
+      "centroid_drift": 0.096,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "utility": {
+      "points_px": [
+        [
+          928.0,
+          1128.0
+        ],
+        [
+          928.0,
+          1432.0
+        ],
+        [
+          1637.0,
+          1432.0
+        ],
+        [
+          1637.0,
+          1128.0
+        ]
+      ],
+      "points_norm": [
+        [
+          0.38667,
+          0.62946
+        ],
+        [
+          0.38667,
+          0.79911
+        ],
+        [
+          0.68208,
+          0.79911
+        ],
+        [
+          0.68208,
+          0.62946
+        ]
+      ],
+      "area_px": 215536.0,
+      "anchor_area_px": 247243.1,
+      "area_ratio": 0.872,
+      "centroid_drift": 0.042,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "office": {
+      "points_px": [
+        [
+          1673.1,
+          945.9
+        ],
+        [
+          1673.1,
+          1427.1
+        ],
+        [
+          2273.9,
+          1427.1
+        ],
+        [
+          2273.9,
+          945.9
+        ]
+      ],
+      "points_norm": [
+        [
+          0.69714,
+          0.52785
+        ],
+        [
+          0.69714,
+          0.79637
+        ],
+        [
+          0.94745,
+          0.79637
+        ],
+        [
+          0.94745,
+          0.52785
+        ]
+      ],
+      "area_px": 289064.1,
+      "anchor_area_px": 335095.6,
+      "area_ratio": 0.863,
+      "centroid_drift": 0.048,
+      "outside_frac": 0.0,
+      "method": "inset"
+    },
+    "basement_hall": {
+      "points_px": [
+        [
+          921.2,
+          1461.0
+        ],
+        [
+          921.2,
+          1664.0
+        ],
+        [
+          2286.8,
+          1664.0
+        ],
+        [
+          2286.8,
+          1461.0
+        ]
+      ],
+      "points_norm": [
+        [
+          0.38385,
+          0.81529
+        ],
+        [
+          0.38385,
+          0.92857
+        ],
+        [
+          0.95282,
+          0.92857
+        ],
+        [
+          0.95282,
+          0.81529
+        ]
+      ],
+      "area_px": 277214.2,
+      "anchor_area_px": 318584.2,
+      "area_ratio": 0.87,
+      "centroid_drift": 0.023,
+      "outside_frac": 0.0,
+      "method": "inset"
+    }
+  },
+  "report": [
+    {
+      "room": "media_room",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.891,
+      "drift": 0.024,
+      "outside": 0.0
+    },
+    {
+      "room": "rec_room",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.87,
+      "drift": 0.022,
+      "outside": 0.0
+    },
+    {
+      "room": "garage_lower",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.87,
+      "drift": 0.025,
+      "outside": 0.0
+    },
+    {
+      "room": "ll_bath",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.814,
+      "drift": 0.075,
+      "outside": 0.0
+    },
+    {
+      "room": "corridor_b",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.796,
+      "drift": 0.096,
+      "outside": 0.0
+    },
+    {
+      "room": "utility",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.872,
+      "drift": 0.042,
+      "outside": 0.0
+    },
+    {
+      "room": "office",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.863,
+      "drift": 0.048,
+      "outside": 0.0
+    },
+    {
+      "room": "basement_hall",
+      "ok": true,
+      "method": "inset",
+      "area_ratio": 0.87,
+      "drift": 0.023,
+      "outside": 0.0
+    }
+  ],
+  "pass": true
+}
