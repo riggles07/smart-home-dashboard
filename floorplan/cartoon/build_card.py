@@ -9,6 +9,10 @@ this project keeps hitting (a dead entity id, a stale `?v=`). So the polygons, t
 map and the image version are baked into one file, and the version is a hash of the exact
 inputs: change the art, the file changes, HA reloads it.
 
+Three layers are built: main / upper / lower. They were traced and fitted in ONE plan
+frame (136..1186 x 118..884) and every render is 2400x1792, so the card swaps the image
+and the room set without touching the projection.
+
 Outputs floorplan/cartoon/dist/floorplan-cartoon-card.js and prints the version.
 """
 from __future__ import annotations
@@ -19,51 +23,71 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-ART = HERE / "art" / "floorplan_render.jpg"
-HOTSPOTS = HERE / "hotspots.json"
 ENTITIES = HERE / "entity_map.json"
 SRC = HERE / "card.src.js"
 OUT_DIR = HERE / "dist"
-IMAGE_URL = "/local/floorplan/cartoon/floorplan_render.jpg"
+IMAGE_DIR = "/local/floorplan/cartoon"
+
+# floor id -> fitted hotspot file. The art file per floor comes from entity_map.json so
+# the payload and the deploy script cannot disagree about which file is which floor.
+HOTSPOTS = {
+    "main": HERE / "hotspots.json",
+    "upper": HERE / "hotspots_upper.json",
+    "lower": HERE / "hotspots_lower.json",
+}
+TEXTURE_KEYS = ("lights", "switches", "media", "appliances", "covers", "locks")
 
 
 def build(require_pass: bool = True) -> dict:
-    hotspots = json.loads(HOTSPOTS.read_text())
     ents = json.loads(ENTITIES.read_text())
 
-    if require_pass and not hotspots.get("pass"):
-        failed = [r["room"] for r in hotspots.get("report", []) if not r.get("ok")]
-        print(f"WARNING: hotspot gate not fully passing; failing rooms: {failed}")
-
-    rooms = {}
-    for rid, room in ents["rooms"].items():
-        hs = hotspots["rooms"].get(rid)
-        if not hs:
-            print(f"  skip {rid}: no hotspot")
+    floors, art_bytes, problems = [], {}, []
+    for cfg in ents["floors"]:
+        fid, art_name = cfg["id"], cfg["art"]
+        art_path = HERE / "art" / art_name
+        hs_path = HOTSPOTS[fid]
+        missing = [p.name for p in (art_path, hs_path) if not p.exists()]
+        if missing:
+            problems.append(f"{fid}: missing {', '.join(missing)}")
             continue
-        lights = room.get("lights") or []
-        switches = room.get("switches") or []
-        media = room.get("media") or []
-        appliances = room.get("appliances") or []
-        covers = room.get("covers") or []
-        locks = room.get("locks") or []
-        rooms[rid] = {
-            "label": room["label"],
-            "points_norm": hs["points_norm"],
-            "lights": lights,
-            "switches": switches,
-            "media": media,
-            "appliances": appliances,
-            "covers": covers,
-            "locks": locks,
-            "temp": room.get("temp"),
-            "humidity": room.get("humidity"),
-            "motion": room.get("motion"),
-            "climate": room.get("climate"),
-            "device_count": (len(lights) + len(switches) + len(media) + len(appliances)
-                             + len(covers) + len(locks)
-                             + (1 if room.get("climate") else 0)),
-        }
+        hotspots = json.loads(hs_path.read_text())
+        if require_pass and not hotspots.get("pass"):
+            failed = [r["room"] for r in hotspots.get("report", []) if not r.get("ok")]
+            print(f"WARNING: {fid} hotspot gate not fully passing; failing rooms: {failed}")
+
+        rooms = {}
+        for rid, room in ents["rooms"].items():
+            if room.get("floor", "main") != fid:
+                continue
+            hs = hotspots["rooms"].get(rid)
+            if not hs:
+                problems.append(f"{fid}/{rid}: in entity_map but no hotspot")
+                continue
+            lists = {k: (room.get(k) or []) for k in TEXTURE_KEYS}
+            rooms[rid] = {
+                "label": room["label"],
+                "points_norm": hs["points_norm"],
+                **lists,
+                "temp": room.get("temp"),
+                "humidity": room.get("humidity"),
+                "motion": room.get("motion"),
+                "climate": room.get("climate"),
+                "device_count": (sum(len(v) for v in lists.values())
+                                 + (1 if room.get("climate") else 0)),
+            }
+
+        if not rooms:
+            problems.append(f"{fid}: no bindable rooms")
+        # Rooms present on the plan but not in HA stay draw-only. Report them so a typo in
+        # entity_map.json cannot silently drop a room from the dashboard.
+        draw_only = sorted(set(hotspots["rooms"]) - set(rooms))
+        art_bytes[fid] = art_path.read_bytes()
+        floors.append({"id": fid, "label": cfg["label"],
+                       "image": f"{IMAGE_DIR}/{art_name}",
+                       "art": art_name, "rooms": rooms, "draw_only": draw_only})
+
+    if problems:
+        raise SystemExit("build failed:\n  " + "\n  ".join(problems))
 
     cams = []
     for c in (ents.get("cameras") or []):
@@ -75,10 +99,12 @@ def build(require_pass: bool = True) -> dict:
                      "x": min(0.99, max(0.01, float(c["x"]))),
                      "y": min(0.99, max(0.01, float(c["y"])))})
 
-    art_bytes = ART.read_bytes()
     digest = hashlib.sha256()
-    digest.update(art_bytes)
-    digest.update(json.dumps(rooms, sort_keys=True).encode())
+    for fid in sorted(art_bytes):
+        digest.update(art_bytes[fid])
+    for f in floors:
+        digest.update(json.dumps({k: f[k] for k in ("id", "image", "rooms")},
+                                 sort_keys=True).encode())
     digest.update(json.dumps(ents["house"], sort_keys=True).encode())
     digest.update(json.dumps(cams, sort_keys=True).encode())
     # The card's own source must be part of the version too. It was not, so changing
@@ -88,13 +114,22 @@ def build(require_pass: bool = True) -> dict:
     version = digest.hexdigest()[:8]
 
     from PIL import Image
-    with Image.open(ART) as im:
-        art_w, art_h = im.size
-    data = {"version": version, "image": IMAGE_URL, "art_w": art_w, "art_h": art_h,
-            "rooms": rooms, "house": ents["house"], "cameras": cams}
+    sizes = {}
+    for f in floors:
+        with Image.open(HERE / "art" / f["art"]) as im:
+            sizes[f["id"]] = im.size
+    art_w, art_h = sizes["main"] if "main" in sizes else next(iter(sizes.values()))
+    for fid, wh in sizes.items():
+        if wh != (art_w, art_h):
+            raise SystemExit(f"{fid} art is {wh}, expected {(art_w, art_h)}: "
+                             "all layers must share one projection")
+
+    data = {"version": version, "art_w": art_w, "art_h": art_h,
+            "floors": floors, "house": ents["house"], "cameras": cams}
 
     js = SRC.read_text()
-    banner = (f"/* built {len(art_bytes)} B art, version {version};\n"
+    banner = (f"/* built {sum(len(b) for b in art_bytes.values())} B art over "
+              f"{len(floors)} floors, version {version};\n"
               f" * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */\n")
     out = (banner
            + "window.__FPC_DATA__ = " + json.dumps(data, separators=(",", ":")) + ";\n"
@@ -105,8 +140,10 @@ def build(require_pass: bool = True) -> dict:
     target.write_text(out)
 
     return {"version": version, "out": str(target), "bytes": target.stat().st_size,
-            "rooms": len(rooms), "art_kb": round(len(art_bytes) / 1024),
-            "hotspot_pass": hotspots.get("pass")}
+            "floors": {f["id"]: len(f["rooms"]) for f in floors},
+            "draw_only": {f["id"]: f["draw_only"] for f in floors},
+            "art_kb": {fid: round(len(b) / 1024) for fid, b in art_bytes.items()},
+            "hotspot_pass": all(json.loads(p.read_text()).get("pass") for p in HOTSPOTS.values())}
 
 
 if __name__ == "__main__":

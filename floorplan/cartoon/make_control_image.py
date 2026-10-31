@@ -10,21 +10,28 @@ layout -- it is asked to *restyle this exact layout*.
 
 What the control image carries, and why each thing is there:
 
-  floors      one material per room from room_spec.FLOORS (all medium brown wood
-              except the laundry). Adjacent rooms share a material on purpose now:
-              room separation is done by walls, which is what the render shows too.
+  floors      one material per room from room_spec.FLOORS. Adjacent rooms share a
+              material on purpose now: room separation is done by walls, which is
+              what the render shows too.
+  roof        only on a floor whose plate does not cover the whole footprint (the
+              upper floor's west strip is roof over the garage). Drawn as a hatched
+              plane so the model renders shingles there instead of a grey void.
   walls       white bands stroked ON the polygon edges, so the edge is the wall
               CENTRELINE. Hotspot mapping depends on that being true.
-  openings    floor-coloured rects painted over shared walls to make the open plan
-              (family room <-> kitchen, living room <-> foyer).
-  furniture   flat blocks from room_spec.FURNITURE, so placement is unambiguous.
-              The prompt asks for 3D furniture in these positions; the blocks are
-              scaffolding, not the look.
-  stairs      treads in the foyer arm so the model does not fill that space with
-              something invented.
+  openings    floor-coloured rects painted over shared walls to make the open plan.
+  furniture   flat blocks from room_spec, so placement is unambiguous. The prompt
+              asks for 3D furniture in these positions; the blocks are scaffolding,
+              not the look.
+  stairs      treads so the model does not fill that space with something invented.
 
 Nothing else is drawn: no text, no labels, no shadows, no decor. Anything drawn here
 is something the model will faithfully copy.
+
+FLOORS
+------
+All three layers share the main floor's coordinate frame (136..1186 x 118..884), so
+one control image per floor renders into the same pixel space and the card can swap
+art layers without re-registering hotspots. Pass --floor upper|lower.
 """
 from __future__ import annotations
 
@@ -37,7 +44,7 @@ from PIL import Image, ImageDraw
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE))
-from geometry import ROOMS, STAIRS, bounds  # noqa: E402
+from geometry import FLOOR_ROOMS, FLOOR_STAIRS, ROOF, bounds_for  # noqa: E402
 import room_spec as spec  # noqa: E402
 
 WALL = (250, 250, 250)
@@ -46,22 +53,29 @@ PAD = 40
 SCALE = 1.6
 WALL_PX = 14
 FURN_OUTLINE = (92, 78, 64)
+ROOF_HATCH = (86, 80, 76)
 
 
-def _check_spec():
+def _check_spec(rooms, sp, floor):
     """Fail loudly if the art spec references a room that does not exist."""
-    for rid in spec.FLOORS:
-        assert rid in ROOMS, f"FLOORS references unknown room {rid!r}"
-    for o in spec.OPENINGS:
+    for rid in sp.FLOORS:
+        assert rid in rooms, f"[{floor}] FLOORS references unknown room {rid!r}"
+    for o in sp.OPENINGS:
         for rid in o["rooms"]:
-            assert rid in ROOMS, f"OPENINGS references unknown room {rid!r}"
-    for f in spec.FURNITURE:
-        assert f["room"] in ROOMS, f"FURNITURE references unknown room {f['room']!r}"
+            assert rid in rooms, f"[{floor}] OPENINGS references unknown room {rid!r}"
+    for f in sp.FURNITURE:
+        assert f["room"] in rooms, f"[{floor}] FURNITURE references unknown room {f['room']!r}"
+    missing = [r for r in rooms if r not in sp.FLOORS]
+    assert not missing, f"[{floor}] rooms with no floor material: {missing}"
 
 
-def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
-    _check_spec()
-    x0, y0, x1, y1 = bounds()
+def render(out: Path, size=(1600, 1168), labels: bool = False, floor: str = "main") -> dict:
+    rooms = FLOOR_ROOMS[floor]
+    sp = spec.for_floor(floor)
+    stairs = FLOOR_STAIRS[floor]
+    _check_spec(rooms, sp, floor)
+
+    x0, y0, x1, y1 = bounds_for(floor)
     w = int((x1 - x0) * SCALE) + PAD * 2
     h = int((y1 - y0) * SCALE) + PAD * 2
 
@@ -75,20 +89,34 @@ def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
     im = Image.new("RGB", (w, h), SURROUND)
     d = ImageDraw.Draw(im)
 
+    # 0. roof planes, before the floors so the plate always wins an overlap
+    for poly in ROOF.get(floor, ()):
+        pts = [T(*p) for p in poly]
+        d.polygon(pts, fill=spec.ROOF_FILL)
+        d.line(pts + [pts[0]], fill=(132, 124, 118), width=6, joint="curve")
+        # diagonal hatch: reads as "this is a sloped surface", not as a floor
+        bx0, by0 = T(*poly[0])
+        bx1, by1 = T(*poly[2]) if len(poly) == 4 else (bx0 + 40, by0 + 40)
+        step = 26
+        sx = bx0 - (by1 - by0)
+        while sx < bx1:
+            d.line([(sx, by1), (sx + (by1 - by0), by0)], fill=ROOF_HATCH, width=3)
+            sx += step
+
     # 1. floors
-    for rid, poly in ROOMS.items():
-        d.polygon([T(*p) for p in poly], fill=spec.FLOORS[rid])
+    for rid, poly in rooms.items():
+        d.polygon([T(*p) for p in poly], fill=sp.FLOORS[rid])
 
     # 2. wall bands (stroked after the fill, never re-filled -- a re-fill erased the
     #    walls entirely in an earlier version)
-    for rid, poly in ROOMS.items():
+    for rid, poly in rooms.items():
         pts = [T(*p) for p in poly]
         d.line(pts + [pts[0]], fill=WALL, width=WALL_PX, joint="curve")
 
     # 3. openings: paint in the room's own floor colour, then mark doors with a leaf
-    for o in spec.OPENINGS:
+    for o in sp.OPENINGS:
         rid = o["rooms"][0]
-        d.rectangle(TR(o["rect"]), fill=spec.FLOORS[rid])
+        d.rectangle(TR(o["rect"]), fill=sp.FLOORS[rid])
         if o.get("kind") == "garage":
             gx0, gy0, gx1, gy1 = TR(o["rect"])
             across = abs(o["rect"][2] - o["rect"][0]) > abs(o["rect"][3] - o["rect"][1])
@@ -104,43 +132,46 @@ def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
             else:             # door in a vertical wall
                 d.line([(dx0 + 3, dy0 + 4), (dx0 + 3, dy1 - 4)], fill=(122, 86, 54), width=7)
 
-    # 3b. tile hint in the laundry only: a visible grid, because the model kept
+    # 3b. tile hint on every tiled room: a visible grid, because the model kept
     #     swapping the two small rooms' floors when the cue was a flat grey fill.
-    lx0, ly0, lx1, ly1 = ROOMS["laundry"][0][0], ROOMS["laundry"][0][1], \
-        ROOMS["laundry"][2][0], ROOMS["laundry"][2][1]
-    step = 30
-    px = lx0
-    while px <= lx1:
-        d.line([T(px, ly0), T(px, ly1)], fill=(168, 178, 184), width=2)
-        px += step
-    py = ly0
-    while py <= ly1:
-        d.line([T(lx0, py), T(lx1, py)], fill=(168, 178, 184), width=2)
-        py += step
+    for rid, poly in rooms.items():
+        if sp.FLOORS[rid] != spec.TILE:
+            continue
+        xs = [p[0] for p in poly]
+        ys = [p[1] for p in poly]
+        tx0, tx1, ty0, ty1 = min(xs) + 4, max(xs) - 4, min(ys) + 4, max(ys) - 4
+        step = 30
+        px = tx0
+        while px <= tx1:
+            d.line([T(px, ty0), T(px, ty1)], fill=(168, 178, 184), width=2)
+            px += step
+        py = ty0
+        while py <= ty1:
+            d.line([T(tx0, py), T(tx1, py)], fill=(168, 178, 184), width=2)
+            py += step
 
-    # 4. stairs -- treads are perpendicular to the direction of travel. The user's
-    #    "Stair direction" arrow points east, so the treads run north-south and the
-    #    flight ascends toward +x. Earlier the treads were horizontal, i.e. climbing
-    #    north, which is what the arrow corrected.
-    s = STAIRS
-    sx0, sy0 = T(s["x0"], s["y0"])
-    sx1, sy1 = T(s["x1"], s["y1"])
-    for i in range(s["treads"] + 1):
-        if spec.STAIR_DIRECTION == "east":
-            x = sx0 + (sx1 - sx0) * i / s["treads"]
+    # 4. stairs -- treads are perpendicular to the direction of travel. The main
+    #    floor's "Stair direction" arrow points east, so its treads run north-south
+    #    and the flight ascends toward +x; the traced sheets show both lower flights
+    #    climbing north-to-south, so their treads are horizontal.
+    sx0, sy0 = T(stairs["x0"], stairs["y0"])
+    sx1, sy1 = T(stairs["x1"], stairs["y1"])
+    for i in range(stairs["treads"] + 1):
+        if sp.STAIR_DIRECTION == "east":
+            x = sx0 + (sx1 - sx0) * i / stairs["treads"]
             d.line([(x, sy0), (x, sy1)], fill=(226, 210, 188), width=5)
         else:
-            y = sy0 + (sy1 - sy0) * i / s["treads"]
+            y = sy0 + (sy1 - sy0) * i / stairs["treads"]
             d.line([(sx0, y), (sx1, y)], fill=(226, 210, 188), width=5)
 
     # 5. furniture blocks
-    for f in spec.FURNITURE:
+    for f in sp.FURNITURE:
         box = TR(f["rect"])
         r = 6
-        d.rounded_rectangle(box, radius=r, fill=spec.fill_for(f),
+        d.rounded_rectangle(box, radius=r, fill=sp.fill_for(f),
                             outline=FURN_OUTLINE, width=3)
         # a second inset block reads as a cushion / seat / tabletop in the render
-        if f["kind"] in ("sofa", "chair", "table", "rug"):
+        if f["kind"] in ("sofa", "chair", "table", "rug", "bed", "pool_table"):
             inset = [box[0] + 6, box[1] + 6, box[2] - 6, box[3] - 6]
             if inset[2] > inset[0] and inset[3] > inset[1]:
                 d.rounded_rectangle(inset, radius=r, outline=(255, 255, 255), width=2)
@@ -151,26 +182,36 @@ def render(out: Path, size=(1600, 1168), labels: bool = False) -> dict:
         # Only for the confirmation diagram sent to the user -- these strings must
         # never reach the control image used for generation, or the model renders them.
         d2 = ImageDraw.Draw(im)
-        for o in spec.OPENINGS:
+        for o in sp.OPENINGS:
             lx0, ly0, lx1, ly1 = TR(o["rect"])
             d2.rectangle([lx0, ly0, lx1, ly1], outline=(200, 30, 30), width=3)
             d2.text((lx0, max(2, ly0 - 16)), o["kind"].upper(), fill=(200, 30, 30))
-        for f in spec.FURNITURE:
-            if f["kind"] in ("island", "fridge", "counter"):
-                lx0, ly0, _, _ = TR(f["rect"])
-                d2.text((lx0, ly0), f["kind"].upper(), fill=(20, 90, 200))
-        sx, sy = T(STAIRS["x1"], (STAIRS["y0"] + STAIRS["y1"]) / 2)
+        for f in sp.FURNITURE:
+            lx0, ly0, _, _ = TR(f["rect"])
+            d2.text((lx0, ly0), f["kind"].upper(), fill=(20, 90, 200))
+        sx, sy = T(stairs["x1"], (stairs["y0"] + stairs["y1"]) / 2)
         d2.line([(sx - 30, sy), (sx + 40, sy)], fill=(20, 140, 40), width=6)
         d2.text((sx + 44, sy - 8), "UP", fill=(20, 140, 40))
 
     im.save(out)
-    return {"control": str(out), "size": list(im.size),
+    return {"floor": floor, "control": str(out), "size": list(im.size),
             "plan_bounds": [x0, y0, x1, y1], "scale": SCALE, "pad": PAD,
-            "rooms": len(ROOMS), "furniture": len(spec.FURNITURE),
-            "openings": len(spec.OPENINGS)}
+            "rooms": len(rooms), "furniture": len(sp.FURNITURE),
+            "openings": len(sp.OPENINGS), "roof_planes": len(ROOF.get(floor, ()))}
+
+
+def _arg(argv, name, default=None):
+    if name in argv:
+        i = argv.index(name)
+        if i + 1 < len(argv):
+            return argv[i + 1]
+    return default
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    out = Path(args[0] if args else "control_plan.png")
-    print(json.dumps(render(out, labels="--labels" in sys.argv), indent=2))
+    argv = sys.argv[1:]
+    floor = _arg(argv, "--floor", "main")
+    positional = [a for i, a in enumerate(argv)
+                  if not a.startswith("--") and not (i and argv[i - 1] == "--floor")]
+    out = Path(positional[0] if positional else f"control_{floor}.png")
+    print(json.dumps(render(out, labels="--labels" in argv, floor=floor), indent=2))

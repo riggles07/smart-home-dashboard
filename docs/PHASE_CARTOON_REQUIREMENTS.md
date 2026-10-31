@@ -1165,3 +1165,81 @@ So the overlay was rebuilt around live view rather than the still:
 Separately, the SDM event subscriber still logs ~1 exception/min with zero events since a
 core restart. That affects *events* (state updates), not on-demand streams: the cameras
 stream fine without it. Left as a known integration-side issue, not a card issue.
+
+## 27. Three floors in one card (2026-10-31)
+
+The scanned sheets for the upper floor and the basement were traced into `geometry.py` and
+the card grew a floor switcher. What follows is the parts that were not obvious.
+
+**One coordinate space for all three floors.** The plan frame is shared --
+`136..1186 x 118..884` -- so `art/floorplan_render.jpg`, `art/render_upper.jpg` and
+`art/render_lower.jpg` are each rendered over that same frame. The sheet-to-plan mapping is
+documented in `geometry.py`:
+
+```
+upper   sheet x 385..1200 -> plan x 361..1186   sheet y 265..832 -> plan y 118..884
+lower   sheet x 345..1180 -> plan x 136..1186   sheet y 218..880 -> plan y 118..884
+```
+
+The upper floor's west wall is at plan x=361, not 136: the strip west of it is roof over
+the garage. That is why `ROOF` is a first-class polygon set -- the upper plate is an L, and
+a control image without the roof plane would leave a grey void that the model then fills
+with invented architecture.
+
+**Tiling is checked before art is spent.** `tools/check_floor_geometry.py` asserts no room
+overlaps another, that rooms (+ roof) cover the footprint within 3%, and that every polygon
+sits inside the bounds. It caught a `NameError` in its own coverage maths first
+(`(bx1 - bx0) * (y1 - by0)` where `y1` did not exist), which is a good argument for
+running it before generating a $0.30 image.
+
+**Walls are stroked ON the polygon edge.** The polygon edge is the wall centreline, not an
+inset line. Every hotspot fit depends on this; moving the stroke inward would shave half a
+wall off each room.
+
+**"Outside the room" is measured by connectivity, not colour.** The first upper-floor fit
+failed the upstairs baths at 6.4% and 5.7% "outside" while nothing crossed a wall: cool grey
+ceramic tile is within 12 RGB of the grey surround, so a colour-distance test could not tell
+floor from background. The gate now takes the background component that touches the image
+border and asks whether a polygon sample falls inside *that*.
+
+**`open_below` is a void.** The stairwell has no floor on the upper level, so the fitted
+polygon slid onto the treads below (measured drift 0.116). It is drawn, and never tappable.
+`VOID_ROOMS` exempts it from the drift gate only.
+
+**A re-roll is all-or-nothing.** The upper render's wardrobe sat a wall off its bath. Adding
+a wall-alignment paragraph to the prompt cured the jog and simultaneously shrank the roof
+strip from 21% to 10% of the frame and put a staircase inside the wardrobe. v1 was restored
+(`render_upper_v1.jpg` is kept as evidence). Targeted region edits (`edit_art.py`) are the
+right tool for this; a full re-roll trades one defect for two.
+
+**Floor switching repaints, it does not rebuild.** `_paint()` was split out of `_build()`
+because a rebuild would drop the pointer wiring, the ResizeObserver and the camera timers.
+The room `<g>` nodes are found again after the overlay clear -- holding a reference across
+the clear cost one crash (`svg.querySelector('.rooms')` returned a detached node).
+
+**The switcher sits bottom-right** (HUD owns the top strip, the driveway pin owns
+bottom-left), 42 px targets, the active tab inverted, the choice kept in
+`localStorage['fpc.floor']`. The toast moved to `bottom: 66px` so it cannot land under the
+tab bar, and a floor change raises it as information (slate) rather than as a failure (red).
+
+**Units are shown, not assumed.** Every temperature sensor in this house reports `°F`
+(67-69). The pill used to render `${value}°`, so a Fahrenheit sensor read as if it were
+Celsius. `tempLabel()` appends the unit when it is not `C`, which keeps the number identical
+to HA's more-info dialog instead of silently converting.
+
+**Rooms may be drawn without being bound.** `walk_in_closet`, `hall_bath`, `ll_bath`,
+`utility`, `corridor_b` and `garage_lower` have no controllable load in HA, and the lower
+garage is deliberately unbound so the garage-door covers and locks cannot appear on two
+floors at once. The test suite requires each of these to be declared in `UNBOUND_OK` with a
+reason, so a typo'd room id cannot hide among them.
+
+**Two rooms were bound to nothing.** `dining_room` and `bathroom` had empty device lists --
+tappable hotspots that opened an empty sheet. The dining room's sensors carry a
+`basement_motion_` entity id but are friendly-named "Dining room Motion", and the bathroom's
+only entity is `switch.z_wave_plus_on_off_toggle_switch_2` (a Z-Wave toggle, bound as a
+switch rather than a light). Both are now wired; the naming oddity is recorded in `_notes`.
+
+State at the end of this phase: entity map v6, 18 rooms, 104 entities validated live,
+`hotspot_pass: true` on all three floors, **559 tests passing**, bundle `d97fa3b5`.
+Not yet uploaded: `render_upper.jpg`, `render_lower.jpg` and the card -- HA still serves
+`8ddfa0cf`.

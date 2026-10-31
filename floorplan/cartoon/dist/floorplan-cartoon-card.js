@@ -1,6 +1,6 @@
-/* built 2504545 B art, version 8ddfa0cf;
+/* built 7860860 B art over 3 floors, version d97fa3b5;
  * regenerate with floorplan/cartoon/build_card.py -- do not hand-edit the dist file */
-window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/floorplan_render.jpg","art_w":2400,"art_h":1792,"rooms":{"study":{"label":"Family Room","points_norm":[[0.01308,0.02131],[0.01308,0.38115],[0.30953,0.38115],[0.30953,0.33631],[0.29156,0.3292],[0.29156,0.02131]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.2932,0.01754],[0.2932,0.31614],[0.31199,0.3216],[0.31239,0.36809],[0.49737,0.36809],[0.5039,0.39762],[0.69459,0.39762],[0.69459,0.01754]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71446,0.02035],[0.71446,0.36488],[0.94721,0.38238],[0.94721,0.02035]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41236,0.38118],[0.41236,0.48892],[0.55936,0.49439],[0.55976,0.90454],[0.75699,0.90454],[0.75781,0.56056],[0.92155,0.55618],[0.92155,0.39267],[0.50178,0.41072],[0.49525,0.38118]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40784,0.50355],[0.40784,0.59633],[0.54341,0.59633],[0.54341,0.50355]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.4011,0.68085],[0.4011,0.78957],[0.54348,0.78957],[0.54348,0.68085]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":0},"living_room":{"label":"Living Room","points_norm":[[0.77297,0.5748],[0.77297,0.91014],[0.9487,0.91014],[0.9487,0.5748]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01215,0.39777],[0.01215,0.90134],[0.39535,0.90134],[0.39535,0.39777]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun","guest_mode":"input_boolean.guest_mode"},"cameras":[{"id":"driveway","label":"Driveway","entity":"camera.outside_driveway_camera","x":0.02,"y":0.972},{"id":"backyard_upper","label":"Backyard Upper","entity":"camera.backyard_backyard_upper_camera","x":0.7001,"y":0.0952},{"id":"kitchen","label":"Kitchen","entity":"camera.kitchen_kitchen_hub","x":0.4351,"y":0.0764},{"id":"garage","label":"Garage","entity":"camera.garage_garage_camera","x":0.2125,"y":0.4803},{"id":"front_door","label":"Front Door","entity":"camera.outside_front_door","x":0.6901,"y":0.972},{"id":"living_room","label":"Living Room","entity":"camera.living_room_living_room_camera","x":0.9434,"y":0.7409}]};
+window.__FPC_DATA__ = {"version":"d97fa3b5","art_w":2400,"art_h":1792,"floors":[{"id":"main","label":"Main","image":"/local/floorplan/cartoon/floorplan_render.jpg","art":"floorplan_render.jpg","rooms":{"study":{"label":"Family Room","points_norm":[[0.01303,0.02079],[0.01303,0.38447],[0.30622,0.38447],[0.30622,0.33853],[0.28825,0.33142],[0.28825,0.02079]],"lights":["light.family_room_family_room"],"switches":["switch.family_room_right","switch.family_room_family_room_left"],"media":["media_player.family_room_tv"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.family_room_family_room_motion_temperature","humidity":null,"motion":"binary_sensor.family_room_family_room_motion_motion","climate":null,"device_count":4},"kitchen":{"label":"Kitchen","points_norm":[[0.28956,0.0163],[0.28956,0.31763],[0.30834,0.3231],[0.30875,0.37067],[0.69544,0.4002],[0.69544,0.0163]],"lights":["light.z_wave_plus_s2_dimmer_light_switch","light.kitchen_kitchen_table","light.dimmer"],"switches":["switch.on_off_switch"],"media":["media_player.kitchen_display"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.kitchen_motion_temperature","humidity":null,"motion":"binary_sensor.kitchen_motion_motion","climate":null,"device_count":5},"dining_room":{"label":"Dining Room","points_norm":[[0.71573,0.01983],[0.71573,0.36819],[0.95052,0.38569],[0.95052,0.01983]],"lights":[],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.basement_motion_temperature","humidity":null,"motion":"binary_sensor.basement_motion_motion","climate":null,"device_count":0},"corridor":{"label":"Foyer","points_norm":[[0.41032,0.38233],[0.41032,0.49116],[0.55895,0.49663],[0.55936,0.91061],[0.75863,0.91061],[0.75944,0.5639],[0.92441,0.55952],[0.92441,0.39382],[0.50056,0.41186],[0.49403,0.38233]],"lights":["light.foyer_hall"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.hallway_hallway_temperature","humidity":"sensor.hallway_hallway_humidity","motion":"binary_sensor.hallway_motion_motion","climate":"climate.hallway_hallway","device_count":2},"laundry":{"label":"Laundry","points_norm":[[0.40574,0.50578],[0.40574,0.59969],[0.54301,0.59969],[0.54301,0.50578]],"lights":[],"switches":["switch.double_relay","switch.double_relay_2"],"media":[],"appliances":["switch.washer_power","switch.laundry_dryer_power"],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":4},"bathroom":{"label":"Bathroom","points_norm":[[0.399,0.68475],[0.399,0.7946],[0.54308,0.7946],[0.54308,0.68475]],"lights":[],"switches":["switch.z_wave_plus_on_off_toggle_switch_2"],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":1},"living_room":{"label":"Living Room","points_norm":[[0.77465,0.57816],[0.77465,0.91626],[0.95202,0.91626],[0.95202,0.57816]],"lights":["light.living_room_ceiling"],"switches":[],"media":["media_player.living_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"garage":{"label":"Garage","points_norm":[[0.01211,0.39898],[0.01211,0.90738],[0.39331,0.90738],[0.39331,0.39898]],"lights":["light.gdo_left_garage_light","light.gdo_right_garage_light"],"switches":[],"media":[],"appliances":[],"covers":["cover.gdo_left_garage_door","cover.gdo_right_garage_door"],"locks":["lock.gdo_left_lock","lock.gdo_right_lock"],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":6}},"draw_only":[]},{"id":"upper","label":"2nd","image":"/local/floorplan/cartoon/render_upper.jpg","art":"render_upper.jpg","rooms":{"master_bedroom":{"label":"Master Bedroom","points_norm":[[0.3699,0.01381],[0.3699,0.32771],[0.60469,0.32771],[0.60469,0.01381]],"lights":["light.master_bedroom","light.bedroom_bedside"],"switches":["switch.bedroom_bd_l","switch.bedroom_bd_r","switch.bedroom_dresser"],"media":[],"appliances":[],"covers":[],"locks":[],"temp":"sensor.master_bedroom_master_bedroom_temperature","humidity":null,"motion":"binary_sensor.bedroom_bedroom_motion_motion","climate":"climate.master_bedroom_master_bedroom","device_count":6},"master_bath":{"label":"Master Bath","points_norm":[[0.20417,0.02065],[0.20417,0.34096],[0.355,0.34096],[0.355,0.02065]],"lights":[],"switches":["switch.z_wave_plus_on_off_toggle_switch","switch.z_wave_plus_on_off_toggle_switch_2"],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"jj_room":{"label":"JJ's Room","points_norm":[[0.73347,0.01381],[0.73347,0.32771],[0.95111,0.32771],[0.95111,0.01381]],"lights":["light.kids_rooms_jj_lamp"],"switches":[],"media":["media_player.jj_s_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2},"colette_room":{"label":"Colette's Room","points_norm":[[0.66953,0.55276],[0.66953,0.91097],[0.95047,0.91097],[0.95047,0.55276]],"lights":["light.kids_rooms_colette_lamp"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":1},"evie_room":{"label":"Evie's Room","points_norm":[[0.36837,0.55093],[0.36837,0.91279],[0.54163,0.91279],[0.54163,0.55093]],"lights":[],"switches":[],"media":["media_player.evie_s_room"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":1},"upstairs_hall":{"label":"Upstairs Hall","points_norm":[[0.37336,0.33845],[0.37336,0.53041],[0.94747,0.53041],[0.94747,0.33845]],"lights":["light.illumino_dimmer_switch","light.upstairs_motion_light_2"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":2}},"draw_only":["hall_bath","open_below","walk_in_closet"]},{"id":"lower","label":"Basement","image":"/local/floorplan/cartoon/render_lower.jpg","art":"render_lower.jpg","rooms":{"media_room":{"label":"Media Room","points_norm":[[0.01358,0.02179],[0.01358,0.3521],[0.446,0.3521],[0.446,0.02179]],"lights":["light.media_media_room_floor","light.media_m1","light.m2","light.m3","light.m4","light.m5","light.m6","light.seat_v","light.h619a","light.h618e","light.h619c","light.basement_media_room","light.basement_movie_dim"],"switches":["switch.movie_seating_light_cycle","switch.nightime_lighting","switch.basement_movie_lighting","switch.basement_tv_lighting","light.basement_movie_dim","switch.rainbow_lights","switch.christmas_media_room","switch.z_wave_plus_s2_on_off_switch_2"],"media":["media_player.shield","media_player.media_room_speaker"],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":23},"rec_room":{"label":"Recreation Room","points_norm":[[0.45055,0.02209],[0.45055,0.35477],[0.39495,0.36173],[0.39495,0.5128],[0.93575,0.5128],[0.93575,0.02209]],"lights":["light.h619e","light.basement_motion_light_1"],"switches":["switch.basement_gameday","switch.basement_daylight","switch.basement_daytime_lighting"],"media":["media_player.basement_tv","media_player.basement_audio","media_player.basement_speaker","media_player.golf_sim"],"appliances":[],"covers":[],"locks":[],"temp":"sensor.basement_motion_temperature","humidity":null,"motion":"binary_sensor.basement_motion_motion","climate":null,"device_count":9},"office":{"label":"Office","points_norm":[[0.69714,0.52785],[0.69714,0.79637],[0.94745,0.79637],[0.94745,0.52785]],"lights":["light.a1_03919c471500682_chamber_light"],"switches":[],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":null,"climate":null,"device_count":1},"basement_hall":{"label":"Basement Hall","points_norm":[[0.38385,0.81529],[0.38385,0.92857],[0.95282,0.92857],[0.95282,0.81529]],"lights":["light.basement_motion_light_1"],"switches":["switch.z_wave_plus_s2_on_off_switch"],"media":[],"appliances":[],"covers":[],"locks":[],"temp":null,"humidity":null,"motion":"binary_sensor.basement_motion_light_1_motion","climate":null,"device_count":2}},"draw_only":["corridor_b","garage_lower","ll_bath","utility"]}],"house":{"alarm_primary":"alarm_control_panel.house","alarm_secondary":["alarm_control_panel.garage","alarm_control_panel.master"],"weather":"weather.forecast_home","sun":"sun.sun","guest_mode":"input_boolean.guest_mode"},"cameras":[{"id":"driveway","label":"Driveway","entity":"camera.outside_driveway_camera","x":0.02,"y":0.972},{"id":"backyard_upper","label":"Backyard Upper","entity":"camera.backyard_backyard_upper_camera","x":0.7001,"y":0.0952},{"id":"kitchen","label":"Kitchen","entity":"camera.kitchen_kitchen_hub","x":0.4351,"y":0.0764},{"id":"garage","label":"Garage","entity":"camera.garage_garage_camera","x":0.2125,"y":0.4803},{"id":"front_door","label":"Front Door","entity":"camera.outside_front_door","x":0.6901,"y":0.972},{"id":"living_room","label":"Living Room","entity":"camera.living_room_living_room_camera","x":0.9434,"y":0.7409}]};
 /* floorplan-cartoon-card — interactive cartoon floor plan for Home Assistant.
  *
  * Single file, no build step, no dependencies. Data (hotspots + entity map) is injected
@@ -21,7 +21,27 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
     console.error('[floorplan-cartoon] data payload missing');
     return;
   }
-  const { rooms, house, image, version, art_w: ART_W, art_h: ART_H, cameras = [] } = DATA;
+  const { house, version, art_w: ART_W, art_h: ART_H, cameras = [] } = DATA;
+
+  // Three layers, one plan frame. Every floor was traced and fitted in the SAME
+  // coordinates (136..1186 x 118..884) and every render is 2400x1792, so switching floor
+  // swaps the image and the room set without touching the projection -- the hotspots stay
+  // pixel-accurate. `rooms` and `ART` are module-level and mutable because every renderer
+  // below reads them; `FI` is the active floor index.
+  const FLOORS = (DATA.floors && DATA.floors.length)
+    ? DATA.floors
+    : [{ id: 'main', label: 'Main', image: DATA.image, rooms: DATA.rooms }];
+  const ART_V = (p) => `${p}?v=${version}`;
+  const STORE = 'fpc.floor';
+  let FI = 0;
+  try {
+    const saved = FLOORS.findIndex((f) => f.id === localStorage.getItem(STORE));
+    if (saved > 0) FI = saved;
+  } catch (e) { /* private mode: start on the main floor */ }
+  let rooms = FLOORS[FI].rooms;
+  let ART = ART_V(FLOORS[FI].image);
+  const isMain = () => (FLOORS[FI].id || 'main') === 'main';
+
 
   // Camera pins sit at plan coordinates (normalised to the art), not inside room polygons:
   // driveway and front door are exterior mounts, so they sit on the plan's edge.
@@ -31,7 +51,6 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
   const camPins = cameras.map((c) =>
     `<button class="cam" data-cam="${c.id}" style="left:${(c.x * 100).toFixed(2)}%;top:${(c.y * 100).toFixed(2)}%"`
     + ` aria-label="${c.label} camera" title="${c.label}">${CAM_ICON}</button>`).join('');
-  const ART = `${image}?v=${version}`;
 
   const SVC = {
     light: 'light/toggle',
@@ -178,11 +197,28 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
         font: 600 13px/1 system-ui, sans-serif; }
     .camview footer button:disabled { opacity: .45; }
 
-    .toast { position: absolute; left: 50%; bottom: 18px; transform: translate(-50%, 20px);
+    /* bottom: 66px clears the floor switcher that sits in the bottom-right corner;
+       a toast that lands under a tab bar reads as decoration, not as feedback. */
+    .toast { position: absolute; left: 50%; bottom: 66px; transform: translate(-50%, 20px);
              background: rgba(150,30,24,.95); color: #fff; padding: 9px 14px; border-radius: 10px;
              font: 600 13px/1.2 system-ui, sans-serif; opacity: 0; pointer-events: none;
              transition: opacity .2s, transform .2s; }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    /* Red is reserved for failures. A floor change is information, not an alarm. */
+    .toast.info { background: rgba(22,30,40,.94); }
+    /* Floor switcher: bottom-RIGHT on purpose. The HUD owns the top strip, and the
+       driveway camera pin sits on the bottom-left corner of the main-floor art. */
+    .floors { position: absolute; right: 8px; bottom: 8px; z-index: 3; display: flex;
+              gap: 4px; padding: 4px; border-radius: 13px;
+              background: rgba(12,17,23,.62); backdrop-filter: blur(8px);
+              box-shadow: 0 4px 14px rgba(0,0,0,.28); }
+    .floors button { font: 600 13px/1 system-ui, sans-serif; letter-spacing: .01em;
+                     min-height: 42px; min-width: 58px; padding: 0 12px; border: 0;
+                     border-radius: 10px; background: transparent; color: #c4cfdb;
+                     cursor: pointer; transition: background .15s, color .15s; }
+    .floors button.on { background: #e6edf5; color: #0b1117; }
+    .floors button:focus-visible { outline: 2px solid var(--fpc-accent); outline-offset: 2px; }
+    .floors button:active { transform: scale(.97); }
     @media (prefers-reduced-motion: reduce) {
       .room.motion, .chip.alarm-triggered { animation: none; }
       .sheet { transition: none; }
@@ -190,6 +226,17 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
   `;
 
   const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1);
+
+  // A pill reading "68°" beside "21°" is a lie about units. The house is Celsius, so a
+  // Fahrenheit sensor keeps its °F suffix rather than being silently relabelled -- the
+  // number stays the one HA shows in more-info, which is what gets compared.
+  const tempLabel = (st) => {
+    const v = st ? parseFloat(st.state) : NaN;
+    if (!isFinite(v)) return '';
+    const u = ((st.attributes && st.attributes.unit_of_measurement) || '°C').trim();
+    const bare = u.replace(/^°/, '');
+    return `${fmt(v)}°${bare === 'C' ? '' : bare}`;
+  };
 
   class FloorplanCartoonCard extends HTMLElement {
     constructor() {
@@ -262,61 +309,16 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
       } catch (e) { /* never let cosmetics break the card */ }
     }
 
-    _build() {
+    // Paint polygons, glow pools and temperature pills for the CURRENT floor. Split out of
+    // _build so a floor switch can repaint the overlay without rebuilding the DOM -- a
+    // rebuild would drop the wiring, the ResizeObserver and the camera timers.
+    _paint() {
       const sh = this.shadowRoot;
-      sh.innerHTML = `<style>${css}</style>
-        <div class="wrap">
-          <div class="hud">
-            <span class="chip" id="clock"></span>
-            <span class="chip" id="wx"><span class="dot off"></span><span class="t">—</span></span>
-            <span class="chip" id="alarm"><button><span class="dot off"></span><span class="t">Alarm</span></button></span>
-            <span class="chip" id="guest"><button title="Guest mode — keeps the house occupied so the alarm will not arm"><span class="dot off"></span><span class="t">Guest</span></button></span>
-            <span class="spacer"></span>
-            <span class="chip" id="mode"><button title="Toggle day/night">◐</button></span>
-          </div>
-          <div class="stage">
-            <img alt="Floor plan" src="${ART}" draggable="false">
-            <svg viewBox="0 0 ${ART_W} ${ART_H}" preserveAspectRatio="none" aria-hidden="false">
-              <defs>
-                <radialGradient id="lamp"><stop offset="0%" stop-color="#ffd79a" stop-opacity=".85"/>
-                  <stop offset="60%" stop-color="#ffbc63" stop-opacity=".35"/>
-                  <stop offset="100%" stop-color="#ffbc63" stop-opacity="0"/></radialGradient>
-              </defs>
-              <g class="glow"></g>
-              <g class="rooms"></g>
-              <g class="labels"></g>
-            </svg>
-            <div class="cams">${camPins}</div>
-          </div>
-          <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Room devices">
-            <header><h2 id="sheetTitle">Room</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="rows" id="rows"></div>
-          </div>
-          <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
-            <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
-            <div class="frame">
-              <img id="camImg" alt="" draggable="false">
-              <button id="camPlay" class="playbig" aria-label="Start live view">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
-                <span>Live view</span>
-              </button>
-            </div>
-            <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
-          </div>
-          <div class="toast" id="toast"></div>
-        </div>`;
-
-      this._pinViewHeight();
-      this._fit();
-      if (window.ResizeObserver) {
-        this._ro = new ResizeObserver(() => this._fit());
-        this._ro.observe(sh.querySelector('.wrap'));
-      }
-
       const svg = sh.querySelector('svg');
       const gRooms = svg.querySelector('.rooms');
       const gLabels = svg.querySelector('.labels');
       const gGlow = svg.querySelector('.glow');
+      for (const g of [gRooms, gLabels, gGlow]) g.textContent = '';
 
       let i = 0;
       for (const [rid, room] of Object.entries(rooms)) {
@@ -366,7 +368,101 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
         i++;
       }
 
-      // interactions
+      this._update();
+      this._setCamVisibility();
+    }
+
+    // Camera pins are placed in MAIN-floor art coordinates. On the upper and lower layers
+    // they would float over unrelated rooms, so they are hidden rather than mismapped --
+    // every camera in this house is a main-floor or exterior mount.
+    _setCamVisibility() {
+      const cams = this.shadowRoot && this.shadowRoot.querySelector('.cams');
+      if (cams) cams.style.display = isMain() ? '' : 'none';
+    }
+
+    // Swap layers. The art and the room set change together; the projection does not,
+    // because all three floors were fitted in one frame.
+    _setFloor(k) {
+      if (!FLOORS[k] || k === FI) return;
+      FI = k;
+      rooms = FLOORS[k].rooms;
+      ART = ART_V(FLOORS[k].image);
+      try { localStorage.setItem(STORE, FLOORS[k].id); } catch (e) { /* private mode */ }
+      const sh = this.shadowRoot;
+      this._closeSheet();
+      this._closeCam();
+      const img = sh.querySelector('.stage img');
+      if (img) img.src = ART;                 // alt text stays generic; the tab name carries the floor
+      sh.querySelectorAll('.floors button').forEach((btn) => {
+        const on = Number(btn.dataset.floor) === k;
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-selected', String(on));
+      });
+      this._paint();
+      this._toast(`${FLOORS[k].label} floor`, true);
+    }
+
+    _build() {
+      const sh = this.shadowRoot;
+      sh.innerHTML = `<style>${css}</style>
+        <div class="wrap">
+          <div class="hud">
+            <span class="chip" id="clock"></span>
+            <span class="chip" id="wx"><span class="dot off"></span><span class="t">—</span></span>
+            <span class="chip" id="alarm"><button><span class="dot off"></span><span class="t">Alarm</span></button></span>
+            <span class="chip" id="guest"><button title="Guest mode — keeps the house occupied so the alarm will not arm"><span class="dot off"></span><span class="t">Guest</span></button></span>
+            <span class="spacer"></span>
+            <span class="chip" id="mode"><button title="Toggle day/night">◐</button></span>
+          </div>
+          <div class="stage">
+            <img alt="Floor plan" src="${ART}" draggable="false">
+            <svg viewBox="0 0 ${ART_W} ${ART_H}" preserveAspectRatio="none" aria-hidden="false">
+              <defs>
+                <radialGradient id="lamp"><stop offset="0%" stop-color="#ffd79a" stop-opacity=".85"/>
+                  <stop offset="60%" stop-color="#ffbc63" stop-opacity=".35"/>
+                  <stop offset="100%" stop-color="#ffbc63" stop-opacity="0"/></radialGradient>
+              </defs>
+              <g class="glow"></g>
+              <g class="rooms"></g>
+              <g class="labels"></g>
+            </svg>
+            <div class="cams">${camPins}</div>
+            ${FLOORS.length > 1 ? `<div class="floors" role="tablist" aria-label="Floor">
+              ${FLOORS.map((f, k) => `<button role="tab" data-floor="${k}" aria-selected="${k === FI}"`
+                + ` class="${k === FI ? 'on' : ''}">${f.label}</button>`).join('')}
+            </div>` : ''}
+          </div>
+          <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Room devices">
+            <header><h2 id="sheetTitle">Room</h2><button class="x" aria-label="Close">×</button></header>
+            <div class="rows" id="rows"></div>
+          </div>
+          <div class="camview" id="camview" role="dialog" aria-modal="true" aria-label="Camera">
+            <header><h2 id="camTitle">Camera</h2><button class="x" aria-label="Close">×</button></header>
+            <div class="frame">
+              <img id="camImg" alt="" draggable="false">
+              <button id="camPlay" class="playbig" aria-label="Start live view">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                <span>Live view</span>
+              </button>
+            </div>
+            <footer><span class="meta" id="camMeta"></span><button id="camLive">Live view</button></footer>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>`;
+
+      this._pinViewHeight();
+      this._fit();
+      if (window.ResizeObserver) {
+        this._ro = new ResizeObserver(() => this._fit());
+        this._ro.observe(sh.querySelector('.wrap'));
+      }
+
+      const svg = sh.querySelector('svg');
+      this._paint();
+
+      // interactions -- bound to the persistent <g> children, so a floor repaint (which only
+      // clears grandchildren) never has to rewire them.
+      const gRooms = svg.querySelector('.rooms');
       gRooms.addEventListener('pointerdown', (e) => this._down(e));
       gRooms.addEventListener('pointerup', (e) => this._up(e));
       gRooms.addEventListener('pointercancel', () => clearTimeout(this._pressTimer));
@@ -385,6 +481,9 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
       sh.querySelector('#camview .x').addEventListener('click', () => this._closeCam());
       sh.querySelector('#camLive').addEventListener('click', () => this._liveCam());
       sh.querySelector('#camPlay').addEventListener('click', () => this._liveCam());
+      sh.querySelectorAll('.floors button').forEach((b2) => {
+        b2.addEventListener('click', (e) => { e.stopPropagation(); this._setFloor(Number(b2.dataset.floor)); });
+      });
       sh.querySelector('.sheet .x').addEventListener('click', () => this._closeSheet());
       sh.getElementById('sheet').addEventListener('click', (e) => {
         if (e.target.id === 'sheet') this._closeSheet();
@@ -408,6 +507,7 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
       if (window.ResizeObserver) new ResizeObserver(setK).observe(svg);
 
       this._built = true;
+      this._setCamVisibility();
     }
 
     disconnectedCallback() {
@@ -761,7 +861,7 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
           const st = hass.states[room.temp];
           const pill = sh.querySelector(`rect[data-tempbg="${rid}"]`);
           const has = st && !['unknown', 'unavailable'].includes(st.state);
-          if (t) t.textContent = has ? `${fmt(parseFloat(st.state))}°` : '';
+          if (t) t.textContent = has ? tempLabel(st) : '';
           if (pill) pill.setAttribute('opacity', has ? '1' : '0');
         }
       }
@@ -822,10 +922,11 @@ window.__FPC_DATA__ = {"version":"8ddfa0cf","image":"/local/floorplan/cartoon/fl
       });
     }
 
-    _toast(msg) {
+    _toast(msg, info) {
       const t = this.shadowRoot.getElementById('toast');
       if (!t) return;
       t.textContent = msg;
+      t.classList.toggle('info', !!info);
       t.classList.add('show');
       clearTimeout(this._toastTimer);
       this._toastTimer = setTimeout(() => t.classList.remove('show'), 1800);

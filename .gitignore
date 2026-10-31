@@ -14,3 +14,6 @@ core.*
 # Kanban worker worktrees. Cards with workspace_kind=worktree are checked out
 # here; without this they all show up as untracked in the main tree.
 .worktrees/
+
+# fit_hotspots.py visual checks -- regenerable, and ~1.5 MB each
+floorplan/cartoon/hotspots_*.png
