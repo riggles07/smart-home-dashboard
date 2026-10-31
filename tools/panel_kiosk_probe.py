@@ -20,6 +20,8 @@ from urllib.parse import unquote
 import paho.mqtt.client as mqtt
 import requests
 
+from mqtt_creds import creds
+
 BASE = "100.104.204.118"
 TOPIC = "wallpanel/mywallpanel/command"
 CLEAN = "/cartoon-plan/cartoon-plan"
@@ -86,7 +88,7 @@ def current_url():
 
 
 c = mqtt.Client(client_id="hermes-shadowprobe", clean_session=True)
-c.username_pw_set("WallPanel", "DaHouse17!")
+c.username_pw_set(*creds())
 c.connect(BASE, 1883, 10)
 c.loop_start()
 time.sleep(1)
@@ -108,7 +110,7 @@ else:
 
 # put the URL back so the tablet is not left on a diagnostic query string
 c = mqtt.Client(client_id="hermes-cleanup", clean_session=True)
-c.username_pw_set("WallPanel", "DaHouse17!")
+c.username_pw_set(*creds())
 c.connect(BASE, 1883, 10)
 c.loop_start()
 time.sleep(1)

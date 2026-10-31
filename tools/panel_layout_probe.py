@@ -12,6 +12,8 @@ from urllib.parse import unquote
 import paho.mqtt.client as mqtt
 import requests
 
+from mqtt_creds import creds
+
 BASE = "100.104.204.118"
 TOPIC = "wallpanel/mywallpanel/command"
 CLEAN = "/cartoon-plan/cartoon-plan"
@@ -66,7 +68,7 @@ H = {"Authorization": "Bearer " + env["HA_TOKEN"], "Content-Type": "application/
 
 def publish(payload):
     c = mqtt.Client(client_id="hermes-geo", clean_session=True)
-    c.username_pw_set("WallPanel", "DaHouse17!")
+    c.username_pw_set(*creds())
     c.connect(BASE, 1883, 10)
     c.loop_start()
     time.sleep(1)

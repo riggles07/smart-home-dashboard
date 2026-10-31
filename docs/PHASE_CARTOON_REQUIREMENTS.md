@@ -1270,3 +1270,39 @@ concrete in reality.
 Verified in the harness: basement layer has no `garage_lower` hotspot at all, the bottom-left
 reads as storage, and the main floor's garage sheet still emits both covers, both locks and
 both GDO lights. 559 tests pass; bundle `451e98f2`.
+
+## 29. Deployment of 451e98f2, and a credential that had been sitting in git
+
+The three files were uploaded by hand into `/config/www/floorplan/cartoon/` and the deploy
+script pointed the module resource at `?v=451e98f2`.
+
+What was checked, and what each check is worth:
+
+- **Served bytes.** All four assets fetched from `/local/floorplan/cartoon/` and md5'd
+  against the working tree: card `92189e0fa4`, `render_lower.jpg` `d3ead00809`,
+  `render_upper.jpg` `7465d34d4e`, `floorplan_render.jpg` `afeef3bf40`. All 200, all
+  identical. A 200 with the old bytes is exactly what a stale upload looks like, so the
+  hash is the check, not the status code.
+- **Resource.** `lovelace/resources` returns six entries and exactly one cartoon module, at
+  `?v=451e98f2`. A second module on the same path is what throws `NotSupportedError` at
+  `customElements.define`, so the count matters as much as the URL.
+- **Dashboard config.** `lovelace/config url_path=cartoon-plan` still has `panel: true` at
+  the view and the full `kiosk_mode` block at the root; the deploy script reported
+  `kept ['kiosk_mode']`. `/floor-plan` still points at the same card.
+- **The tablet.** Could not be verified: the panel has been `unavailable` in HA since
+  2026-10-30T09:55Z and every port on `100.92.176.5` refuses, including 1883 -- the tablet
+  is off the network, not merely asleep with MQTT dropped. `tools/panel_card_probe.py` is
+  the check when it returns: it evals inside the page, reads the baked version, the three
+  floor tabs, the active layer's room ids and the art basename out of the shadow DOM, and
+  reports through the URL sensor. Until that runs, "deployed" means "served and wired",
+  not "seen on the wall".
+
+**The four `tools/panel_*_probe.py` scripts had the broker password typed into them.** It
+went to GitHub in `f46e1e9` and stayed there through every commit since, in a repo whose
+own rule is that credentials supplied by screenshot do not get reproduced in files. The
+login is now read from `MQTT_USER` / `MQTT_PASS` in `/root/.hermes/.env` via
+`tools/mqtt_creds.py`; `git grep DaHouse17` over the working tree is empty.
+
+Removing it from the tree does **not** remove it from history. Anyone with the repo can
+read it, so the broker password needs rotating -- and if the panel is only ever reachable on
+the Tailscale net, that is the difference between a hygiene fix and an actual exposure.

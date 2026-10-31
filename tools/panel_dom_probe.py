@@ -20,6 +20,8 @@ import time
 import paho.mqtt.client as mqtt
 import requests
 
+from mqtt_creds import creds
+
 BASE = "100.104.204.118"
 TOPIC = "wallpanel/mywallpanel/command"
 
@@ -60,7 +62,7 @@ print("url before:", requests.get(f"{HA}/api/states/sensor.my_wall_panel_current
                                   headers=H, timeout=20).json()["state"][-60:])
 
 c = mqtt.Client(client_id="hermes-domprobe", clean_session=True)
-c.username_pw_set("WallPanel", "DaHouse17!")
+c.username_pw_set(*creds())
 c.connect(BASE, 1883, 10)
 c.loop_start()
 time.sleep(1)
