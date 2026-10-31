@@ -1228,9 +1228,9 @@ Celsius. `tempLabel()` appends the unit when it is not `C`, which keeps the numb
 to HA's more-info dialog instead of silently converting.
 
 **Rooms may be drawn without being bound.** `walk_in_closet`, `hall_bath`, `ll_bath`,
-`utility`, `corridor_b` and `garage_lower` have no controllable load in HA, and the lower
-garage is deliberately unbound so the garage-door covers and locks cannot appear on two
-floors at once. The test suite requires each of these to be declared in `UNBOUND_OK` with a
+`utility`, `corridor_b` and `storage` have no controllable load in HA. The card only paints
+hotspots for rooms that are in `entity_map.json`, so an unbound room is art and geometry
+only -- it cannot be tapped into an empty sheet. The test suite requires each of these to be declared in `UNBOUND_OK` with a
 reason, so a typo'd room id cannot hide among them.
 
 **Two rooms were bound to nothing.** `dining_room` and `bathroom` had empty device lists --
@@ -1243,3 +1243,30 @@ State at the end of this phase: entity map v6, 18 rooms, 104 entities validated 
 `hotspot_pass: true` on all three floors, **559 tests passing**, bundle `d97fa3b5`.
 Not yet uploaded: `render_upper.jpg`, `render_lower.jpg` and the card -- HA still serves
 `8ddfa0cf`.
+
+## 28. The lower floor does not have a second garage (2026-10-31)
+
+The basement sheet labels its south-west corner GARAGE ROOM and cuts two 9'-1" openings in
+the south wall, and the first pass took that at face value: cars, overhead doors, the lot.
+It is wrong. The garage is on the main floor; this corner is the same slab seen from
+below -- under-garage storage, reached from the basement hall. Drawing it as a garage put a
+second garage in a house that has one, and put the two doors on a wall that is 2.9 m of
+concrete in reality.
+
+- `geometry.py`: `garage_lower` -> `storage`, same polygon (the plate still has to tile).
+- `room_spec.py`: concrete slab, two shelf runs and stacked boxes instead of two cars; the
+  two `kind: garage` openings deleted, the house door kept as `storage_door`.
+- The art was corrected with `edit_art.py`, not by re-rolling: everything else in that
+  render had already passed a vision check. The instruction named the quadrant, the two
+  cars, the two doors and the replacement furniture.
+- **Watch the resolution.** The first edit came back 1200x896 because `--size` defaults to
+  None, not to the source's size. `--size 2K` on the retry returns 2400x1792 like the other
+  layers. A half-size layer still fits (the fit normalises by image size) but it quietly
+  halves the art the tablet draws.
+- `hotspots_lower.json` refit: all eight rooms pass, `storage` drift 0.026, 0% outside.
+- `entity_map.json` `_notes.storage` records why it is draw-only and where the real garage
+  lives; `tests/test_cartoon_card.py` `UNBOUND_OK` swaps `garage_lower` for `storage`.
+
+Verified in the harness: basement layer has no `garage_lower` hotspot at all, the bottom-left
+reads as storage, and the main floor's garage sheet still emits both covers, both locks and
+both GDO lights. 559 tests pass; bundle `451e98f2`.

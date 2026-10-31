@@ -163,6 +163,7 @@ KIND_FILL.update({
     "desk": (128, 88, 52), "tv": (60, 62, 68), "pool_table": (46, 104, 78),
     "car": (96, 104, 116), "water_heater": (206, 206, 210),
     "furnace": (150, 152, 158), "freezer": (240, 240, 240),
+    "box": (176, 152, 118),
     "washer": (240, 240, 240), "dryer": (240, 240, 240),
     "sofa": (120, 126, 134), "chair": (78, 110, 170), "rug": (214, 178, 96),
     "table": (128, 88, 52), "shelf": (150, 110, 74), "bookshelf": (110, 76, 46),
@@ -236,7 +237,7 @@ UPPER_FURNITURE = [
 LOWER_FLOORS = {
     "media_room":    CARPET,
     "rec_room":      CARPET,
-    "garage_lower":  CONCRETE,
+    "storage":       CONCRETE,
     "ll_bath":       TILE,
     "corridor_b":    (156, 116, 80),
     "utility":       CONCRETE,
@@ -255,13 +256,10 @@ LOWER_OPENINGS = [
      "rect": (600, 620, 660, 638)},
     {"id": "office_door", "rooms": ("office", "basement_hall"), "kind": "door",
      "rect": (940, 770, 1000, 790)},
-    {"id": "garage_house", "rooms": ("garage_lower", "basement_hall"), "kind": "door",
+    {"id": "storage_door", "rooms": ("storage", "basement_hall"), "kind": "door",
      "rect": (548, 800, 566, 856)},
-    # two overhead doors, south wall -- same as the main plan's garage
-    {"id": "garage_door_l", "rooms": ("garage_lower",), "kind": "garage",
-     "rect": (170, 872, 330, 890)},
-    {"id": "garage_door_r", "rooms": ("garage_lower",), "kind": "garage",
-     "rect": (365, 872, 525, 890)},
+    # No overhead doors on this level: the garage doors are on the main floor, directly
+    # above this room. Painting them here put two garages in one house.
 ]
 
 LOWER_FURNITURE = [
@@ -289,10 +287,13 @@ LOWER_FURNITURE = [
     {"room": "ll_bath", "kind": "tub", "colour": "white", "rect": (716, 552, 780, 622)},
     {"room": "ll_bath", "kind": "toilet", "colour": "white", "rect": (790, 552, 830, 596)},
     {"room": "ll_bath", "kind": "basin", "colour": "white", "rect": (840, 552, 888, 592)},
-    # --- garage: two bays, shelves against the house wall -------------------
-    {"room": "garage_lower", "kind": "car", "colour": "grey", "rect": (170, 470, 320, 700)},
-    {"room": "garage_lower", "kind": "car", "colour": "grey", "rect": (360, 470, 510, 700)},
-    {"room": "garage_lower", "kind": "shelf", "colour": "wood", "rect": (150, 740, 340, 790)},
+    # --- under-garage storage: shelving and stacked boxes, bare slab -------
+    {"room": "storage", "kind": "shelf", "colour": "wood", "rect": (146, 430, 330, 470)},
+    {"room": "storage", "kind": "shelf", "colour": "wood", "rect": (146, 740, 330, 782)},
+    {"room": "storage", "kind": "shelf", "colour": "steel", "rect": (452, 470, 500, 700)},
+    {"room": "storage", "kind": "box", "colour": "cardboard", "rect": (180, 520, 280, 600)},
+    {"room": "storage", "kind": "box", "colour": "cardboard", "rect": (300, 610, 400, 690)},
+    {"room": "storage", "kind": "box", "colour": "cardboard", "rect": (180, 640, 250, 700)},
 ]
 
 

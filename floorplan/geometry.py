@@ -152,10 +152,10 @@ LOWER_ROOMS = {
     # and it wraps the media room's south-east corner back to the stair side.
     "rec_room":   [(563, 404), (626, 404), (626, 118), (1186, 118),
                    (1186, 545), (563, 545)],
-    # The sheet labels this GARAGE ROOM and cuts two 9'-1" door openings in the
-    # south wall -- the same two-car garage the main plan carries. Same corner,
-    # same 41 % of the width, so it is the same room seen from below.
-    "garage_lower":   [(136, 404), (563, 404), (563, 884), (136, 884)],
+    # The sheet labels this corner GARAGE ROOM, but the garage is on the main floor --
+    # this is the same corner seen from below: bare under-garage storage, entered from
+    # the basement hall, no vehicles and no overhead doors on this level.
+    "storage":        [(136, 404), (563, 404), (563, 884), (136, 884)],
     "ll_bath":        [(709, 545), (896, 545), (896, 629), (709, 629)],
     "corridor_b":     [(563, 545), (709, 545), (709, 629), (563, 629)],
     "utility":        [(563, 629), (896, 629), (896, 780), (563, 780)],

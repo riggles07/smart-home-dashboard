@@ -390,7 +390,7 @@
     }
   ],
   "_notes": {
-    "lower_garage": "The lower sheet shows a two-car garage in the same footprint as the main-floor garage. Until that is confirmed to be a second physical room, the lower garage is drawn (geometry.py) but NOT bound here, so the GDO doors and locks never appear on two floors at once.",
+    "storage": "Draw-only, and not a garage: the lower sheet labels this corner GARAGE ROOM, but that is the main-floor garage seen from below. On this level it is unfinished under-garage storage off the basement hall -- no vehicles, no overhead doors, nothing switchable, so it is drawn (geometry.py room 'storage') and never bound. The main-floor room 'garage' keeps the GDO doors and locks.",
     "bathroom": "The only bathroom entity in HA is switch.z_wave_plus_on_off_toggle_switch_2 (friendly name 'Bathroom'); it is a Z-Wave toggle, so it is bound as a switch, not as primary_light. switch.z_wave_plus_on_off_toggle_switch ('Bathroom Toilet') is the toilet's own switch and is deliberately not on the plan.",
     "dining_room": "The dining room's sensors carry a 'basement_motion_' entity_id but are friendly-named 'Dining room Motion'; bound as temp + motion on that basis. Its temperature reports in Fahrenheit, so the pill carries °F rather than being converted -- the number matches HA's more-info dialog.",
     "basement_hall": "Stair/hall wiring: switch.z_wave_plus_s2_on_off_switch ('Basement Stairs') and light.basement_motion_light_1 ('Motion light 1'). The generic switch.z_wave_plus_s2_on_off_switch_3 ('Basement') is deliberately not on the plan -- its load cannot be identified from its name.",

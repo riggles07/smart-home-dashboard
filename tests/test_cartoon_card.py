@@ -29,7 +29,7 @@ FLOOR_ART = {"main": "floorplan_render.jpg", "upper": "render_upper.jpg",
 # two floors at once.
 UNBOUND_OK = {
     "open_below",      # stairwell void: no floor to stand on
-    "garage_lower",    # drawn but unbound so the GDO doors cannot appear on two floors
+    "storage",         # under-garage storage: bare slab, no switchable load, not a garage
     "corridor_b",      # passage, no devices
     "hall_bath",       # upstairs shared bath: no light/switch in HA
     "walk_in_closet",  # no light/switch in HA
