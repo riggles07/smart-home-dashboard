@@ -1289,13 +1289,31 @@ What was checked, and what each check is worth:
 - **Dashboard config.** `lovelace/config url_path=cartoon-plan` still has `panel: true` at
   the view and the full `kiosk_mode` block at the root; the deploy script reported
   `kept ['kiosk_mode']`. `/floor-plan` still points at the same card.
-- **The tablet.** Could not be verified: the panel has been `unavailable` in HA since
-  2026-10-30T09:55Z and every port on `100.92.176.5` refuses, including 1883 -- the tablet
-  is off the network, not merely asleep with MQTT dropped. `tools/panel_card_probe.py` is
-  the check when it returns: it evals inside the page, reads the baked version, the three
-  floor tabs, the active layer's room ids and the art basename out of the shadow DOM, and
-  reports through the URL sensor. Until that runs, "deployed" means "served and wired",
-  not "seen on the wall".
+- **The tablet.** Verified after the panel came back, with `tools/panel_card_probe.py`:
+  it reloads the page, evals inside it, and reads the card out of the shadow DOM, reporting
+  through `sensor.my_wall_panel_current_url` so the answer travels over the panel's own MQTT
+  link instead of needing a cable or a screenshot.
+
+  ```
+  main     ver:451e98f2 act:0 art:floorplan_render.jpg?v=451e98f2 nat:2400x1792
+           n8 study,kitchen,dining_room,corridor,laundry,bathroom,living_room,garage
+  upper    ver:451e98f2 act:1 art:render_upper.jpg?v=451e98f2    nat:2400x1792
+           n6 master_bedroom,master_bath,jj_room,colette_room,evie_room,upstairs_hall
+  basement ver:451e98f2 act:2 art:render_lower.jpg?v=451e98f2    nat:2400x1792
+           n4 media_room,rec_room,office,basement_hall
+  ```
+
+  Every layer loads at full 2400x1792 and the basement has **four** hotspots, not eight:
+  `ll_bath`, `utility`, `corridor_b` and `storage` are drawn and unbound, and `garage_lower`
+  is gone. The floor was switched three times and put back to main, so the wall is left
+  where it started.
+
+  Two things this cost, worth writing down: `document.querySelector('floorplan-cartoon-card')`
+  returns null -- the card lives inside HA's shadow roots, so the walk has to descend
+  through them and keep the element it finds; and the version is read from
+  `window.__FPC_DATA__.version`, because the element exposes no version property of its own.
+  A probe that fails inside the page changes nothing and looks exactly like a panel that is
+  offline, so every eval must write its error into the URL too.
 
 **The four `tools/panel_*_probe.py` scripts had the broker password typed into them.** It
 went to GitHub in `f46e1e9` and stayed there through every commit since, in a repo whose

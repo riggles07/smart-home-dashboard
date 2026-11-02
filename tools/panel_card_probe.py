@@ -110,12 +110,13 @@ def current_url(env: dict) -> str:
                         headers=ha_headers(env), timeout=20).json()["state"]
 
 
-def wait_report(env: dict, tag: str, timeout: int = 60) -> str | None:
+def wait_report(env: dict, key: str, timeout: int = 60) -> str | None:
+    """Poll the panel's URL until ``key=`` shows up, and return the decoded value."""
     for _ in range(timeout // 4):
         time.sleep(4)
         u = current_url(env)
-        if tag in u:
-            return unquote(u.split(tag + "=", 1)[1].split("&")[0])
+        if key in u:
+            return unquote(u.split(key, 1)[1].split("&")[0])
     return None
 
 
