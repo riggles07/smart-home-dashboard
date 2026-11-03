@@ -1351,13 +1351,25 @@ its duplicate merge commit. Verified two ways:
 - Every dropped commit's `git patch-id` is present in the rewritten history, so every change
   survives -- only the duplicate copy is gone.
 
-**Verified after the force push, from a fresh clone of GitHub rather than from the working
-copy:** `main` is `4d31642`, 204 commits, and walking every commit in the clone with
-`git grep` for the exact credential returns **0** hits. A grep for the fragment is also
-clean, including the line in section 29 that used to quote it.
+A second pass was needed because the first one redacted the full password but left the
+ten-character fragment that section 29 had quoted, so the fragment was rewritten to
+`REDACTED` too and pushed again. Final state: `main` is `93daa2a`, 205 commits.
 
-**What this does not do.** The old commit objects are unreachable now, but GitHub keeps
-unreachable objects addressable by SHA for a while and serves cached commit pages and API
-responses; the only way to be certain a leaked credential is dead is to change it. If the
-broker login is ever rotated, only `MQTT_PASS` in `/root/.hermes/.env` and the panel's
-WallPanel settings need updating -- the scripts read it from there now.
+**Verified after the force pushes, from a fresh clone of GitHub rather than from the working
+copy:** walking every commit in the clone with `git grep` for the credential and for its
+fragment returns **0** hits, on `main` and on every other branch and PR ref (`git ls-remote`
+was used to enumerate them; `fix/ha-dead-code-and-guards` and `refs/pull/2/head` carry 120
+commits each and are clean). The working copy was then moved onto the rewritten history and
+`reflog expire --expire=now --all && gc --prune=now` run, after which the old SHAs no longer
+resolve locally; the pre-scrub backup bundle was deleted.
+
+**What this does not do -- and this one is not hypothetical.** Old commit objects are no
+longer fetchable (`git fetch origin e36dc6c` fails), but GitHub still *serves* them through
+the REST API: an unauthenticated `GET /repos/riggles07/smart-home-dashboard/commits/f46e1e9`
+returns 200 with a patch that contains the old login, and the repo is public. So the scrub
+removed the credential from every clone anyone can take, and did not remove it from GitHub's
+cached view of history. Closing that needs either a purge request to GitHub Support
+("removing sensitive data from a repository") or a new password -- and since the exposed
+string is still the live broker login, rotating it is the step that actually retires the
+secret. Rotation touches three places: the Mosquitto add-on config, `MQTT_PASS` in
+`/root/.hermes/.env`, and the WallPanel settings on the tablet.
