@@ -1319,8 +1319,45 @@ What was checked, and what each check is worth:
 went to GitHub in `f46e1e9` and stayed there through every commit since, in a repo whose
 own rule is that credentials supplied by screenshot do not get reproduced in files. The
 login is now read from `MQTT_USER` / `MQTT_PASS` in `/root/.hermes/.env` via
-`tools/mqtt_creds.py`; `git grep REDACTED` over the working tree is empty.
+`tools/mqtt_creds.py`; a grep for the old literal over the working tree is empty.
 
 Removing it from the tree does **not** remove it from history. Anyone with the repo can
 read it, so the broker password needs rotating -- and if the panel is only ever reachable on
 the Tailscale net, that is the difference between a hygiene fix and an actual exposure.
+
+## 30. Scrubbing the broker password out of the git history (2026-11-01)
+
+Section 29 ends with "removing it from the tree does not remove it from history". This is
+that removal.
+
+The secret existed in two kinds of place: the four `tools/panel_*_probe.py` scripts from
+`f46e1e9` until it was moved to `.env`, and nowhere else -- a scan for `ghp_`, `gho_`,
+`AIza`, `sk-ant`, `AKIA`, long JWTs and `GOOGLE_API_KEY=` values turned up only placeholders
+like `HA_TOKEN=<your-long-lived-token>`.
+
+**Method.** `git-filter-repo --replace-text` on a fresh single-branch clone of `main`, with
+`literal:<password>==>REDACTED`, then a forced push of `main` only. Only `main` needed it:
+`git branch -r --contains f46e1e9` returned exactly one ref, so no other branch was carrying
+the credential and no other branch had to be rewritten.
+
+**Seven commits disappeared, and that is fine -- checked, not assumed.** The rewritten
+history has 204 commits against 211. The seven are duplicates: this repo carries two
+parallel lineages of the same work around the old PR #1 merge (every commit in that stretch
+exists twice under different SHAs), and filter-repo collapses the redundant copy along with
+its duplicate merge commit. Verified two ways:
+
+- `git archive e36dc6c | tar -x` diffed against the rewritten tip: **no differences**, so no
+  file content was lost.
+- Every dropped commit's `git patch-id` is present in the rewritten history, so every change
+  survives -- only the duplicate copy is gone.
+
+**Verified after the force push, from a fresh clone of GitHub rather than from the working
+copy:** `main` is `4d31642`, 204 commits, and walking every commit in the clone with
+`git grep` for the exact credential returns **0** hits. A grep for the fragment is also
+clean, including the line in section 29 that used to quote it.
+
+**What this does not do.** The old commit objects are unreachable now, but GitHub keeps
+unreachable objects addressable by SHA for a while and serves cached commit pages and API
+responses; the only way to be certain a leaked credential is dead is to change it. If the
+broker login is ever rotated, only `MQTT_PASS` in `/root/.hermes/.env` and the panel's
+WallPanel settings need updating -- the scripts read it from there now.
